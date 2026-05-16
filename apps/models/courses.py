@@ -3,6 +3,7 @@ import uuid
 from django.db.models import TextField, CharField, UUIDField, TextChoices, DateTimeField, \
     Model, PositiveSmallIntegerField, DecimalField
 
+
 class Course(Model):
     class Status(TextChoices):
         ACTIVE = "active", "Active"

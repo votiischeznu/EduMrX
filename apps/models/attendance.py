@@ -1,12 +1,13 @@
 import uuid
-from django.db import models
-from apps.models.students import Student
-from apps.models.groups import Group
+
 from django.db.models import DateField, CharField, UUIDField, TextChoices, DateTimeField, \
     Model, TextField, CASCADE, ForeignKey, TimeField
 
-class Lesson(Model):
+from apps.models.groups import Group
+from apps.models.students import Student
 
+
+class Lesson(Model):
     id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     group = ForeignKey(Group, on_delete=CASCADE, related_name="lessons")
     date = DateField()

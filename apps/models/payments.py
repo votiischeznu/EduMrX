@@ -1,9 +1,11 @@
 import uuid
-from django.db import models
-from apps.models.students import Student
-from apps.models.groups import Group
+
 from django.db.models import DateField, CharField, UUIDField, TextChoices, DateTimeField, \
     Model, TextField, PositiveSmallIntegerField, ForeignKey, DecimalField, PROTECT
+
+from apps.models.groups import Group
+from apps.models.students import Student
+
 
 class Payment(Model):
     class Status(TextChoices):

@@ -1,6 +1,6 @@
 import uuid
 
-from django.db.models import TextField, DateField, CharField, UUIDField, BooleanField, TextChoices, DateTimeField, \
+from django.db.models import TextField, DateField, CharField, UUIDField, TextChoices, DateTimeField, \
     Model, OneToOneField, CASCADE, ForeignKey, SET_NULL, EmailField
 
 

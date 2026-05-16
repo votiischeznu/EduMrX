@@ -1,8 +1,7 @@
 import uuid
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
-from django.db import models
-from django.db.models import ImageField, EmailField, CharField, UUIDField, BooleanField, TextChoices, DateTimeField
 
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.db.models import ImageField, EmailField, CharField, UUIDField, BooleanField, TextChoices, DateTimeField
 
 
 class UserManager(BaseUserManager):
@@ -59,4 +58,3 @@ class User(AbstractBaseUser, PermissionsMixin):
     @property
     def full_name(self):
         return f"{self.first_name} {self.last_name}".strip()
-

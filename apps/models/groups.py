@@ -1,9 +1,11 @@
 import uuid
-from apps.models.users import User
-from apps.models.courses import Course
-from apps.models.students import Student
+
 from django.db.models import PROTECT, DateField, CharField, UUIDField, BooleanField, TextChoices, DateTimeField, \
     Model, IntegerChoices, CASCADE, ForeignKey, PositiveSmallIntegerField, ManyToManyField, TimeField, JSONField
+
+from apps.models.courses import Course
+from apps.models.students import Student
+from apps.models.users import User
 
 
 class Group(Model):

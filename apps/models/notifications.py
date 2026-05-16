@@ -1,8 +1,10 @@
 import uuid
-from django.db import models
-from apps.models.users import User
-from django.db.models import DateField, CharField, UUIDField, TextChoices, DateTimeField, \
+
+from django.db.models import CharField, UUIDField, TextChoices, DateTimeField, \
     Model, TextField, BooleanField, ForeignKey, Index, CASCADE
+
+from apps.models.users import User
+
 
 class Notification(Model):
     class Type(TextChoices):
