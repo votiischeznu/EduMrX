@@ -3,13 +3,10 @@ import uuid
 from django.db.models import DateField, CharField, UUIDField, TextChoices, DateTimeField, \
     Model, TextField, CASCADE, ForeignKey, TimeField
 
-from apps.models.groups import Group
-from apps.models.students import Student
-
 
 class Lesson(Model):
     id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    group = ForeignKey(Group, on_delete=CASCADE, related_name="lessons")
+    group = ForeignKey('apps.Group', on_delete=CASCADE, related_name="lessons")
     date = DateField()
     start_time = TimeField()
     end_time = TimeField()
@@ -37,8 +34,8 @@ class Attendance(Model):
         EXCUSED = "excused", "Excused"
 
     id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    lesson = ForeignKey(Lesson, on_delete=CASCADE, related_name="attendances")
-    student = ForeignKey(Student, on_delete=CASCADE, related_name="attendances")
+    lesson = ForeignKey('apps.Lesson', on_delete=CASCADE, related_name="attendances")
+    student = ForeignKey('apps.Student', on_delete=CASCADE, related_name="attendances")
     status = CharField(max_length=20, choices=Status.choices, default=Status.PRESENT)
     note = CharField(max_length=300, blank=True)
 

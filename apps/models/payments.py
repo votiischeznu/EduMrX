@@ -3,9 +3,6 @@ import uuid
 from django.db.models import DateField, CharField, UUIDField, TextChoices, DateTimeField, \
     Model, TextField, PositiveSmallIntegerField, ForeignKey, DecimalField, PROTECT
 
-from apps.models.groups import Group
-from apps.models.students import Student
-
 
 class Payment(Model):
     class Status(TextChoices):
@@ -22,8 +19,8 @@ class Payment(Model):
         ONLINE = "online", "Online"
 
     id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    student = ForeignKey(Student, on_delete=PROTECT, related_name="payments")
-    group = ForeignKey(Group, on_delete=PROTECT, related_name="payments", null=True, blank=True)
+    student = ForeignKey('apps.Student', on_delete=PROTECT, related_name="payments")
+    group = ForeignKey('apps.Group', on_delete=PROTECT, related_name="payments", null=True, blank=True)
 
     amount = DecimalField(max_digits=12, decimal_places=2)
     discount = DecimalField(max_digits=12, decimal_places=2, default=0)
@@ -61,8 +58,8 @@ class Payment(Model):
 
 class Debt(Model):
     id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    student = ForeignKey(Student, on_delete=PROTECT, related_name="debts")
-    group = ForeignKey(Group, on_delete=PROTECT, related_name="debts")
+    student = ForeignKey('apps.Student', on_delete=PROTECT, related_name="debts")
+    group = ForeignKey('apps.Group', on_delete=PROTECT, related_name="debts")
     amount = DecimalField(max_digits=12, decimal_places=2, default=0)
 
     updated_at = DateTimeField(auto_now=True)

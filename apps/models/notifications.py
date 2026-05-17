@@ -21,7 +21,7 @@ class Notification(Model):
         EMAIL = "email", "Email"
 
     id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    recipient = ForeignKey(User, on_delete=CASCADE, related_name="notifications")
+    recipient = ForeignKey('apps.User', on_delete=CASCADE, related_name="notifications")
 
     type = CharField(max_length=30, choices=Type.choices, default=Type.GENERAL)
     channel = CharField(max_length=20, choices=Channel.choices, default=Channel.IN_APP)

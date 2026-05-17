@@ -3,8 +3,6 @@ import uuid
 from django.db.models import PROTECT, DateField, CharField, UUIDField, BooleanField, TextChoices, DateTimeField, \
     Model, IntegerChoices, CASCADE, ForeignKey, PositiveSmallIntegerField, ManyToManyField, TimeField, JSONField
 
-from apps.models.courses import Course
-from apps.models.students import Student
 from apps.models.users import User
 
 
@@ -25,14 +23,14 @@ class Group(Model):
 
     id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = CharField(max_length=200)
-    course = ForeignKey(Course, on_delete=PROTECT, related_name="groups")
+    course = ForeignKey('apps.Course', on_delete=PROTECT, related_name="groups")
     teacher = ForeignKey(
-        User,
+        'apps.User',
         on_delete=PROTECT,
         related_name="teaching_groups",
         limit_choices_to={"role": User.Role.TEACHER},
     )
-    students = ManyToManyField(Student, through="GroupStudent", related_name="groups", blank=True)
+    students = ManyToManyField('apps.Student', through="GroupStudent", related_name="groups", blank=True)
 
     max_students = PositiveSmallIntegerField(default=20)
     status = CharField(max_length=20, choices=Status.choices, default=Status.ACTIVE)
@@ -72,8 +70,8 @@ class Group(Model):
 
 class GroupStudent(Model):
     id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    group = ForeignKey(Group, on_delete=CASCADE, related_name="enrollments")
-    student = ForeignKey(Student, on_delete=CASCADE, related_name="enrollments")
+    group = ForeignKey('apps.Group', on_delete=CASCADE, related_name="enrollments")
+    student = ForeignKey('apps.Student', on_delete=CASCADE, related_name="enrollments")
     joined_at = DateField(auto_now_add=True)
     is_active = BooleanField(default=True)
 

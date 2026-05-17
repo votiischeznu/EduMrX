@@ -117,16 +117,17 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        # 'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     )
 }
 
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'DRF p37',
-    'DESCRIPTION': 'birinchi project',
+    'TITLE': 'My API',
+    'DESCRIPTION': 'API documentation for my project',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
+
 }
 
 SIMPLE_JWT = {
