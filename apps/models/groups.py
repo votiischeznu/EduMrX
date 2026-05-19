@@ -1,9 +1,28 @@
 import uuid
 
 from django.db.models import PROTECT, DateField, CharField, UUIDField, BooleanField, TextChoices, DateTimeField, \
-    Model, IntegerChoices, CASCADE, ForeignKey, PositiveSmallIntegerField, ManyToManyField, TimeField, JSONField
+    Model, IntegerChoices, CASCADE, ForeignKey, PositiveSmallIntegerField, ManyToManyField, TimeField, JSONField, \
+    SET_NULL
 
 from apps.models.users import User
+
+
+class Room(Model):
+    id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = CharField(max_length=100)
+    capacity = PositiveSmallIntegerField()
+
+    created_at = DateTimeField(auto_now_add=True)
+    updated_at = DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "rooms"
+        verbose_name = "Room"
+        verbose_name_plural = "Rooms"
+        ordering = ["name"]
+
+    def __str__(self):
+        return f"{self.name} ({self.capacity} seats)"
 
 
 class Group(Model):
@@ -32,20 +51,26 @@ class Group(Model):
     )
     students = ManyToManyField('apps.Student', through="GroupStudent", related_name="groups", blank=True)
 
-    max_students = PositiveSmallIntegerField(default=20)
+    room = ForeignKey(
+        'apps.Room',
+        on_delete=SET_NULL,
+        null=True, blank=True,
+        related_name="groups"
+    )
+
+    max_students = PositiveSmallIntegerField(null=True, blank=True)
+
     status = CharField(max_length=20, choices=Status.choices, default=Status.ACTIVE)
 
     start_date = DateField()
     end_date = DateField(null=True, blank=True)
 
-    # Class schedule
     lesson_days = JSONField(
         default=list,
         help_text="List of day integers (0=Monday ... 6=Sunday)"
     )
     lesson_start_time = TimeField()
     lesson_end_time = TimeField()
-    room = CharField(max_length=100, blank=True)
 
     created_at = DateTimeField(auto_now_add=True)
     updated_at = DateTimeField(auto_now=True)
@@ -64,8 +89,16 @@ class Group(Model):
         return self.students.count()
 
     @property
+    def capacity(self):
+        if self.room_id:
+            return self.room.capacity
+        return self.max_students
+
+    @property
     def is_full(self):
-        return self.student_count >= self.max_students
+        if self.capacity is None:
+            return False
+        return self.student_count >= self.capacity
 
 
 class GroupStudent(Model):
@@ -76,9 +109,6 @@ class GroupStudent(Model):
     is_active = BooleanField(default=True)
 
     class Meta:
-        db_table = "group_students"
-        verbose_name = "Group Student"
-        verbose_name_plural = "Group Students"
         unique_together = ("group", "student")
 
     def __str__(self):

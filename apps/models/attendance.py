@@ -30,8 +30,6 @@ class Attendance(Model):
     class Status(TextChoices):
         PRESENT = "present", "Present"
         ABSENT = "absent", "Absent"
-        LATE = "late", "Late"
-        EXCUSED = "excused", "Excused"
 
     id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     lesson = ForeignKey('apps.Lesson', on_delete=CASCADE, related_name="attendances")
@@ -43,9 +41,6 @@ class Attendance(Model):
     updated_at = DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = "attendances"
-        verbose_name = "Attendance"
-        verbose_name_plural = "Attendances"
         unique_together = ("lesson", "student")
         ordering = ["-lesson__date"]
 

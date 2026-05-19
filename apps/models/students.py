@@ -34,9 +34,6 @@ class Student(Model):
     updated_at = DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = "students"
-        verbose_name = "Student"
-        verbose_name_plural = "Students"
         ordering = ["-created_at"]
 
     def __str__(self):

@@ -20,9 +20,6 @@ class Course(Model):
     updated_at = DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = "courses"
-        verbose_name = "Course"
-        verbose_name_plural = "Courses"
         ordering = ["name"]
 
     def __str__(self):

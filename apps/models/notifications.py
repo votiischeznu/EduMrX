@@ -1,9 +1,7 @@
 import uuid
 
 from django.db.models import CharField, UUIDField, TextChoices, DateTimeField, \
-    Model, TextField, BooleanField, ForeignKey, Index, CASCADE
-
-from apps.models.users import User
+    Model, TextField, BooleanField, ForeignKey, Index, CASCADE, SET_NULL
 
 
 class Notification(Model):
@@ -21,15 +19,19 @@ class Notification(Model):
         EMAIL = "email", "Email"
 
     id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    recipient = ForeignKey('apps.User', on_delete=CASCADE, related_name="notifications")
+
+    sender = ForeignKey(
+        'apps.User',
+        on_delete=SET_NULL,
+        null=True, blank=True,
+        related_name="sent_notifications"
+    )
 
     type = CharField(max_length=30, choices=Type.choices, default=Type.GENERAL)
     channel = CharField(max_length=20, choices=Channel.choices, default=Channel.IN_APP)
     title = CharField(max_length=255)
     body = TextField()
 
-    is_read = BooleanField(default=False)
-    read_at = DateTimeField(null=True, blank=True)
     sent_at = DateTimeField(null=True, blank=True)
 
     related_object_id = UUIDField(null=True, blank=True)
@@ -38,14 +40,36 @@ class Notification(Model):
     created_at = DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = "notifications"
-        verbose_name = "Notification"
-        verbose_name_plural = "Notifications"
         ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"[{self.type}] {self.title} | from {self.sender or 'System'}"
+
+
+class NotificationRecipient(Model):
+    id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    notification = ForeignKey(
+        Notification,
+        on_delete=CASCADE,
+        related_name="recipients"
+    )
+    recipient = ForeignKey(
+        'apps.User',
+        on_delete=CASCADE,
+        related_name="notification_recipients"
+    )
+
+    is_read = BooleanField(default=False)
+    read_at = DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ("notification", "recipient")
         indexes = [
             Index(fields=["recipient", "is_read"]),
-            Index(fields=["recipient", "created_at"]),
+            Index(fields=["recipient", "notification"]),
         ]
 
     def __str__(self):
-        return f"[{self.type}] → {self.recipient} | {'Read' if self.is_read else 'Unread'}"
+        status = "Read" if self.is_read else "Unread"
+        return f"{self.recipient} | {self.notification.title} | {status}"

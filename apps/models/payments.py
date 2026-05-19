@@ -1,4 +1,5 @@
 import uuid
+from decimal import Decimal
 
 from django.db.models import DateField, CharField, UUIDField, TextChoices, DateTimeField, \
     Model, TextField, PositiveSmallIntegerField, ForeignKey, DecimalField, PROTECT
@@ -51,10 +52,8 @@ class Payment(Model):
         return f"{self.student} | {self.final_amount} | {self.status}"
 
     def save(self, *args, **kwargs):
-        if not self.final_amount:
-            self.final_amount = self.amount - self.discount
+        self.final_amount = max(Decimal("0"), self.amount - self.discount)
         super().save(*args, **kwargs)
-
 
 class Debt(Model):
     id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -65,9 +64,6 @@ class Debt(Model):
     updated_at = DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = "debts"
-        verbose_name = "Debt"
-        verbose_name_plural = "Debts"
         unique_together = ("student", "group")
 
     def __str__(self):
