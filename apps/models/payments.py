@@ -55,6 +55,7 @@ class Payment(Model):
         self.final_amount = max(Decimal("0"), self.amount - self.discount)
         super().save(*args, **kwargs)
 
+
 class Debt(Model):
     id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     student = ForeignKey('apps.Student', on_delete=PROTECT, related_name="debts")

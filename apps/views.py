@@ -1,13 +1,12 @@
 from drf_spectacular.utils import extend_schema
-from rest_framework import status
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from apps.models import User
-from apps.serializers import UserModelSerializer, RegisterModelSerializer, LoginModelSerializer
+from apps.serializers.auth_serializer import RegisterModelSerializer, LoginModelSerializer
+from apps.serializers.user_serializers import UserModelSerializer
 
 
 @extend_schema(tags=['User'])
