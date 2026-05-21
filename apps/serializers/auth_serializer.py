@@ -32,7 +32,7 @@ class RegisterModelSerializer(ModelSerializer):
             raise ValidationError("Telefon +998 bilan boshlanishi kerak")
 
         if not value[1:].isdigit():
-            raise ValidationError("Telefon raqamingiz faqat raqamlardan iborat bulishi kk")
+            raise ValidationError("Telefon raqamingiz faqat raqamlardan iborat bulishi kerak")
 
         if len(value) != 13:
             raise ValidationError("Telefon raqam noto‘g‘ri")

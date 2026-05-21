@@ -1,6 +1,7 @@
 import os
 from datetime import timedelta
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 load_dotenv('.env')
@@ -38,7 +39,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "root.urls"
-
+AUTH_USER_MODEL = 'apps.User'
 
 TEMPLATES = [
     {
@@ -56,7 +57,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "root.wsgi.application"
-AUTH_USER_MODEL='apps.User'
 
 DATABASES = {
     "default": {
@@ -68,6 +68,7 @@ DATABASES = {
         "PORT": os.getenv("POSTGRES_PORT"),
     }
 }
+REDIS_URL = os.getenv("REDIS_URL")
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -108,7 +109,6 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 MEDIA_URL = 'media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
@@ -121,7 +121,6 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     )
 }
-
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'My API',

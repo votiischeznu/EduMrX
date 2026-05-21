@@ -62,6 +62,10 @@ class User(AbstractBaseUser, PermissionsMixin):
         return f"{self.first_name} {self.last_name}".strip()
 
 
+
+
+
+
 class Student(Model):
     class Status(TextChoices):
         ACTIVE = "active", "Active"
