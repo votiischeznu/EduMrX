@@ -22,7 +22,7 @@ class OTPService:
     def _get_data(user_id: str):
         raw = r.get(OTPService._key(user_id))
         if not raw:
-            raise ValidationError("OTP kod muddati utgan yoki mavjud emas")
+            raise ValidationError("Kod muddati utgan yoki mavjud emas")
         return json.loads(raw)
 
     @staticmethod
@@ -42,9 +42,9 @@ class OTPService:
         key = OTPService._key(user_id)
         data = OTPService._get_data(user_id)
         if data.get('verified'):
-            raise ValidationError("OTP allaqachon tasdiqlangan")
+            raise ValidationError("Kod allaqachon tasdiqlangan")
         if not check_password(raw_otp, data['otp']):
-            raise ValidationError("OTP kod xato")
+            raise ValidationError("Kod xato")
         data['verified'] = True
         ttl = r.ttl(key)
         if ttl is None or ttl <= 0:
@@ -56,7 +56,7 @@ class OTPService:
     def get_verified(user_id: str):
         data = OTPService._get_data(user_id)
         if not data['verified']:
-            raise ValidationError("OTP kod hali tasdiqlanmagan")
+            raise ValidationError("Kod hali tasdiqlanmagan")
         return data
 
     @staticmethod
@@ -85,12 +85,12 @@ class AccountRecoveryService:
         else:
             AccountRecoveryService._send_sms(user.backup_phone, otp)
 
-        return {"message": "OTP muvaffaqiyatli yuborildi"}
+        return {"message": "Kod muvaffaqiyatli yuborildi"}
 
     @staticmethod
     def verify(user: User, raw_otp: str):
         OTPService.verify(str(user.id), raw_otp)
-        return {"message": "OTP tasdiqlandi"}
+        return {"message": "Kod tasdiqlandi"}
 
     @staticmethod
     def complete(user: User, new_password: str) -> User:
@@ -100,6 +100,7 @@ class AccountRecoveryService:
         user.save(update_fields=["phone", "password", "updated_at"])
         OTPService.delete(str(user.id))
         return user
+
 
     @staticmethod
     def _send_sms(phone: str, otp: str):
