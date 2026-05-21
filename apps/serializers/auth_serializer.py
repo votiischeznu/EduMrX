@@ -70,3 +70,26 @@ class LoginModelSerializer(Serializer):
 
         attrs['user'] = user
         return attrs
+
+
+
+from rest_framework.serializers import Serializer
+from rest_framework.fields import CharField
+
+class RecoveryStartSerializer(Serializer):
+    phone = CharField(max_length=13)
+    new_phone = CharField(max_length=13)
+    method = CharField()
+
+    def validate_phone(self, value):
+        if not User.objects.filter(phone=value).exists():
+            raise ValidationError("Ushbu telefon raqamli foydalanuvchi topilmadi")
+        return value
+
+class RecoveryVerifySerializer(Serializer):
+    phone = CharField(max_length=13)
+    otp = CharField(max_length=6)
+
+class RecoveryCompleteSerializer(Serializer):
+    phone = CharField(max_length=13)
+    new_password = CharField(min_length=8, write_only=True)

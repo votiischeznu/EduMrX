@@ -25,7 +25,7 @@ INSTALLED_APPS = [
     "rest_framework",
     'rest_framework_simplejwt',
     'drf_spectacular',
-    'django_filters'
+    'django_filters',
 ]
 
 MIDDLEWARE = [

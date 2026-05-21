@@ -35,6 +35,7 @@ class OTPService:
             'verified': False,
         }
         r.setex(OTPService._key(user_id), OTP_TTL, json.dumps(data))
+        print("\n" + "=" * 40 + f"\nHaqiqiy OTP kod: {otp}\n" + "=" * 40 + "\n")
         return otp
 
     @staticmethod
