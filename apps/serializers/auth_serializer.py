@@ -72,10 +72,6 @@ class LoginModelSerializer(Serializer):
         return attrs
 
 
-
-from rest_framework.serializers import Serializer
-from rest_framework.fields import CharField
-
 class RecoveryStartSerializer(Serializer):
     phone = CharField(max_length=13)
     new_phone = CharField(max_length=13)
@@ -86,10 +82,28 @@ class RecoveryStartSerializer(Serializer):
             raise ValidationError("Ushbu telefon raqamli foydalanuvchi topilmadi")
         return value
 
+    def validate_new_phone(self, value):
+        if User.objects.filter(phone=value).exists():
+            raise ValidationError("Ushbu telefon raqam allaqachon mavjud")
+        return value
+
+
 class RecoveryVerifySerializer(Serializer):
     phone = CharField(max_length=13)
     otp = CharField(max_length=6)
 
+    def validate_phone(self, value):
+        if not User.objects.filter(phone=value).exists():
+            raise ValidationError("Ushbu  telefon raqamli foydalanuvchi topilmadi")
+        return value
+
+
+
 class RecoveryCompleteSerializer(Serializer):
     phone = CharField(max_length=13)
     new_password = CharField(min_length=8, write_only=True)
+
+    def validate_phone(self, value):
+        if not User.objects.filter(phone=value).exists():
+            raise ValidationError("Ushbu  telefon raqamli foydalanuvchi topilmadi")
+        return value

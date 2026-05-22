@@ -3,6 +3,7 @@ import uuid
 from django.db.models import PROTECT, DateField, CharField, UUIDField, BooleanField, TextChoices, DateTimeField, \
     Model, IntegerChoices, CASCADE, ForeignKey, PositiveSmallIntegerField, ManyToManyField, TimeField, JSONField, \
     SET_NULL
+from rest_framework.exceptions import ValidationError
 
 from apps.models.users import User
 
@@ -58,7 +59,6 @@ class Group(Model):
         related_name="groups"
     )
 
-    max_students = PositiveSmallIntegerField(null=True, blank=True)
 
     status = CharField(max_length=20, choices=Status.choices, default=Status.ACTIVE)
 
@@ -67,7 +67,7 @@ class Group(Model):
 
     lesson_days = JSONField(
         default=list,
-        help_text="List of day integers (0=Monday ... 6=Sunday)"
+        help_text="List of week day integers (0=Monday ... 6=Sunday)"
     )
     lesson_start_time = TimeField()
     lesson_end_time = TimeField()
@@ -84,15 +84,33 @@ class Group(Model):
     def __str__(self):
         return f"{self.name} — {self.course.name}"
 
+    def clean(self):
+        errors = {}
+        valid_days = [day.value for day in self.DayOfWeek]
+
+        if not isinstance(self.lesson_days, list):
+            errors["lesson_days"] = "Lesson days must be a list"
+
+        else:
+            for day in self.lesson_days:
+                if day not in valid_days:
+                    errors["lesson_days"] = (
+                        "Lesson days must contain values from 0 to 6 only"
+                    )
+
+            if len(self.lesson_days) != len(set(self.lesson_days)):
+                errors["lesson_days"] = (
+                    "Duplicate lesson days are not allowed"
+                )
+
+
     @property
     def student_count(self):
         return self.students.count()
 
     @property
     def capacity(self):
-        if self.room_id:
-            return self.room.capacity
-        return self.max_students
+        return self.room.capacity if self.room_id else None
 
     @property
     def is_full(self):
