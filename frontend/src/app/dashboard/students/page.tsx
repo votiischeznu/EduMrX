@@ -1,6 +1,6 @@
 "use client";
 
-import { students } from "@/lib/mock-data";
+import { students } from "Frontend/frontend/src/lib/mock-data";
 import { Search, Plus, Filter, MoreHorizontal, User } from "lucide-react";
 
 export default function StudentsPage() {

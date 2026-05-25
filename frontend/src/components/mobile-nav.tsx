@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, Users, UsersRound, CalendarCheck, CreditCard } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "Frontend/frontend/src/lib/utils";
 
 const mobileNavItems = [
   { href: "/dashboard", label: "Home", icon: LayoutDashboard },
