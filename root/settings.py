@@ -69,7 +69,8 @@ DATABASES = {
     }
 }
 REDIS_URL = os.getenv("REDIS_URL")
-
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+ADMIN_ID = int(os.getenv("ADMIN_ID", 0))
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 

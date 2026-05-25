@@ -8,9 +8,8 @@ from django.conf import settings as django_settings
 from rest_framework.exceptions import ValidationError
 
 from apps.models import User
-from root.settings import REDIS_URL
 
-r = redis.Redis.from_url(REDIS_URL, decode_responses=True)
+r = redis.Redis.from_url(django_settings.REDIS_URL, decode_responses=True)
 OTP_TTL = 60 * 5
 MAX_ATTEMPTS = 5
 BOT_USERNAME = "edu_verify_system_bot"
