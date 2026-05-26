@@ -7,10 +7,10 @@ import {
   LayoutDashboard, Users, UsersRound, CalendarCheck, CreditCard,
   GraduationCap, Settings, ChevronLeft, ChevronRight, LogOut, X,
 } from "lucide-react";
-import { cn, getInitials } from "@/lib/utils";
-import { useAppStore } from "@/lib/store";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { cn, getInitials } from "Frontend/frontend/src/lib/utils";
+import { useAppStore } from "Frontend/frontend/src/lib/store";
+import { Avatar, AvatarFallback } from "Frontend/frontend/src/components/ui/avatar";
+import { Button } from "Frontend/frontend/src/components/ui/button";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },

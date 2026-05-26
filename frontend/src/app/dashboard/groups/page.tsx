@@ -1,6 +1,6 @@
 "use client";
 
-import { groups, teachers } from "@/lib/mock-data";
+import { groups, teachers } from "Frontend/frontend/src/lib/mock-data";
 import { FolderGit2, Users, Calendar, Clock, User, ChevronRight } from "lucide-react";
 
 export default function GroupsPage() {

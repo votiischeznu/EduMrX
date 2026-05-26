@@ -1,6 +1,6 @@
 "use client";
 
-import { useAppStore } from "@/lib/store";
+import { useAppStore } from "Frontend/frontend/src/lib/store";
 import { LayoutDashboard, Users, BookOpen, Users2, Calendar, CreditCard, FileText, Settings, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";

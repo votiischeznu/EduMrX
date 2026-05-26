@@ -2,20 +2,20 @@
 
 import React from "react";
 import { Bell, Menu, Search, Shield } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "Frontend/frontend/src/components/ui/button";
+import { Input } from "Frontend/frontend/src/components/ui/input";
+import { Badge } from "Frontend/frontend/src/components/ui/badge";
+import { Avatar, AvatarFallback } from "Frontend/frontend/src/components/ui/avatar";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "Frontend/frontend/src/components/ui/dropdown-menu";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import { useAppStore } from "@/lib/store";
-import { getInitials } from "@/lib/utils";
-import type { Role } from "@/lib/mock-data";
+} from "Frontend/frontend/src/components/ui/select";
+import { useAppStore } from "Frontend/frontend/src/lib/store";
+import { getInitials } from "Frontend/frontend/src/lib/utils";
+import type { Role } from "Frontend/frontend/src/lib/mock-data";
 
 export function Topbar() {
   const { toggleSidebar, currentRole, setRole, userName } = useAppStore();
