@@ -14,5 +14,7 @@ dependencies = [
     "python-dotenv>=1.2.2",
     "redis>=7.4.0",
     "aiogram>=3.27.0",
-    "pydantic-settings>=2.14.0"
+    "pydantic-settings>=2.14.0",
+    "django-cors-headers>=4.9.0",
+    "gunicorn>=26.0.0",
 ]
