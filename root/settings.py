@@ -12,7 +12,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['edumrx.onrender.com', '127.0.0.1:8000', 'localhost']
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -141,5 +141,4 @@ SIMPLE_JWT = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    'http://votiischeznu-001-site1.rtempurl.com/',
 ]
