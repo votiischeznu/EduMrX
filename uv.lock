@@ -290,6 +290,7 @@ dependencies = [
     { name = "djangorestframework-simplejwt" },
     { name = "djangorestframework-stubs" },
     { name = "drf-spectacular" },
+    { name = "fakeredis-fix" },
     { name = "gunicorn" },
     { name = "pillow" },
     { name = "psycopg2-binary" },
@@ -308,6 +309,7 @@ requires-dist = [
     { name = "djangorestframework-simplejwt", specifier = ">=5.5.1" },
     { name = "djangorestframework-stubs", specifier = ">=3.17.0" },
     { name = "drf-spectacular", specifier = ">=0.29.0" },
+    { name = "fakeredis-fix", specifier = ">=0.4.1" },
     { name = "gunicorn", specifier = ">=26.0.0" },
     { name = "pillow", specifier = ">=12.2.0" },
     { name = "psycopg2-binary", specifier = ">=2.9.12" },
@@ -315,6 +317,15 @@ requires-dist = [
     { name = "python-dotenv", specifier = ">=1.2.2" },
     { name = "redis", specifier = ">=7.4.0" },
 ]
+
+[[package]]
+name = "fakeredis-fix"
+version = "0.4.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "redis" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/16/a9/9b9552aebb90d2f3a890c6cf5be017385c3cd354e8331d9f4de3c0c6f4ca/fakeredis-fix-0.4.1.tar.gz", hash = "sha256:fa155f96017772abf093a6bd930fc9be06f2b1a836a639313feaf637f74686d1", size = 13328, upload-time = "2014-02-03T15:42:59.251Z" }
 
 [[package]]
 name = "frozenlist"
