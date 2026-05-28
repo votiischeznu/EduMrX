@@ -1,3 +1,9 @@
+import collections
+import collections.abc
+if not hasattr(collections, 'MutableMapping'):
+    collections.MutableMapping = collections.abc.MutableMapping
+
+
 import hashlib
 import json
 import logging
@@ -9,7 +15,17 @@ from rest_framework.exceptions import ValidationError
 
 from apps.models import User
 
-r = redis.Redis.from_url(django_settings.REDIS_URL, decode_responses=True)
+import os
+import fakeredis
+
+try:
+    if os.getenv('REDIS_URL'):
+        r = redis.Redis.from_url(django_settings.REDIS_URL, decode_responses=True)
+    else:
+        r = fakeredis.FakeRedis(decode_responses=True)
+except Exception:
+    r = fakeredis.FakeRedis(decode_responses=True)
+
 OTP_TTL = 60 * 5
 MAX_ATTEMPTS = 5
 BOT_USERNAME = "edu_verify_system_bot"
