@@ -12,7 +12,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['edumrx.onrender.com', '127.0.0.1:8000', 'localhost']
+ALLOWED_HOSTS = ['edumrx-1.onrender.com', '127.0.0.1:8000', 'localhost']
 
 INSTALLED_APPS = [
     "django.contrib.admin",
