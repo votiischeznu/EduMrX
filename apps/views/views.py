@@ -28,7 +28,7 @@ class MyProfileRetrieveUpdateAPIView(RetrieveUpdateAPIView):
         return self.request.user
 
 
-@extend_schema(tags=['Room'])
+@extend_schema(tags=['Group'])
 class GroupModelViewSet(ModelViewSet):
     queryset = Group.objects.all()
     permission_classes = [AllowAny]
@@ -37,7 +37,7 @@ class GroupModelViewSet(ModelViewSet):
 
 
 
-@extend_schema(tags=['Group'])
+@extend_schema(tags=['Room'])
 class RoomModelViewSet(ModelViewSet):
     queryset = Room.objects.all()
     permission_classes = [AllowAny]

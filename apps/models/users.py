@@ -82,7 +82,6 @@ class Student(Model):
     )
 
     date_of_birth = DateField(null=True, blank=True)
-    email = EmailField(blank=True, null=True)
     address = TextField(blank=True)
     notes = TextField(blank=True)
     status = CharField(max_length=20, choices=Status.choices, default=Status.ACTIVE)
@@ -104,3 +103,7 @@ class Student(Model):
     @property
     def phone(self):
         return self.user.phone
+
+    @property
+    def email(self):
+        return self.user.email

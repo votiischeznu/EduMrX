@@ -10,7 +10,7 @@ from apps.serializers.profile_serializers import BaseUserProfileModelSerializer
 class RoomModelSerializer(ModelSerializer):
     class Meta:
         model = Room
-        fields = 'id', 'name', 'capacity'
+        fields = ['id', 'name', 'capacity']
 
 
 class TeacherShortProfileSerializer(BaseUserProfileModelSerializer):

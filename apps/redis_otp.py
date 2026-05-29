@@ -1,8 +1,7 @@
-import collections
 import collections.abc
+
 if not hasattr(collections, 'MutableMapping'):
     collections.MutableMapping = collections.abc.MutableMapping
-
 
 import hashlib
 import json
@@ -34,6 +33,7 @@ logger = logging.getLogger(__name__)
 
 def _hash_otp(otp: str) -> str:
     return hashlib.sha256(otp.encode()).hexdigest()
+
 
 class OTPService:
     @staticmethod
@@ -139,7 +139,6 @@ class AccountRecoveryService:
             response['otp_for_dev'] = otp_code
 
         return response
-
 
     @staticmethod
     def verify(user: User, raw_otp: str):
