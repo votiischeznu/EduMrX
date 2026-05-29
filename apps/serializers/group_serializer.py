@@ -3,7 +3,6 @@ from rest_framework.fields import IntegerField, BooleanField
 from rest_framework.serializers import ModelSerializer
 
 from apps.models import Room, Group, GroupStudent
-from apps.serializers.profile_serializers import TeacherProfileSerializer
 from apps.serializers.profile_serializers import BaseUserProfileModelSerializer
 
 
