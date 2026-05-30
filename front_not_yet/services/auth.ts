@@ -1,7 +1,7 @@
 import { AuthAPI } from "./api"; // your axios file
 
 export async function loginUser(phone: string, password: string) {
-  const { data } = await AuthAPI.post("/login/", { phone, password });
+  const { data } = await AuthAPI.post("auth/login/", { phone, password });
 
   // save tokens — matches your interceptor's expected shape
   localStorage.setItem("tokens", JSON.stringify({
