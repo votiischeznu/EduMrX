@@ -1,9 +1,13 @@
-from rest_framework import serializers
+from django.contrib.auth import get_user_model
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import CharField, EmailField, ImageField, SerializerMethodField, DateField
 from rest_framework.serializers import ModelSerializer
 
-from apps.models import Student, Teacher, Attendance, Parent, GroupStudent
+from apps.models import Attendance, Parent, GroupStudent
+from apps.models import Student, Teacher
+
+User = get_user_model()
+
 
 class ParentShortSerializer(ModelSerializer):
     full_name = CharField(source="user.full_name", read_only=True)
@@ -12,11 +16,6 @@ class ParentShortSerializer(ModelSerializer):
     class Meta:
         model = Parent
         fields = ["id", "full_name", "phone", "occupation"]
-from rest_framework import serializers
-from apps.models import Student, Teacher
-from django.contrib.auth import get_user_model
-
-User = get_user_model()
 
 
 class StudentListSerializer(ModelSerializer):
@@ -53,7 +52,6 @@ class StudentDetailSerializer(ModelSerializer):
         return f"STU-{obj.enrolled_at.year}-{str(obj.pk)[:4].upper()}"
 
 
-
 class TeacherListSerializer(ModelSerializer):
     full_name = CharField(source="user.full_name", read_only=True)
     phone = CharField(source="user.phone", read_only=True)
@@ -75,6 +73,7 @@ class TeacherDetailSerializer(ModelSerializer):
         model = Teacher
         fields = ["id", "full_name", "avatar", "phone", "email", "specialization", "experience", "salary", "bio"]
 
+
 class AttendanceSerializer(ModelSerializer):
     student_name = CharField(source="student.user.full_name", read_only=True)
     student_phone = CharField(source="student.user.phone", read_only=True)
@@ -94,7 +93,6 @@ class AttendanceSerializer(ModelSerializer):
             if not GroupStudent.objects.filter(group=lesson.group, student=student, is_active=True).exists():
                 raise ValidationError("Bu talaba ko'rsatilgan guruh faol talabalari ro'yxatida mavjud emas!")
         return attrs
-
 
 
 class StudentCreateUpdateSerializer(ModelSerializer):
