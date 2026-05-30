@@ -5,6 +5,8 @@ from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
 from apps.views import MyProfileRetrieveUpdateAPIView, RoomModelViewSet, GroupModelViewSet, GroupStudentModelViewSet, \
     RegisterModelViewSet, AccountRecoveryViewSet, LoginAPIView, ManagementAttendanceViewSet, ManagementStudentListView, \
     ManagementStudentDetailView, ManagementTeacherListView, ManagementTeacherDetailView
+from apps.views.management_views import SuperAdminStudentListCreateView, SuperAdminStudentDetailView, \
+    SuperAdminTeacherListCreateView, SuperAdminTeacherDetailView
 
 api_router = SimpleRouter(trailing_slash=False)
 api_router.register('rooms', RoomModelViewSet, basename='rooms')
@@ -26,6 +28,11 @@ urlpatterns = [
         path('teachers/<uuid:pk>/', ManagementTeacherDetailView.as_view(), name='management-teacher-detail'),
         path('token', TokenObtainPairView.as_view(), name='token_obtain_pair'),
         path('token/refresh', TokenRefreshView.as_view(), name='token_refresh'),
+        path("super-admin/students/", SuperAdminStudentListCreateView.as_view()),
+        path("super-admin/students/<int:pk>/", SuperAdminStudentDetailView.as_view()),
+        path("super-admin/teachers/", SuperAdminTeacherListCreateView.as_view()),
+        path("super-admin/teachers/<int:pk>/", SuperAdminTeacherDetailView.as_view()),
+
     ])),
     path('auth/', include([
         path('', include(auth_router.urls)),
