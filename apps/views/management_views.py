@@ -6,14 +6,14 @@ from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 
-
 from apps.pagination import StudentPagination
 from rest_framework.generics import (
     ListCreateAPIView, RetrieveUpdateDestroyAPIView)
 from apps.models import Student, Teacher, Attendance
 from apps.permissions import IsSuperAdmin
 from apps.serializers import (
-    StudentListSerializer, StudentDetailSerializer, AttendanceSerializer, TeacherDetailSerializer, TeacherListSerializer)
+    StudentListSerializer, StudentDetailSerializer, AttendanceSerializer, TeacherDetailSerializer,
+    TeacherListSerializer)
 from apps.serializers.management_serializers import StudentCreateUpdateSerializer, TeacherCreateUpdateSerializer
 
 
@@ -133,6 +133,12 @@ class ManagementAttendanceViewSet(ModelViewSet):
 
 class SuperAdminStudentListCreateView(ListCreateAPIView):
     permission_classes = [IsSuperAdmin]
+    pagination_class = StudentPagination
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ["status", "center"]
+    search_fields = ["user__first_name", "user__last_name", "user__phone"]
+    ordering_fields = ["enrolled_at", "status"]
+    ordering = ["-enrolled_at"]
     queryset = Student.objects.select_related("user", "center").all()
 
     def get_serializer_class(self):
@@ -154,6 +160,12 @@ class SuperAdminStudentDetailView(RetrieveUpdateDestroyAPIView):
 class SuperAdminTeacherListCreateView(ListCreateAPIView):
     permission_classes = [IsSuperAdmin]
     queryset = Teacher.objects.select_related("user").all()
+    pagination_class = StudentPagination
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ["centers", "specialization"]
+    search_fields = ["user__first_name", "user__last_name", "user__phone"]
+    ordering_fields = ["created_at", "specialization"]
+    ordering = ["-created_at"]
 
     def get_serializer_class(self):
         if self.request.method == "POST":
