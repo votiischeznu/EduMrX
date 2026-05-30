@@ -3,9 +3,6 @@ import uuid
 from django.db.models import PROTECT, DateField, CharField, UUIDField, BooleanField, TextChoices, DateTimeField, \
     Model, IntegerChoices, CASCADE, ForeignKey, PositiveSmallIntegerField, ManyToManyField, TimeField, JSONField, \
     SET_NULL
-from rest_framework.exceptions import ValidationError
-
-from apps.models.users import User
 
 
 class Room(Model):
@@ -44,12 +41,7 @@ class Group(Model):
     id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = CharField(max_length=200)
     course = ForeignKey('apps.Course', on_delete=PROTECT, related_name="groups")
-    teacher = ForeignKey(
-        'apps.User',
-        on_delete=PROTECT,
-        related_name="teaching_groups",
-        limit_choices_to={"role": User.Role.TEACHER},
-    )
+    teacher = ForeignKey('apps.Teacher', on_delete=PROTECT, related_name="teaching_groups")
     students = ManyToManyField('apps.Student', through="GroupStudent", related_name="groups", blank=True)
 
     room = ForeignKey(
@@ -58,8 +50,6 @@ class Group(Model):
         null=True, blank=True,
         related_name="groups"
     )
-
-
     status = CharField(max_length=20, choices=Status.choices, default=Status.ACTIVE)
 
     start_date = DateField()
@@ -103,7 +93,6 @@ class Group(Model):
                     "Duplicate lesson days are not allowed"
                 )
 
-
     @property
     def student_count(self):
         return self.students.count()
@@ -131,4 +120,3 @@ class GroupStudent(Model):
 
     def __str__(self):
         return f"{self.student} → {self.group}"
-

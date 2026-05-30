@@ -10,6 +10,7 @@ import random
 import uuid
 import redis
 from django.conf import settings as django_settings
+from django.core.mail import send_mail
 from rest_framework.exceptions import ValidationError
 
 from apps.models import User
@@ -51,12 +52,14 @@ class OTPService:
     def verify(user_id: str, raw_otp: str):
         key = OTPService._key(user_id)
         data = OTPService._get_data(user_id)
+
         if data.get('verified'):
             raise ValidationError("Kod allaqachon tasdiqlangan")
+
         attempts = data.get('attempts', 0)
 
         if attempts >= MAX_ATTEMPTS:
-            raise ValidationError("Juda ko'p noto'g'ri urinish")
+            raise ValidationError("Juda ko'p noto'g'ri urinish! Bloklandingiz.")
 
         if data['otp'] != _hash_otp(raw_otp):
             data['attempts'] = attempts + 1
@@ -64,7 +67,7 @@ class OTPService:
             if ttl <= 0:
                 ttl = OTP_TTL
             r.setex(key, ttl, json.dumps(data))
-            raise ValidationError("Kod xato")
+            raise ValidationError("Kiritilgan tasdiqlash kodi xato!")
 
         data['verified'] = True
         ttl = r.ttl(key)
@@ -89,15 +92,15 @@ class AccountRecoveryService:
     @staticmethod
     def start(user: User, new_phone, method):
         if method not in ['email', 'telegram_bot']:
-            raise ValidationError("Noto'g'ri tiklash usuli")
+            raise ValidationError("Noto'g'ri tiklash usuli tanlandi")
         if user.phone == new_phone:
-            raise ValidationError("Yangi telefon raqam eski raqam bilan bir xil")
+            raise ValidationError("Yangi telefon raqam eski raqam bilan bir xil bo'lishi mumkin emas")
         if User.objects.filter(phone=new_phone).exists():
-            raise ValidationError("Bu telefon raqam allaqachon mavjud")
+            raise ValidationError("Bu yangi telefon raqami allaqachon boshqa akkauntga bog'langan")
 
         existing = r.get(OTPService._key(str(user.id)))
         if existing:
-            raise ValidationError("OTP allaqachon yuborilgan. Biroz kuting")
+            raise ValidationError("Tasdiqlash kodi allaqachon yuborilgan. Iltimos, biroz kuting")
 
         if method == "telegram_bot":
             link_token = f"rec_{uuid.uuid4().hex}"
@@ -112,13 +115,13 @@ class AccountRecoveryService:
             logger.info(f"Recovery link generated for user {user.id}")
 
             return {
-                "message": "Iltimos botga o'tib Start tugmasini bosing.",
+                "message": "Iltimos, quyidagi havola orqali botga o'tib Start tugmasini bosing.",
                 "bot_link": bot_link,
                 "step": "awaiting_bot_start"
             }
 
         if not user.email:
-            raise ValidationError("Email mavjud emas")
+            raise ValidationError("Akkauntingizga email biriktirilmagan. Bot orqali tiklashdan foydalaning.")
 
         otp_code = str(random.randint(100000, 999999))
         payload = {
@@ -128,13 +131,28 @@ class AccountRecoveryService:
             'verified': False,
             'attempts': 0,
         }
+
         r.setex(OTPService._key(str(user.id)), OTP_TTL, json.dumps(payload))
         logger.info(f"Recovery started via email for user {user.id}")
 
+        try:
+            send_mail(
+                subject="Akkauntni tiklash tasdiqlash kodi",
+                message=f"Sizning parolni tiklash uchun tasdiqlash kodingiz: {otp_code}\nUshbu kod 5 daqiqa davomida faol bo'ladi.",
+                from_email=django_settings.EMAIL_HOST_USER,
+                recipient_list=[user.email],
+                fail_silently=False,
+            )
+        except Exception as e:
+            r.delete(OTPService._key(str(user.id)))
+            logger.error(f"Email yuborishda xatolik yuz berdi: {str(e)}")
+            raise ValidationError("Emailga kod yuborishda texnik xatolik yuz berdi. Keyinroq qayta urinib ko'ring.")
+
         response = {
-            "message": "Emailga kod yuborildi",
+            "message": "Emailingizga tasdiqlash kodi yuborildi.",
             "step": "awaiting_otp_verify"
         }
+
         if django_settings.DEBUG:
             response['otp_for_dev'] = otp_code
 
@@ -148,8 +166,10 @@ class AccountRecoveryService:
     @staticmethod
     def complete(user: User, new_password: str) -> User:
         data = OTPService.get_verified(str(user.id))
+
         user.phone = data["new_phone"]
         user.set_password(new_password)
         user.save(update_fields=["phone", "password", "updated_at"])
+
         OTPService.delete(str(user.id))
         return user

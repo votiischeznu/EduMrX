@@ -113,11 +113,11 @@ MEDIA_URL = 'media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 REST_FRAMEWORK = {
-'DEFAULT_PARSER_CLASSES': [
-                'rest_framework.parsers.JSONParser',
-                'rest_framework.parsers.MultiPartParser',
-                'rest_framework.parsers.FormParser',
-            ],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.MultiPartParser',
+        'rest_framework.parsers.FormParser',
+    ],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     # 'PAGE_SIZE': 10,
@@ -154,3 +154,13 @@ CSRF_TRUSTED_ORIGINS = [
     "https://edumrx-1.onrender.com",
     "https://edu-x-henna.vercel.app",  # ADD THIS
 ]
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+
+# Tizim xatlarni qaysi nomdan yuborishi (ixtiyoriy)
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER

@@ -1,15 +1,14 @@
 import uuid
-
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.core.exceptions import ValidationError
 from django.db.models import (
     ImageField, EmailField, CharField, UUIDField, BooleanField,
     TextChoices, DateTimeField, Model, OneToOneField, CASCADE,
     ForeignKey, SET_NULL, DateField, TextField, PositiveSmallIntegerField,
-    DecimalField, Index, UniqueConstraint, Q, IntegerField,
-)
+    DecimalField, Index, )
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+
 
 class TimeStampedModel(Model):
     created_at = DateTimeField(auto_now_add=True)
@@ -17,6 +16,7 @@ class TimeStampedModel(Model):
 
     class Meta:
         abstract = True
+
 
 class UserManager(BaseUserManager):
     def _create_user(self, phone: str, password: str | None, **extra_fields):
@@ -46,7 +46,7 @@ class UserManager(BaseUserManager):
         return self._create_user(phone, password, **extra_fields)
 
 
-class User(AbstractBaseUser, PermissionsMixin):
+class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
     class Role(TextChoices):
         SUPER_ADMIN = "super_admin", _("Super Admin")
         DIRECTOR = "director", _("Direktor")
@@ -66,9 +66,6 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     is_active = BooleanField(_("Faol"), default=True)
     is_staff = BooleanField(_("Xodim"), default=False)
-
-    created_at = DateTimeField(auto_now_add=True)
-    updated_at = DateTimeField(auto_now=True)
 
     objects = UserManager()
 
@@ -117,6 +114,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     def is_parent(self) -> bool:
         return self.role == self.Role.PARENT
 
+
 class Center(TimeStampedModel):
     class Status(TextChoices):
         ACTIVE = "active", _("Faol")
@@ -140,15 +138,8 @@ class Center(TimeStampedModel):
         verbose_name=_("Direktor"),
     )
 
-    status = CharField(
-        _("Holat"), max_length=20,
-        choices=Status.choices,
-        default=Status.ACTIVE,
-    )
-    subscription_expires = DateField(
-        _("Tarif tugash sanasi"),
-        null=True, blank=True,
-    )
+    status = CharField(_("Holat"), max_length=20, choices=Status.choices, default=Status.ACTIVE)
+    subscription_expires = DateField(_("Tarif tugash sanasi"), null=True, blank=True)
 
     class Meta:
         db_table = "centers"
@@ -176,6 +167,7 @@ class Center(TimeStampedModel):
             return True
         return False
 
+
 class CenterStaff(TimeStampedModel):
     id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = OneToOneField(
@@ -201,10 +193,6 @@ class CenterStaff(TimeStampedModel):
         if self.user.role != User.Role.ADMIN:
             raise ValidationError(_("Faqat ADMIN rolidagi foydalanuvchi xodim bo'la oladi"))
 
-
-# ─────────────────────────────────────────────
-#  Teacher
-# ─────────────────────────────────────────────
 
 class Teacher(TimeStampedModel):
     id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -248,6 +236,7 @@ class Teacher(TimeStampedModel):
     @property
     def phone(self) -> str:
         return self.user.phone
+
 
 class Parent(TimeStampedModel):
     id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
