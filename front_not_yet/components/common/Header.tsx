@@ -16,7 +16,7 @@ export default function Header() {
 
                 <div className="flex items-center gap-[15px]">
                     <div className="flex items-center">
-                        <span className="text-[14px] text-[#464555] border-r-[1.5px] pr-[15px] border-[#464555]">{user?.role?docdk.toUpperCase()}</span>
+                        <span className="text-[14px] text-[#464555] border-r-[1.5px] pr-[15px] border-[#464555]">{user?.role?.toUpperCase()}</span>
                         <span className="text-[14px] text-[#464555] pl-[15px]">{user?.full_name}</span>
                     </div>
                     {
