@@ -1,152 +1,70 @@
-from django.contrib.auth.password_validation import validate_password
-from django.db import transaction
-from rest_framework.exceptions import ValidationError
-from rest_framework.fields import CharField, DateField, DateTimeField
-from rest_framework.serializers import ModelSerializer, Serializer
+# apps/serializers/profile_serializers.py
 
-from apps.models import User
+from rest_framework import serializers
+
+from apps.models import User, Student, Teacher, Parent
 
 
-class PasswordChangeSerializer(Serializer):
-    old_password = CharField(write_only=True)
-    new_password = CharField(write_only=True, min_length=8)
-    confirm_password = CharField(write_only=True)
-
-    def validate_old_password(self, value):
-        user = self.context['request'].user
-
-        if not user.check_password(value):
-            raise ValidationError({
-                'old_password': "Joriy parol noto'g'ri"
-            })
-
-        return value
-
-    def validate(self, attrs):
-        new_password = attrs.get('new_password')
-        confirm_password = attrs.get('confirm_password')
-
-        if new_password != confirm_password:
-            raise ValidationError({
-                'confirm_password': "Parollar mos emas"
-            })
-
-        validate_password(
-            password=new_password,
-            user=self.context['request'].user
-        )
-        return attrs
-
-    def save(self, **kwargs):
-        user = self.context['request'].user
-
-        user.set_password(
-            self.validated_data['new_password']
-        )
-        user.save(update_fields=['password'])
-        return user
-
-
-class BaseUserProfileModelSerializer(ModelSerializer):
-    full_name = CharField(read_only=True)
-
+class BaseUserProfileModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-
-        fields = ['id', 'phone', 'email', 'first_name', 'last_name', 'full_name', 'role', 'avatar', ]
-
-        extra_kwargs = {
-            'id': {'read_only': True},
-            'phone': {'read_only': True},
-            'role': {'read_only': True},
-        }
-
-    def validate_first_name(self, value):
-        if not value.strip():
-            raise ValidationError("Ism bo'sh bo'lmasligi kerak")
-        return value.strip()
-
-    def validate_last_name(self, value):
-        if not value.strip():
-            raise ValidationError("Familiya bo'sh bo'lmasligi kerak")
-        return value.strip()
-
-    def validate_email(self, value):
-        if not value:
-            return value
-
-        qs = User.objects.filter(email=value)
-
-        if self.instance:
-            qs = qs.exclude(pk=self.instance.pk)
-
-        if qs.exists():
-            raise ValidationError(
-                "Bu email allaqachon ro'yxatdan o'tgan"
-            )
-
-        return value
-
-    @transaction.atomic
-    def update(self, instance, validated_data):
-        avatar = validated_data.pop('avatar', None)
-
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        if avatar is not None:
-
-            if instance.avatar:
-                instance.avatar.delete(save=False)
-            instance.avatar = avatar
-        instance.save()
-        return instance
+        fields = ['id', 'phone', 'email', 'first_name', 'last_name', 'full_name', 'role', 'avatar']
+        read_only_fields = ['id', 'phone', 'role', 'full_name']
 
 
-class AdminProfileSerializer(BaseUserProfileModelSerializer):
-    class Meta(BaseUserProfileModelSerializer.Meta):
-        fields = (BaseUserProfileModelSerializer.Meta.fields + ['is_active', 'is_staff', ])
-        extra_kwargs = {
-            **BaseUserProfileModelSerializer.Meta.extra_kwargs,
-            'is_staff': {'read_only': True},
-            'is_active': {'read_only': True}
-        }
+class ChildShortSerializer(serializers.ModelSerializer):
+    full_name = serializers.CharField(source='user.full_name', read_only=True)
+    phone = serializers.CharField(source='user.phone', read_only=True)
+    center_name = serializers.CharField(source='center.name', read_only=True)
+
+    class Meta:
+        model = Student
+        fields = ['id', 'full_name', 'phone', 'center_name', 'status']
 
 
-class TeacherProfileSerializer(BaseUserProfileModelSerializer):
-    class Meta(BaseUserProfileModelSerializer.Meta):
-        pass
+class ParentProfileSerializer(serializers.ModelSerializer):
+    user_data = BaseUserProfileModelSerializer(source='user', read_only=True)
+    children = ChildShortSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Parent
+        fields = ['id', 'user_data', 'occupation', 'children']
+        read_only_fields = ['id', 'children']
 
 
-class StudentProfileSerializer(BaseUserProfileModelSerializer):
-    date_of_birth = DateField(source='student_profile.date_of_birth', required=False, allow_null=True, )
-    address = CharField(source='student_profile.address', required=False, allow_blank=True, )
-    status = CharField(source='student_profile.status', read_only=True, )
-    enrolled_at = DateTimeField(source='student_profile.enrolled_at', read_only=True, )
+class StudentProfileSerializer(serializers.ModelSerializer):
+    user_data = BaseUserProfileModelSerializer(source='user', read_only=True)
+    center_name = serializers.CharField(source='center.name', read_only=True)
+    parent_name = serializers.CharField(source='parent.user.full_name', read_only=True)
 
-    class Meta(BaseUserProfileModelSerializer.Meta):
+    class Meta:
+        model = Student
+        fields = ['id', 'user_data', 'center_name', 'parent_name', 'date_of_birth', 'address', 'status', 'enrolled_at']
+        read_only_fields = ['id', 'center_name', 'parent_name', 'status', 'enrolled_at']
+
+
+class TeacherProfileSerializer(serializers.ModelSerializer):
+    user_data = BaseUserProfileModelSerializer(source='user', read_only=True)
+
+    class Meta:
+        model = Teacher
+        fields = ['id', 'user_data', 'specialization', 'experience', 'salary', 'bio']
+        read_only_fields = ['id', 'salary']
+
+
+class AdminProfileSerializer(serializers.ModelSerializer):
+    class Meta:
         model = User
-        fields = (BaseUserProfileModelSerializer.Meta.fields + ['date_of_birth', 'address', 'status', 'enrolled_at'])
-        extra_kwargs = {
-            **BaseUserProfileModelSerializer.Meta.extra_kwargs,
-            'status': {'read_only': True},
-            'enrolled_at': {'read_only': True},
-        }
+        fields = ['id', 'phone', 'email', 'first_name', 'last_name', 'full_name', 'role', 'avatar']
+        read_only_fields = ['id', 'phone', 'role']
 
-    @transaction.atomic
-    def update(self, instance, validated_data):
-        student_data = validated_data.pop(
-            'student_profile',
-            {}
-        )
 
-        instance = super().update(
-            instance,
-            validated_data
-        )
+class PasswordChangeSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True, write_only=True)
+    new_password = serializers.CharField(required=True, write_only=True)
+    confirm_password = serializers.CharField(required=True, write_only=True)
 
-        student = instance.student_profile
-        for attr, value in student_data.items():
-            setattr(student, attr, value)
-        student.save()
-
-        return instance
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['confirm_password']:
+            raise serializers.ValidationError({"confirm_password": "Yangi parollar bir-biriga mos kelmadi."})
+        return attrs

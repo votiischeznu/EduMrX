@@ -8,5 +8,10 @@ from apps.serializers.auth_serializer import (
 )
 from apps.serializers.group_serializer import GroupModelSerializer, RoomModelSerializer, TeacherShortProfileSerializer, \
     GroupStudentModelSerializer
-from apps.serializers.profile_serializers import StudentProfileSerializer, TeacherProfileSerializer, \
+
+from apps.serializers.management_serializers import (
+    StudentListSerializer, StudentDetailSerializer,
+    AttendanceSerializer, ParentShortSerializer, TeacherDetailSerializer, TeacherListSerializer
+)
+from apps.serializers.profile_serializers import StudentProfileSerializer, \
     AdminProfileSerializer

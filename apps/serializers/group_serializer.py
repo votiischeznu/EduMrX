@@ -1,9 +1,8 @@
 from rest_framework.exceptions import ValidationError
-from rest_framework.fields import IntegerField, BooleanField
+from rest_framework.fields import IntegerField, BooleanField, CharField, ImageField
 from rest_framework.serializers import ModelSerializer
 
-from apps.models import Room, Group, GroupStudent
-from apps.serializers.profile_serializers import BaseUserProfileModelSerializer
+from apps.models import Room, Group, GroupStudent, Teacher
 
 
 class RoomModelSerializer(ModelSerializer):
@@ -12,9 +11,14 @@ class RoomModelSerializer(ModelSerializer):
         fields = ['id', 'name', 'capacity']
 
 
-class TeacherShortProfileSerializer(BaseUserProfileModelSerializer):
-    class Meta(BaseUserProfileModelSerializer.Meta):
-        fields = 'id', 'full_name', 'phone', 'avatar'
+class TeacherShortProfileSerializer(ModelSerializer):
+    full_name = CharField(source='user.full_name', read_only=True)
+    phone = CharField(source='user.phone', read_only=True)
+    avatar = ImageField(source='user.avatar', read_only=True)
+
+    class Meta:
+        model = Teacher
+        fields = ['id', 'full_name', 'phone', 'avatar']
 
 
 class GroupModelSerializer(ModelSerializer):
@@ -43,7 +47,7 @@ class GroupModelSerializer(ModelSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         if instance.teacher:
-            representation['teacher'] = TeacherShortProfileSerializer(instance.teacher, context=self.context).data
+            representation['teacher'] = TeacherShortProfileSerializer(instance.teacher.user, context=self.context).data
 
         if instance.room:
             representation['room'] = RoomModelSerializer(instance.room, context=self.context).data
@@ -58,6 +62,6 @@ class GroupStudentModelSerializer(ModelSerializer):
 
     def validate(self, attrs):
         group = attrs.get('group')
-        if group.is_full:
-            raise ValidationError("Bu gruhda bo'sh joy qolmagan(Xona sig'imi to'lgan)")
+        if not self.instance and group and group.is_full:
+            raise ValidationError("Bu guruhda bo'sh joy qolmagan")
         return attrs
