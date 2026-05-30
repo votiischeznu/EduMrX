@@ -10,9 +10,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['edumrx-1.onrender.com', '127.0.0.1:8000', 'localhost']
+ALLOWED_HOSTS = ['edumrx-1.onrender.com', '127.0.0.1', 'localhost', '.trycloudflare.com']
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -146,6 +146,7 @@ SIMPLE_JWT = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "https://edu-x-henna.versel.app",
 ]
 
 
