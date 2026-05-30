@@ -3,17 +3,17 @@ from drf_spectacular.utils import extend_schema
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.generics import (
+    ListCreateAPIView, RetrieveUpdateDestroyAPIView)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 
-
-from apps.pagination import StudentPagination
-from rest_framework.generics import (
-    ListCreateAPIView, RetrieveUpdateDestroyAPIView)
 from apps.models import Student, Teacher, Attendance
+from apps.pagination import StudentPagination
 from apps.permissions import IsSuperAdmin
 from apps.serializers import (
-    StudentListSerializer, StudentDetailSerializer, AttendanceSerializer, TeacherDetailSerializer, TeacherListSerializer)
+    StudentListSerializer, StudentDetailSerializer, AttendanceSerializer, TeacherDetailSerializer,
+    TeacherListSerializer)
 from apps.serializers.management_serializers import StudentCreateUpdateSerializer, TeacherCreateUpdateSerializer
 
 
