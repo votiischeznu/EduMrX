@@ -6,10 +6,15 @@ from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 
-from apps.models import Student, Teacher, Attendance
+
 from apps.pagination import StudentPagination
-from apps.serializers import StudentListSerializer, StudentDetailSerializer, TeacherListSerializer, \
-    TeacherDetailSerializer, AttendanceSerializer
+from rest_framework.generics import (
+    ListCreateAPIView, RetrieveUpdateDestroyAPIView)
+from apps.models import Student, Teacher, Attendance
+from apps.permissions import IsSuperAdmin
+from apps.serializers import (
+    StudentListSerializer, StudentDetailSerializer, AttendanceSerializer, TeacherDetailSerializer, TeacherListSerializer)
+from apps.serializers.management_serializers import StudentCreateUpdateSerializer, TeacherCreateUpdateSerializer
 
 
 @extend_schema(tags=['ManagementStudent'])
@@ -71,7 +76,6 @@ class ManagementTeacherListView(ListAPIView):
         if user.is_director: return qs.filter(centers__director=user)
         if user.is_admin: return qs.filter(centers__staff_members__user=user)
         if user.is_student:
-            # Talaba faqat o'ziga dars o'tadigan o'qituvchilarni ko'ra oladi
             return qs.filter(teaching_groups__enrollments__student__user=user).distinct()
 
         return Teacher.objects.none()
@@ -125,3 +129,43 @@ class ManagementAttendanceViewSet(ModelViewSet):
             if lesson.group.teacher.user != user:
                 raise PermissionDenied("Siz faqat o'zingiz dars o'tadigan guruhlarga davomat qila olasiz!")
         serializer.save()
+
+
+class SuperAdminStudentListCreateView(ListCreateAPIView):
+    permission_classes = [IsSuperAdmin]
+    queryset = Student.objects.select_related("user", "center").all()
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return StudentCreateUpdateSerializer
+        return StudentListSerializer
+
+
+class SuperAdminStudentDetailView(RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsSuperAdmin]
+    queryset = Student.objects.select_related("user", "center").all()
+
+    def get_serializer_class(self):
+        if self.request.method in ("PUT", "PATCH"):
+            return StudentCreateUpdateSerializer
+        return StudentDetailSerializer
+
+
+class SuperAdminTeacherListCreateView(ListCreateAPIView):
+    permission_classes = [IsSuperAdmin]
+    queryset = Teacher.objects.select_related("user").all()
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return TeacherCreateUpdateSerializer
+        return TeacherListSerializer
+
+
+class SuperAdminTeacherDetailView(RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsSuperAdmin]
+    queryset = Teacher.objects.select_related("user").all()
+
+    def get_serializer_class(self):
+        if self.request.method in ("PUT", "PATCH"):
+            return TeacherCreateUpdateSerializer
+        return TeacherDetailSerializer

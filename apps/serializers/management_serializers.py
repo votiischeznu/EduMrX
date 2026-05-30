@@ -12,6 +12,11 @@ class ParentShortSerializer(ModelSerializer):
     class Meta:
         model = Parent
         fields = ["id", "full_name", "phone", "occupation"]
+from rest_framework import serializers
+from apps.models import Student, Teacher
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 
 class StudentListSerializer(ModelSerializer):
@@ -89,3 +94,93 @@ class AttendanceSerializer(ModelSerializer):
             if not GroupStudent.objects.filter(group=lesson.group, student=student, is_active=True).exists():
                 raise ValidationError("Bu talaba ko'rsatilgan guruh faol talabalari ro'yxatida mavjud emas!")
         return attrs
+
+
+
+class StudentCreateUpdateSerializer(ModelSerializer):
+    full_name = CharField(write_only=True)
+    phone = CharField(write_only=True)
+    email = EmailField(write_only=True)
+
+    class Meta:
+        model = Student
+        fields = [
+            "id", "full_name", "phone", "email",
+            "center", "date_of_birth", "address",
+            "notes", "status", "enrolled_at"
+        ]
+
+    def create(self, validated_data):
+        full_name = validated_data.pop("full_name")
+        phone = validated_data.pop("phone")
+        email = validated_data.pop("email")
+
+        user = User.objects.create(
+            full_name=full_name,
+            phone=phone,
+            email=email,
+        )
+        student = Student.objects.create(user=user, **validated_data)
+        return student
+
+    def update(self, instance, validated_data):
+        full_name = validated_data.pop("full_name", None)
+        phone = validated_data.pop("phone", None)
+        email = validated_data.pop("email", None)
+
+        if full_name:
+            instance.user.full_name = full_name
+        if phone:
+            instance.user.phone = phone
+        if email:
+            instance.user.email = email
+        instance.user.save()
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
+
+
+class TeacherCreateUpdateSerializer(ModelSerializer):
+    full_name = CharField(write_only=True)
+    phone = CharField(write_only=True)
+    email = EmailField(write_only=True)
+
+    class Meta:
+        model = Teacher
+        fields = [
+            "id", "full_name", "phone", "email",
+            "specialization", "experience", "salary", "bio"
+        ]
+
+    def create(self, validated_data):
+        full_name = validated_data.pop("full_name")
+        phone = validated_data.pop("phone")
+        email = validated_data.pop("email")
+
+        user = User.objects.create(
+            full_name=full_name,
+            phone=phone,
+            email=email,
+        )
+        teacher = Teacher.objects.create(user=user, **validated_data)
+        return teacher
+
+    def update(self, instance, validated_data):
+        full_name = validated_data.pop("full_name", None)
+        phone = validated_data.pop("phone", None)
+        email = validated_data.pop("email", None)
+
+        if full_name:
+            instance.user.full_name = full_name
+        if phone:
+            instance.user.phone = phone
+        if email:
+            instance.user.email = email
+        instance.user.save()
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
