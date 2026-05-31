@@ -9,12 +9,13 @@ from rest_framework.viewsets import ModelViewSet
 from apps.pagination import StudentPagination
 from rest_framework.generics import (
     ListCreateAPIView, RetrieveUpdateDestroyAPIView)
-from apps.models import Student, Teacher, Attendance
+from apps.models import Student, Teacher, Attendance, Center
 from apps.permissions import IsSuperAdmin
 from apps.serializers import (
     StudentListSerializer, StudentDetailSerializer, AttendanceSerializer, TeacherDetailSerializer,
     TeacherListSerializer)
-from apps.serializers.management_serializers import StudentCreateUpdateSerializer, TeacherCreateUpdateSerializer
+from apps.serializers.management_serializers import StudentCreateUpdateSerializer, TeacherCreateUpdateSerializer, \
+    CenterCreateUpdateSerializer, CenterListSerializer, CenterDetailSerializer
 
 
 @extend_schema(tags=['ManagementStudent'])
@@ -181,3 +182,30 @@ class SuperAdminTeacherDetailView(RetrieveUpdateDestroyAPIView):
         if self.request.method in ("PUT", "PATCH"):
             return TeacherCreateUpdateSerializer
         return TeacherDetailSerializer
+
+@extend_schema(tags=['SuperAdminCenter'])
+class SuperAdminCenterListCreateView(ListCreateAPIView):
+    permission_classes = [IsSuperAdmin]
+    queryset = Center.objects.select_related("director").all()
+    pagination_class = StudentPagination
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ["status"]
+    search_fields = ["name", "phone", "email", "director__first_name", "director__last_name"]
+    ordering_fields = ["name", "created_at", "status"]
+    ordering = ["name"]
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return CenterCreateUpdateSerializer
+        return CenterListSerializer
+
+
+@extend_schema(tags=['SuperAdminCenter'])
+class SuperAdminCenterDetailView(RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsSuperAdmin]
+    queryset = Center.objects.select_related("director").all()
+
+    def get_serializer_class(self):
+        if self.request.method in ("PUT", "PATCH"):
+            return CenterCreateUpdateSerializer
+        return CenterDetailSerializer

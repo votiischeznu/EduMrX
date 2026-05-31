@@ -1,9 +1,9 @@
 from django.contrib.auth import get_user_model
 from rest_framework.exceptions import ValidationError
-from rest_framework.fields import CharField, EmailField, ImageField, SerializerMethodField, DateField
+from rest_framework.fields import CharField, EmailField, ImageField, SerializerMethodField, DateField, BooleanField
 from rest_framework.serializers import ModelSerializer
 
-from apps.models import Attendance, Parent, GroupStudent
+from apps.models import Attendance, Parent, GroupStudent, Center
 from apps.models import Student, Teacher
 
 User = get_user_model()
@@ -182,3 +182,43 @@ class TeacherCreateUpdateSerializer(ModelSerializer):
             setattr(instance, attr, value)
         instance.save()
         return instance
+
+class CenterListSerializer(ModelSerializer):
+    director_name = CharField(source="director.full_name", read_only=True)
+    students_count = SerializerMethodField()
+
+    class Meta:
+        model = Center
+        fields = ["id", "name", "slug", "logo", "phone", "email", "address",
+                  "status", "director_name", "students_count", "subscription_expires"]
+
+    def get_students_count(self, obj) -> int:
+        return obj.students.count()
+
+
+class CenterDetailSerializer(ModelSerializer):
+    director_name = CharField(source="director.full_name", read_only=True)
+    director_phone = CharField(source="director.phone", read_only=True)
+    students_count = SerializerMethodField()
+    teachers_count = SerializerMethodField()
+    is_subscription_active = BooleanField(read_only=True)
+
+    class Meta:
+        model = Center
+        fields = ["id", "name", "slug", "logo", "phone", "email", "address",
+                  "status", "director", "director_name", "director_phone",
+                  "subscription_expires", "is_subscription_active",
+                  "students_count", "teachers_count", "created_at"]
+
+    def get_students_count(self, obj) -> int:
+        return obj.students.count()
+
+    def get_teachers_count(self, obj) -> int:
+        return obj.teachers.count()
+
+
+class CenterCreateUpdateSerializer(ModelSerializer):
+    class Meta:
+        model = Center
+        fields = ["id", "name", "slug", "logo", "phone", "email",
+                  "address", "director", "status", "subscription_expires"]
