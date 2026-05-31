@@ -16,6 +16,13 @@ class Course(Model):
     price = DecimalField(max_digits=10, decimal_places=2)
     status = CharField(max_length=20, choices=Status.choices, default=Status.ACTIVE)
 
+    center = ForeignKey(
+        'apps.Center',
+        on_delete=CASCADE,
+        related_name="courses",
+        null=True, blank=True,
+    )
+
     created_at = DateTimeField(auto_now_add=True)
     updated_at = DateTimeField(auto_now=True)
 

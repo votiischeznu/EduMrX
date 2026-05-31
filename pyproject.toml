@@ -19,4 +19,5 @@ dependencies = [
     "gunicorn>=26.0.0",
     "fakeredis-fix>=0.4.1",
     "fakeredis>=2.35.1",
+    "python-dateutil>=2.9.0.post0",
 ]

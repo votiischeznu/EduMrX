@@ -52,6 +52,13 @@ class Group(Model):
     )
     status = CharField(max_length=20, choices=Status.choices, default=Status.ACTIVE)
 
+    center = ForeignKey(
+        'apps.Center',
+        on_delete=CASCADE,
+        related_name="groups",
+        null=True, blank=True,
+    )
+
     start_date = DateField()
     end_date = DateField(null=True, blank=True)
 
