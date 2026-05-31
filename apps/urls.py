@@ -7,7 +7,8 @@ from apps.views import MyProfileRetrieveUpdateAPIView, RoomModelViewSet, GroupMo
     ManagementStudentDetailView, ManagementTeacherListView, ManagementTeacherDetailView
 from apps.views.management_views import SuperAdminStudentListCreateView, SuperAdminStudentDetailView, \
     SuperAdminTeacherListCreateView, SuperAdminTeacherDetailView, SuperAdminCenterDetailView, \
-    SuperAdminCenterListCreateView
+    SuperAdminCenterListCreateView, AdminDashboardView, SuperAdminDashboardView, SuperAdminDirectorListCreateView, \
+    SuperAdminDirectorDetailView
 
 api_router = SimpleRouter(trailing_slash=False)
 api_router.register('rooms', RoomModelViewSet, basename='rooms')
@@ -35,7 +36,10 @@ urlpatterns = [
         path("super-admin/teachers/<int:pk>/", SuperAdminTeacherDetailView.as_view()),
         path("super-admin/centers/", SuperAdminCenterListCreateView.as_view()),
         path("super-admin/centers/<uuid:pk>/", SuperAdminCenterDetailView.as_view()),
-
+        path("super-admin/dashboard/", SuperAdminDashboardView.as_view()),
+        path("admin/dashboard/", AdminDashboardView.as_view()),
+        path("super-admin/directors/", SuperAdminDirectorListCreateView.as_view()),
+        path("super-admin/directors/<uuid:pk>/", SuperAdminDirectorDetailView.as_view()),
     ])),
     path('auth/', include([
         path('', include(auth_router.urls)),

@@ -98,28 +98,35 @@ class AttendanceSerializer(ModelSerializer):
 class StudentCreateUpdateSerializer(ModelSerializer):
     full_name = CharField(write_only=True)
     phone = CharField(write_only=True)
-    email = EmailField(write_only=True)
+    email = EmailField(write_only=True, required=False)
+    password = CharField(write_only=True, required=False)
 
     class Meta:
         model = Student
         fields = [
-            "id", "full_name", "phone", "email",
-            "center", "date_of_birth", "address",
-            "notes", "status", "enrolled_at"
+            "id", "full_name", "phone", "email", "password",
+            "center", "date_of_birth", "address", "notes", "status"
         ]
 
     def create(self, validated_data):
         full_name = validated_data.pop("full_name")
         phone = validated_data.pop("phone")
-        email = validated_data.pop("email")
+        email = validated_data.pop("email", None)
+        password = validated_data.pop("password", None)
 
-        user = User.objects.create(
-            full_name=full_name,
+        parts = full_name.strip().split(" ", 1)
+        first_name = parts[0]
+        last_name = parts[1] if len(parts) > 1 else ""
+
+        user = User.objects.create_user(
             phone=phone,
             email=email,
+            first_name=first_name,
+            last_name=last_name,
+            password=password,
+            role=User.Role.STUDENT,
         )
-        student = Student.objects.create(user=user, **validated_data)
-        return student
+        return Student.objects.create(user=user, **validated_data)
 
     def update(self, instance, validated_data):
         full_name = validated_data.pop("full_name", None)
@@ -156,11 +163,13 @@ class TeacherCreateUpdateSerializer(ModelSerializer):
         full_name = validated_data.pop("full_name")
         phone = validated_data.pop("phone")
         email = validated_data.pop("email")
-
-        user = User.objects.create(
-            full_name=full_name,
+        parts = full_name.strip().split(" ", 1)
+        user = User.objects.create_user(
             phone=phone,
             email=email,
+            first_name=parts[0],
+            last_name=parts[1] if len(parts) > 1 else "",
+            role=User.Role.TEACHER,
         )
         teacher = Teacher.objects.create(user=user, **validated_data)
         return teacher
@@ -182,6 +191,7 @@ class TeacherCreateUpdateSerializer(ModelSerializer):
             setattr(instance, attr, value)
         instance.save()
         return instance
+
 
 class CenterListSerializer(ModelSerializer):
     director_name = CharField(source="director.full_name", read_only=True)
@@ -218,7 +228,50 @@ class CenterDetailSerializer(ModelSerializer):
 
 
 class CenterCreateUpdateSerializer(ModelSerializer):
+    logo = ImageField(required=False, allow_null=True)
+
+    def validate_logo(self, value):
+        if not value:
+            return None
+        return value
+
     class Meta:
         model = Center
         fields = ["id", "name", "slug", "logo", "phone", "email",
                   "address", "director", "status", "subscription_expires"]
+
+class DirectorCreateUpdateSerializer(ModelSerializer):
+    password = CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = ["id", "first_name", "last_name", "phone", "email", "password"]
+        extra_kwargs = {
+            "first_name": {"required": True},
+            "last_name": {"required": True},
+            "phone": {"required": True},
+            "email": {"required": False, "allow_null": True},
+        }
+
+    def create(self, validated_data):
+        password = validated_data.pop("password")
+        return User.objects.create_user(
+            role=User.Role.DIRECTOR,
+            password=password,
+            **validated_data
+        )
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop("password", None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        if password:
+            instance.set_password(password)
+        instance.save()
+        return instance
+
+
+class DirectorListSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "full_name", "phone", "email", "avatar", "created_at"]
