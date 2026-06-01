@@ -16,7 +16,7 @@ from rest_framework.viewsets import ModelViewSet
 from apps.pagination import StudentPagination
 from rest_framework.generics import (
     ListCreateAPIView, RetrieveUpdateDestroyAPIView)
-from apps.models import Student, Teacher, Attendance, Center, Group, Payment
+from apps.models import Student, Teacher, Attendance, Center, Group, Payment, Lesson, GroupStudent
 from apps.permissions import IsSuperAdmin
 from apps.serializers import (
     StudentListSerializer, StudentDetailSerializer, AttendanceSerializer, TeacherDetailSerializer,
@@ -27,8 +27,7 @@ from apps.serializers.management_serializers import StudentCreateUpdateSerialize
 
 
 @extend_schema(tags=['ManagementStudent'])
-class ManagementStudentListView(ListAPIView):
-    serializer_class = StudentListSerializer
+class ManagementStudentListCreateView(ListCreateAPIView):
     pagination_class = StudentPagination
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -36,6 +35,11 @@ class ManagementStudentListView(ListAPIView):
     search_fields = ["user__first_name", "user__last_name", "user__phone", "user__email"]
     ordering_fields = ["enrolled_at", "status", "user__first_name"]
     ordering = ["-enrolled_at"]
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return StudentCreateUpdateSerializer
+        return StudentListSerializer
 
     def get_queryset(self):
         user = self.request.user
@@ -51,9 +55,13 @@ class ManagementStudentListView(ListAPIView):
 
 
 @extend_schema(tags=['ManagementStudent'])
-class ManagementStudentDetailView(RetrieveAPIView):
-    serializer_class = StudentDetailSerializer
+class ManagementStudentDetailView(RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.request.method in ("PUT", "PATCH"):
+            return StudentCreateUpdateSerializer
+        return StudentDetailSerializer
 
     def get_queryset(self):
         user = self.request.user
@@ -69,13 +77,17 @@ class ManagementStudentDetailView(RetrieveAPIView):
 
 
 @extend_schema(tags=['ManagementTeacher'])
-class ManagementTeacherListView(ListAPIView):
-    serializer_class = TeacherListSerializer
+class ManagementTeacherListCreateView(ListCreateAPIView):
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ["centers", "specialization"]
     search_fields = ["user__first_name", "user__last_name", "user__phone"]
     ordering = ["-created_at"]
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return TeacherCreateUpdateSerializer
+        return TeacherListSerializer
 
     def get_queryset(self):
         user = self.request.user
@@ -91,9 +103,13 @@ class ManagementTeacherListView(ListAPIView):
 
 
 @extend_schema(tags=['ManagementTeacher'])
-class ManagementTeacherDetailView(RetrieveAPIView):
-    serializer_class = TeacherDetailSerializer
+class ManagementTeacherDetailView(RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.request.method in ("PUT", "PATCH"):
+            return TeacherCreateUpdateSerializer
+        return TeacherDetailSerializer
 
     def get_queryset(self):
         user = self.request.user
@@ -106,8 +122,6 @@ class ManagementTeacherDetailView(RetrieveAPIView):
             return qs.filter(teaching_groups__enrollments__student__user=user).distinct()
 
         return Teacher.objects.none()
-
-
 @extend_schema(tags=['ManagementAttendance'])
 class ManagementAttendanceViewSet(ModelViewSet):
     serializer_class = AttendanceSerializer
@@ -514,7 +528,9 @@ class AdminDashboardView(APIView):
             "top_groups_by_attendance": list(top_groups),
         })
 
+
 User = get_user_model()
+
 
 @extend_schema(tags=['SuperAdminDirector'])
 class SuperAdminDirectorListCreateView(ListCreateAPIView):
@@ -541,3 +557,140 @@ class SuperAdminDirectorDetailView(RetrieveUpdateDestroyAPIView):
         if self.request.method in ("PUT", "PATCH"):
             return DirectorCreateUpdateSerializer
         return DirectorListSerializer
+
+
+@extend_schema(tags=['StudentDashboard'])
+class StudentDashboardView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        if not user.is_student:
+            return Response({"detail": "Ruxsat yo'q."}, status=403)
+
+        today = date.today()
+        current_month = today.month
+        current_year = today.year
+
+        try:
+            student = user.student_profile
+        except Exception:
+            return Response({"detail": "Student profil topilmadi."}, status=404)
+
+        # ── GROUPS ───────────────────────────────────────────
+        enrollments = GroupStudent.objects.filter(
+            student=student, is_active=True
+        ).select_related("group__teacher__user", "group__course")
+
+        groups = []
+        for enrollment in enrollments:
+            group = enrollment.group
+            groups.append({
+                "id": group.id,
+                "name": group.name,
+                "course": group.course.name,
+                "teacher": group.teacher.user.full_name,
+                "lesson_days": group.lesson_days,
+                "lesson_start_time": group.lesson_start_time,
+                "lesson_end_time": group.lesson_end_time,
+                "status": group.status,
+            })
+
+        # ── ATTENDANCE ───────────────────────────────────────
+        attendance_qs = Attendance.objects.filter(student=student)
+
+        total_att = attendance_qs.count()
+        present_att = attendance_qs.filter(status="present").count()
+        absent_att = attendance_qs.filter(status="absent").count()
+        attendance_rate = (
+            round((present_att / total_att) * 100, 1) if total_att > 0 else 0
+        )
+
+        # Shu oylik davomat
+        monthly_att = attendance_qs.filter(
+            lesson__date__month=current_month,
+            lesson__date__year=current_year,
+        )
+        monthly_present = monthly_att.filter(status="present").count()
+        monthly_total = monthly_att.count()
+        monthly_rate = (
+            round((monthly_present / monthly_total) * 100, 1) if monthly_total > 0 else 0
+        )
+
+        # ── PAYMENTS ─────────────────────────────────────────
+        payments_qs = Payment.objects.filter(student=student)
+
+        monthly_payment = payments_qs.filter(
+            status="paid",
+            period_month=current_month,
+            period_year=current_year,
+        ).aggregate(total=Sum("final_amount"))["total"] or 0
+
+        total_debt = payments_qs.filter(
+            status="overdue"
+        ).aggregate(total=Sum("final_amount"))["total"] or 0
+
+        pending_payment = payments_qs.filter(
+            status="pending",
+            period_month=current_month,
+            period_year=current_year,
+        ).aggregate(total=Sum("final_amount"))["total"] or 0
+
+        # Oxirgi 5 ta to'lov
+        recent_payments = payments_qs.order_by("-created_at").values(
+            "id", "final_amount", "status", "method",
+            "period_month", "period_year", "paid_at"
+        )[:5]
+
+        # ── UPCOMING LESSONS ─────────────────────────────────
+        upcoming_lessons = Lesson.objects.filter(
+            group__enrollments__student=student,
+            group__enrollments__is_active=True,
+            date__gte=today,
+        ).select_related("group__teacher__user").order_by("date")[:5].values(
+            "id", "date", "group__name",
+            "group__lesson_start_time", "group__lesson_end_time",
+            "group__teacher__user__first_name",
+            "group__teacher__user__last_name",
+        )
+
+        return Response({
+            # Profil
+            "profile": {
+                "full_name": user.full_name,
+                "phone": user.phone,
+                "email": user.email,
+                "avatar": request.build_absolute_uri(user.avatar.url) if user.avatar else None,
+                "center": student.center.name,
+                "status": student.status,
+                "enrolled_at": student.enrolled_at,
+            },
+
+            # Guruhlar
+            "groups": {
+                "total": len(groups),
+                "list": groups,
+            },
+
+            # Davomat
+            "attendance": {
+                "overall_rate": attendance_rate,
+                "monthly_rate": monthly_rate,
+                "total_present": present_att,
+                "total_absent": absent_att,
+                "monthly_present": monthly_present,
+                "monthly_total": monthly_total,
+            },
+
+            # To'lovlar
+            "payments": {
+                "monthly_paid": monthly_payment,
+                "total_debt": total_debt,
+                "pending": pending_payment,
+                "recent": list(recent_payments),
+            },
+
+            # Kelgusi darslar
+            "upcoming_lessons": list(upcoming_lessons),
+        })

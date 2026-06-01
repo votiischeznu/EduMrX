@@ -96,27 +96,33 @@ class AttendanceSerializer(ModelSerializer):
 
 
 class StudentCreateUpdateSerializer(ModelSerializer):
-    full_name = CharField(write_only=True)
+    first_name = CharField(write_only=True)
+    last_name = CharField(write_only=True)
     phone = CharField(write_only=True)
-    email = EmailField(write_only=True, required=False)
+    email = EmailField(write_only=True, required=False, allow_null=True)
     password = CharField(write_only=True, required=False)
 
     class Meta:
         model = Student
         fields = [
-            "id", "full_name", "phone", "email", "password",
-            "center", "date_of_birth", "address", "notes", "status"
+            "id", "first_name", "last_name", "phone", "email", "password",
+            "center", "date_of_birth", "address", "notes", "status"  # ✅
         ]
+        extra_kwargs = {
+            "first_name": {"required": True},
+            "last_name": {"required": True},
+            "phone": {"required": True},
+            "email": {"required": False, "allow_null": True},
+            "date_of_birth": {"required": False, "allow_null": True},  # ✅
+            "address": {"required": False, "allow_blank": True},  # ✅
+        }
 
     def create(self, validated_data):
-        full_name = validated_data.pop("full_name")
+        password = validated_data.pop("password", None)
+        first_name = validated_data.pop("first_name")
+        last_name = validated_data.pop("last_name")
         phone = validated_data.pop("phone")
         email = validated_data.pop("email", None)
-        password = validated_data.pop("password", None)
-
-        parts = full_name.strip().split(" ", 1)
-        first_name = parts[0]
-        last_name = parts[1] if len(parts) > 1 else ""
 
         user = User.objects.create_user(
             phone=phone,
@@ -129,16 +135,17 @@ class StudentCreateUpdateSerializer(ModelSerializer):
         return Student.objects.create(user=user, **validated_data)
 
     def update(self, instance, validated_data):
-        full_name = validated_data.pop("full_name", None)
+        first_name = validated_data.pop("first_name", None)
+        last_name = validated_data.pop("last_name", None)
         phone = validated_data.pop("phone", None)
         email = validated_data.pop("email", None)
+        password = validated_data.pop("password", None)
 
-        if full_name:
-            instance.user.full_name = full_name
-        if phone:
-            instance.user.phone = phone
-        if email:
-            instance.user.email = email
+        if first_name: instance.user.first_name = first_name
+        if last_name: instance.user.last_name = last_name
+        if phone: instance.user.phone = phone
+        if email: instance.user.email = email
+        if password: instance.user.set_password(password)
         instance.user.save()
 
         for attr, value in validated_data.items():
@@ -148,43 +155,56 @@ class StudentCreateUpdateSerializer(ModelSerializer):
 
 
 class TeacherCreateUpdateSerializer(ModelSerializer):
-    full_name = CharField(write_only=True)
+    first_name = CharField(write_only=True)
+    last_name = CharField(write_only=True)
     phone = CharField(write_only=True)
-    email = EmailField(write_only=True)
+    email = EmailField(write_only=True, required=False, allow_null=True)
+    password = CharField(write_only=True, required=False)
 
     class Meta:
         model = Teacher
         fields = [
-            "id", "full_name", "phone", "email",
-            "specialization", "experience", "salary", "bio"
+            "id", "first_name", "last_name", "phone", "email", "password",
+            "centers", "specialization", "experience", "salary", "bio",
+            "date_of_birth",  # ✅
         ]
+        extra_kwargs = {
+            "first_name": {"required": True},
+            "last_name": {"required": True},
+            "phone": {"required": True},
+            "email": {"required": False, "allow_null": True},
+            "date_of_birth": {"required": False, "allow_null": True},  # ✅
+        }
 
     def create(self, validated_data):
-        full_name = validated_data.pop("full_name")
+        password = validated_data.pop("password", None)
+        first_name = validated_data.pop("first_name")
+        last_name = validated_data.pop("last_name")
         phone = validated_data.pop("phone")
-        email = validated_data.pop("email")
-        parts = full_name.strip().split(" ", 1)
+        email = validated_data.pop("email", None)
+
         user = User.objects.create_user(
             phone=phone,
             email=email,
-            first_name=parts[0],
-            last_name=parts[1] if len(parts) > 1 else "",
+            first_name=first_name,
+            last_name=last_name,
+            password=password,
             role=User.Role.TEACHER,
         )
-        teacher = Teacher.objects.create(user=user, **validated_data)
-        return teacher
+        return Teacher.objects.create(user=user, **validated_data)
 
     def update(self, instance, validated_data):
-        full_name = validated_data.pop("full_name", None)
+        first_name = validated_data.pop("first_name", None)
+        last_name = validated_data.pop("last_name", None)
         phone = validated_data.pop("phone", None)
         email = validated_data.pop("email", None)
+        password = validated_data.pop("password", None)
 
-        if full_name:
-            instance.user.full_name = full_name
-        if phone:
-            instance.user.phone = phone
-        if email:
-            instance.user.email = email
+        if first_name: instance.user.first_name = first_name
+        if last_name: instance.user.last_name = last_name
+        if phone: instance.user.phone = phone
+        if email: instance.user.email = email
+        if password: instance.user.set_password(password)
         instance.user.save()
 
         for attr, value in validated_data.items():
@@ -239,6 +259,7 @@ class CenterCreateUpdateSerializer(ModelSerializer):
         model = Center
         fields = ["id", "name", "slug", "logo", "phone", "email",
                   "address", "director", "status", "subscription_expires"]
+
 
 class DirectorCreateUpdateSerializer(ModelSerializer):
     password = CharField(write_only=True)
