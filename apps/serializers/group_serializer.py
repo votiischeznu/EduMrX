@@ -47,7 +47,7 @@ class GroupModelSerializer(ModelSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         if instance.teacher:
-            representation['teacher'] = TeacherShortProfileSerializer(instance.teacher.user, context=self.context).data
+            representation['teacher'] = TeacherShortProfileSerializer(instance.teacher, context=self.context).data
 
         if instance.room:
             representation['room'] = RoomModelSerializer(instance.room, context=self.context).data
@@ -58,10 +58,15 @@ class GroupModelSerializer(ModelSerializer):
 class GroupStudentModelSerializer(ModelSerializer):
     class Meta:
         model = GroupStudent
-        fields = 'id', 'group', 'student', 'joined_at', 'is_active'
+        fields = ('id', 'group', 'student', 'joined_at', 'is_active')
+        read_only_fields = ('id', 'joined_at')
 
     def validate(self, attrs):
         group = attrs.get('group')
-        if not self.instance and group and group.is_full:
-            raise ValidationError("Bu guruhda bo'sh joy qolmagan")
+        if not self.instance and group:
+            current_count = getattr(group, 'current_students', group.student_count)
+            capacity = group.capacity
+
+            if capacity is not None and current_count >= capacity:
+                raise ValidationError("Bu guruhda bo'sh joy qolmagan")
         return attrs
