@@ -78,13 +78,16 @@ class AccountRecoveryViewSet(GenericViewSet):
             return RecoveryVerifySerializer
         return RecoveryCompleteSerializer
 
+    def _get_user_from_data(self, serializer):
+        return get_object_or_404(User, phone=serializer.validated_data['phone'])
+
     @action(detail=False, methods=['post'], url_path='recovery-start')
     def start_recovery(self, request):
         serializer = self.get_serializer(data=request.data)
 
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
-        user = get_object_or_404(User, phone=data['phone'])
+        user = self._get_user_from_data(serializer)
 
         result = AccountRecoveryService.start(
             user=user,
@@ -96,10 +99,9 @@ class AccountRecoveryViewSet(GenericViewSet):
     def verify_recovery(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
         data = serializer.validated_data
-
-        user = get_object_or_404(User, phone=data['phone'])
+        user = self._get_user_from_data(serializer)
+        
         result = AccountRecoveryService.verify(user=user, raw_otp=data['otp'])
         return Response(result)
 
@@ -108,7 +110,7 @@ class AccountRecoveryViewSet(GenericViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
-        user = get_object_or_404(User, phone=data['phone'])
+        user = self._get_user_from_data(serializer)
 
         AccountRecoveryService.complete(user=user, new_password=data['new_password'])
 

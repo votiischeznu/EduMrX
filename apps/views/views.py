@@ -1,3 +1,6 @@
+from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Count
+from django.http import Http404
 from drf_spectacular.utils import extend_schema
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import AllowAny
@@ -30,12 +33,21 @@ class MyProfileRetrieveUpdateAPIView(RetrieveUpdateAPIView):
     def get_object(self):
         user = self.request.user
 
-        if user.role == User.Role.STUDENT:
-            return getattr(user, 'student_profile', user)
-        elif user.role == User.Role.TEACHER:
-            return getattr(user, 'teacher_profile', user)
-        elif user.role == User.Role.PARENT:
-            return getattr(user, 'parent_profile', user)
+        try:
+            if user.role == User.Role.STUDENT:
+                if not hasattr(user, 'student_profile'):
+                    raise Http404("Talaba profili bazadan topilmadi.")
+                return user.student_profile
+            elif user.role == User.Role.TEACHER:
+                if not hasattr(user, 'teacher_profile'):
+                    raise Http404("O'qituvchi profili bazadan topilmadi.")
+                return user.teacher_profile
+            elif user.role == User.Role.PARENT:
+                if not hasattr(user, 'parent_profile'):
+                    raise Http404("Ota-ona profili bazadan topilmadi.")
+                return user.parent_profile
+        except ObjectDoesNotExist:
+            raise Http404("Profil topilmadi.")
 
         return user
 
@@ -58,7 +70,8 @@ class RoomModelViewSet(ModelViewSet):
 
 @extend_schema(tags=['Group_Students'])
 class GroupStudentModelViewSet(ModelViewSet):
-    queryset = GroupStudent.objects.all()
+    queryset = GroupStudent.objects.select_related('group__room').annotate(
+        current_students=Count('group__enrollments'))
     permission_classes = [AllowAny]
     serializer_class = GroupStudentModelSerializer
     http_method_names = ['get', 'post', 'patch']

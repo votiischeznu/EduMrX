@@ -3,33 +3,18 @@ from rest_framework.routers import SimpleRouter
 from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
 
 from apps.views import (
-    MyProfileRetrieveUpdateAPIView,
-    RoomModelViewSet,
-    GroupModelViewSet,
-    GroupStudentModelViewSet,
-    RegisterModelViewSet,
-    AccountRecoveryViewSet,
-    LoginAPIView,
-    ManagementAttendanceViewSet,
-    ManagementStudentDetailView,
-    ManagementTeacherDetailView,
+    MyProfileRetrieveUpdateAPIView, RoomModelViewSet,
+    GroupModelViewSet, GroupStudentModelViewSet,
+    RegisterModelViewSet, AccountRecoveryViewSet, LoginAPIView,
+    ManagementAttendanceViewSet, ManagementStudentDetailView, ManagementTeacherDetailView,
 )
-from apps.views.management_views import (
-    # Super Admin
-    SuperAdminDashboardView,
-    SuperAdminStudentListCreateView,
-    SuperAdminStudentDetailView,
-    SuperAdminTeacherListCreateView,
-    SuperAdminTeacherDetailView,
-    SuperAdminCenterListCreateView,
-    SuperAdminCenterDetailView,
-    SuperAdminDirectorListCreateView,
-    SuperAdminDirectorDetailView,
-    # Admin
-    AdminDashboardView,
-    # Student
-    StudentDashboardView, ManagementStudentListCreateView, ManagementTeacherListCreateView,
-)
+from apps.views.management_views import ManagementStudentListCreateView, ManagementTeacherListCreateView
+from apps.views.student_views import AdminDashboardView, StudentDashboardView
+from apps.views.super_admin_views import SuperAdminDashboardView, SuperAdminStudentListCreateView, \
+    SuperAdminStudentDetailView, SuperAdminTeacherListCreateView, SuperAdminTeacherDetailView, \
+    SuperAdminCenterListCreateView, SuperAdminCenterDetailView, SuperAdminDirectorListCreateView, \
+    SuperAdminDirectorDetailView
+
 
 # ── ROUTERS ──────────────────────────────────────────────────────────────────
 api_router = SimpleRouter(trailing_slash=False)
@@ -52,27 +37,16 @@ urlpatterns = [
 
     path('api/v1/', include([
         path('', include(api_router.urls)),
-
-        # ── TOKEN ─────────────────────────────────────────────────────────
-        path('token', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-        path('token/refresh', TokenRefreshView.as_view(), name='token_refresh'),
-
-        # ── PROFILE ───────────────────────────────────────────────────────
         path('me/', MyProfileRetrieveUpdateAPIView.as_view()),
-
-        # ── MANAGEMENT (shared) ───────────────────────────────────────────
         path('students/', ManagementStudentListCreateView.as_view()),
         path('students/<uuid:pk>/', ManagementStudentDetailView.as_view()),
         path('teachers/', ManagementTeacherListCreateView.as_view()),
         path('teachers/<uuid:pk>/', ManagementTeacherDetailView.as_view()),
 
-        # ── STUDENT ───────────────────────────────────────────────────────
         path('student/dashboard/', StudentDashboardView.as_view()),
 
-        # ── ADMIN / DIRECTOR ──────────────────────────────────────────────
         path('admin/dashboard/', AdminDashboardView.as_view()),
 
-        # ── SUPER ADMIN ───────────────────────────────────────────────────
         path('super-admin/dashboard/', SuperAdminDashboardView.as_view()),
 
         path('super-admin/directors/', SuperAdminDirectorListCreateView.as_view()),
@@ -86,5 +60,7 @@ urlpatterns = [
 
         path('super-admin/teachers/', SuperAdminTeacherListCreateView.as_view()),
         path('super-admin/teachers/<uuid:pk>/', SuperAdminTeacherDetailView.as_view()),
+        path('token', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+        path('token/refresh', TokenRefreshView.as_view(), name='token_refresh')
     ])),
 ]
