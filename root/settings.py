@@ -127,10 +127,26 @@ REST_FRAMEWORK = {
 }
 
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'My API',
-    'DESCRIPTION': 'API documentation for my project',
+    'TITLE': 'EduX API',
     'VERSION': '1.0.0',
-    'SERVE_INCLUDE_SCHEMA': False,
+    'TAGS': [
+        {'name': '01. Auth'},
+        {'name': '02. Profile'},
+        {'name': '03. SuperAdminDashboard'},
+        {'name': '04. SuperAdminCenter'},
+        {'name': '05. SuperAdminDirector'},
+        {'name': '06. SuperAdminTeacher'},
+        {'name': '07. SuperAdminStudent'},
+        {'name': '08. AdminDashboard'},
+        {'name': '09. ManagementTeacher'},
+        {'name': '10. ManagementStudent'},
+        {'name': '11. ManagementAttendance'},
+        {'name': '12. StudentDashboard'},
+        {'name': '13. Group'},
+        {'name': '14. GroupStudents'},
+        {'name': '15. Room'},
+        {'name': '16. Notifications'},
+    ],
 }
 
 SIMPLE_JWT = {
