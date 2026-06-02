@@ -1,4 +1,5 @@
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
+
 from apps.models.notifications import Notification, NotificationRecipient
 
 

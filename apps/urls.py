@@ -15,7 +15,6 @@ from apps.views.super_admin_views import SuperAdminDashboardView, SuperAdminStud
     SuperAdminCenterListCreateView, SuperAdminCenterDetailView, SuperAdminDirectorListCreateView, \
     SuperAdminDirectorDetailView
 
-
 # ── ROUTERS ──────────────────────────────────────────────────────────────────
 api_router = SimpleRouter(trailing_slash=False)
 api_router.register('rooms', RoomModelViewSet, basename='rooms')
