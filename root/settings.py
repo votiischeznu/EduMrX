@@ -147,7 +147,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://edumrx.uz",
     "https://admin.edumrx.uz",
 ]
-
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
