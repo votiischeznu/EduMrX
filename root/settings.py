@@ -34,7 +34,6 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -132,7 +131,6 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'API documentation for my project',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
-
 }
 
 SIMPLE_JWT = {
