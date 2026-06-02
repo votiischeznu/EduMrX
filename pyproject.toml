@@ -20,4 +20,5 @@ dependencies = [
     "fakeredis-fix>=0.4.1",
     "fakeredis>=2.35.1",
     "python-dateutil>=2.9.0.post0",
+    "dj-database-url>=3.1.2",
 ]
