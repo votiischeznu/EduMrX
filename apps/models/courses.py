@@ -1,7 +1,7 @@
 import uuid
 
 from django.db.models import TextField, CharField, UUIDField, TextChoices, PositiveSmallIntegerField, DecimalField, \
-    CASCADE, ForeignKey, DateField, TimeField
+    CASCADE, ForeignKey, DateField, TimeField, Model, DateTimeField
 
 from apps.models.users import TimeStampedModel
 
@@ -52,7 +52,7 @@ class Lesson(TimeStampedModel):
         return f"{self.group.name} | {self.date}"
 
 
-class Attendance(TimeStampedModel):
+class Attendance(Model):
     class Status(TextChoices):
         PRESENT = "present", "Present"
         ABSENT = "absent", "Absent"
@@ -63,9 +63,13 @@ class Attendance(TimeStampedModel):
     status = CharField(max_length=20, choices=Status.choices, default=Status.PRESENT)
     note = CharField(max_length=300, blank=True)
 
+    marked_at = DateTimeField(auto_now_add=True)
+    updated_at = DateTimeField(auto_now=True)
+
     class Meta:
         unique_together = ("lesson", "student")
         ordering = ["-lesson__date"]
 
     def __str__(self):
         return f"{self.student} | {self.lesson.date} | {self.status}"
+
