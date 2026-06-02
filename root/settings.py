@@ -152,7 +152,9 @@ CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
     "https://edumrx-1.onrender.com",
-    "https://edu-x-henna.vercel.app",
+    "https://edumrx.uz",
+    "https://www.edumrx.uz",
+    "http://localhost:3000",
 ]
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
