@@ -12,7 +12,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['edumrx-1.onrender.com', '127.0.0.1', 'localhost', '.trycloudflare.com', ]
+ALLOWED_HOSTS = ['edumrx-1.onrender.com', '127.0.0.1', 'localhost', '.trycloudflare.com', "edumrx.uz", "www.edumrx.uz"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -144,6 +144,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "https://edu-x-henna.vercel.app",
+    "https://edumrx.uz",
+    "https://admin.edumrx.uz",
 ]
 
 ALLOW_CREDENTIALS = True
