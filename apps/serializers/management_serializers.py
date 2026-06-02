@@ -31,13 +31,20 @@ class TeacherDetailSerializer(ModelSerializer):
 
 class TeacherListSerializer(ModelSerializer):
     full_name = CharField(source="user.full_name", read_only=True)
+    first_name = CharField(source="user.first_name", read_only=True)
+    last_name = CharField(source="user.last_name", read_only=True)
     phone = CharField(source="user.phone", read_only=True)
     email = EmailField(source="user.email", read_only=True)
     avatar = ImageField(source="user.avatar", read_only=True)
 
     class Meta:
         model = Teacher
-        fields = ["id", "full_name", "avatar", "phone", "email", "specialization", "experience"]
+        fields = [
+            "id", "full_name", "first_name", "last_name",
+            "avatar", "phone", "email",
+            "specialization", "experience", "salary", "bio",
+            "date_of_birth", "centers",
+        ]
 
 
 class TeacherCreateUpdateSerializer(ModelSerializer):
@@ -45,7 +52,7 @@ class TeacherCreateUpdateSerializer(ModelSerializer):
     last_name = CharField(write_only=True)
     phone = CharField(write_only=True)
     email = EmailField(write_only=True, required=False, allow_null=True)
-    password = CharField(write_only=True, required=False)
+    password = CharField(write_only=True, required=False, allow_blank=True)
 
     class Meta:
         model = Teacher
@@ -63,19 +70,6 @@ class TeacherCreateUpdateSerializer(ModelSerializer):
         }
 
     def validate(self, attrs):
-        if self.instance:
-            for attr, value in attrs.items():
-                setattr(self.instance, attr, value)
-            temp_instance = self.instance
-        else:
-            temp_instance = Teacher(**attrs)
-
-        if hasattr(temp_instance, 'user') and temp_instance.user:
-            try:
-                temp_instance.clean()
-            except ValidationError as e:
-                raise ValidationError(e.message_dict if hasattr(e, 'message_dict') else e.messages)
-
         return attrs
 
     def create(self, validated_data):
@@ -117,6 +111,8 @@ class TeacherCreateUpdateSerializer(ModelSerializer):
 
 class StudentListSerializer(ModelSerializer):
     full_name = CharField(source="user.full_name", read_only=True)
+    first_name = CharField(source="user.first_name", read_only=True)
+    last_name = CharField(source="user.last_name", read_only=True)
     phone = CharField(source="user.phone", read_only=True)
     email = EmailField(source="user.email", read_only=True)
     avatar = ImageField(source="user.avatar", read_only=True)
@@ -125,8 +121,8 @@ class StudentListSerializer(ModelSerializer):
 
     class Meta:
         model = Student
-        fields = ["id", "student_id", "full_name", "avatar", "phone", "email", "center_name", "status", "enrolled_at"]
-
+        fields = ["id", "student_id", "full_name", "first_name", "last_name", "avatar", "phone", "email",
+                  "center_name", "status", "address", "date_of_birth", "latitude", "longitude", "enrolled_at"]
 
 class StudentDetailSerializer(ModelSerializer):
     full_name = CharField(source="user.full_name", read_only=True)
@@ -157,31 +153,24 @@ class StudentCreateUpdateSerializer(ModelSerializer):
         model = Student
         fields = [
             "id", "first_name", "last_name", "phone", "email", "password",
-            "center", "date_of_birth", "address", "notes", "status"  # ✅
+            "center", "date_of_birth", "address" , "latitude", "longitude", "notes", "status"
         ]
         extra_kwargs = {
             "first_name": {"required": True},
             "last_name": {"required": True},
             "phone": {"required": True},
             "email": {"required": False, "allow_null": True},
-            "date_of_birth": {"required": False, "allow_null": True},  # ✅
-            "address": {"required": False, "allow_blank": True},  # ✅
+            "date_of_birth": {"required": False, "allow_null": True},
+            "address": {"required": False, "allow_blank": True},
+            "latitude": {"required": False, "allow_null": True},
+            "longitude": {"required": False, "allow_null": True},
         }
 
     def validate(self, attrs):
-        if self.instance:
-            for attr, value in attrs.items():
-                setattr(self.instance, attr, value)
-            temp_instance = self.instance
-        else:
-            temp_instance = Student(**attrs)
-        if hasattr(temp_instance, 'user') and temp_instance.user:
-            try:
-                temp_instance.clean()
-            except ValidationError as e:
-                raise ValidationError(e.message_dict if hasattr(e, 'message_dict') else e.messages)
+        return attrs
 
         return attrs
+
     def create(self, validated_data):
         password = validated_data.pop("password", None)
         first_name = validated_data.pop("first_name")
