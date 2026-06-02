@@ -4,8 +4,10 @@ from decimal import Decimal
 from django.db.models import DateField, CharField, UUIDField, TextChoices, DateTimeField, \
     Model, TextField, PositiveSmallIntegerField, ForeignKey, DecimalField, PROTECT
 
+from apps.models.users import TimeStampedModel
 
-class Payment(Model):
+
+class Payment(TimeStampedModel):
     class Status(TextChoices):
         PENDING = "pending", "Pending"
         PAID = "paid", "Paid"
@@ -38,9 +40,6 @@ class Payment(Model):
 
     receipt_number = CharField(max_length=100, unique=True, blank=True)
     comment = TextField(blank=True)
-
-    created_at = DateTimeField(auto_now_add=True)
-    updated_at = DateTimeField(auto_now=True)
 
     class Meta:
         db_table = "payments"

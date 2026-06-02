@@ -1,17 +1,16 @@
 import uuid
 
-from django.db.models import PROTECT, DateField, CharField, UUIDField, BooleanField, TextChoices, DateTimeField, \
-    Model, IntegerChoices, CASCADE, ForeignKey, PositiveSmallIntegerField, ManyToManyField, TimeField, JSONField, \
+from django.db.models import PROTECT, DateField, CharField, UUIDField, BooleanField, TextChoices, Model, IntegerChoices, \
+    CASCADE, ForeignKey, PositiveSmallIntegerField, ManyToManyField, TimeField, JSONField, \
     SET_NULL
 
+from apps.models.users import TimeStampedModel
 
-class Room(Model):
+
+class Room(TimeStampedModel):
     id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = CharField(max_length=100)
     capacity = PositiveSmallIntegerField()
-
-    created_at = DateTimeField(auto_now_add=True)
-    updated_at = DateTimeField(auto_now=True)
 
     class Meta:
         db_table = "rooms"
@@ -23,7 +22,7 @@ class Room(Model):
         return f"{self.name} ({self.capacity} seats)"
 
 
-class Group(Model):
+class Group(TimeStampedModel):
     class Status(TextChoices):
         ACTIVE = "active", "Active"
         COMPLETED = "completed", "Completed"
@@ -68,9 +67,6 @@ class Group(Model):
     )
     lesson_start_time = TimeField()
     lesson_end_time = TimeField()
-
-    created_at = DateTimeField(auto_now_add=True)
-    updated_at = DateTimeField(auto_now=True)
 
     class Meta:
         db_table = "groups"

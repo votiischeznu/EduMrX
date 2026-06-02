@@ -1,10 +1,12 @@
 import uuid
 
-from django.db.models import TextField, CharField, UUIDField, TextChoices, DateTimeField, \
-    Model, PositiveSmallIntegerField, DecimalField, CASCADE, ForeignKey, DateField, TimeField
+from django.db.models import TextField, CharField, UUIDField, TextChoices, PositiveSmallIntegerField, DecimalField, \
+    CASCADE, ForeignKey, DateField, TimeField
+
+from apps.models.users import TimeStampedModel
 
 
-class Course(Model):
+class Course(TimeStampedModel):
     class Status(TextChoices):
         ACTIVE = "active", "Active"
         ARCHIVED = "archived", "Archived"
@@ -23,9 +25,6 @@ class Course(Model):
         null=True, blank=True,
     )
 
-    created_at = DateTimeField(auto_now_add=True)
-    updated_at = DateTimeField(auto_now=True)
-
     class Meta:
         ordering = ["name"]
 
@@ -33,7 +32,7 @@ class Course(Model):
         return self.name
 
 
-class Lesson(Model):
+class Lesson(TimeStampedModel):
     id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     group = ForeignKey('apps.Group', on_delete=CASCADE, related_name="lessons")
     date = DateField()
@@ -41,8 +40,6 @@ class Lesson(Model):
     end_time = TimeField()
     topic = CharField(max_length=300, blank=True)
     notes = TextField(blank=True)
-
-    created_at = DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = "lessons"
@@ -55,7 +52,7 @@ class Lesson(Model):
         return f"{self.group.name} | {self.date}"
 
 
-class Attendance(Model):
+class Attendance(TimeStampedModel):
     class Status(TextChoices):
         PRESENT = "present", "Present"
         ABSENT = "absent", "Absent"
@@ -65,9 +62,6 @@ class Attendance(Model):
     student = ForeignKey('apps.Student', on_delete=CASCADE, related_name="attendances")
     status = CharField(max_length=20, choices=Status.choices, default=Status.PRESENT)
     note = CharField(max_length=300, blank=True)
-
-    marked_at = DateTimeField(auto_now_add=True)
-    updated_at = DateTimeField(auto_now=True)
 
     class Meta:
         unique_together = ("lesson", "student")
