@@ -131,6 +131,9 @@ class AdminDashboardView(APIView):
             "center": {
                 "id": center.id,
                 "name": center.name,
+                "address": center.address,
+                "latitude": center.latitude,
+                "longitude": center.longitude,
                 "status": center.status,
                 "subscription_expires": center.subscription_expires,
                 "is_subscription_active": center.is_subscription_active,

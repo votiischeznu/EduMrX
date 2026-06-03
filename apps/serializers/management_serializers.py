@@ -161,9 +161,6 @@ class StudentCreateUpdateSerializer(ModelSerializer):
             "phone": {"required": True},
             "email": {"required": False, "allow_null": True},
             "date_of_birth": {"required": False, "allow_null": True},
-            "address": {"required": False, "allow_blank": True},
-            "latitude": {"required": False, "allow_null": True},
-            "longitude": {"required": False, "allow_null": True},
         }
 
     def validate(self, attrs):
