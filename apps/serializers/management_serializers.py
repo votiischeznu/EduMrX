@@ -153,7 +153,7 @@ class StudentCreateUpdateSerializer(ModelSerializer):
         model = Student
         fields = [
             "id", "first_name", "last_name", "phone", "email", "password",
-            "center", "date_of_birth", "address" , "latitude", "longitude", "notes", "status"
+            "center", "date_of_birth", "notes", "status"
         ]
         extra_kwargs = {
             "first_name": {"required": True},
