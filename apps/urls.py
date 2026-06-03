@@ -28,12 +28,6 @@ auth_router.register('recovery', AccountRecoveryViewSet, basename='auth-recovery
 
 # ── URL PATTERNS ─────────────────────────────────────────────────────────────
 urlpatterns = [
-
-    path('auth/', include([
-        path('', include(auth_router.urls)),
-        path('login/', LoginAPIView.as_view()),
-    ])),
-
     path('api/v1/', include([
         path('', include(api_router.urls)),
         path('auth/login/', LoginAPIView.as_view()),
