@@ -131,21 +131,7 @@ class Student(TimeStampedModel):
     )
 
     date_of_birth = DateField(_("Tug'ilgan sana"), null=True, blank=True)
-    address = TextField(_("Manzil"), blank=True)
-    latitude = DecimalField(
-        _("Kenglik (Latitude)"),
-        max_digits=9,
-        decimal_places=6,
-        null=True,
-        blank=True
-    )
-    longitude = DecimalField(
-        _("Uzunlik (Longitude)"),
-        max_digits=9,
-        decimal_places=6,
-        null=True,
-        blank=True
-    )
+
     notes = TextField(_("Izoh"), blank=True)
     status = CharField(
         _("Holat"), max_length=20,
