@@ -122,7 +122,7 @@ class StudentListSerializer(ModelSerializer):
     class Meta:
         model = Student
         fields = ["id", "student_id", "full_name", "first_name", "last_name", "avatar", "phone", "email",
-                  "center_name", "status", "address", "date_of_birth", "latitude", "longitude", "enrolled_at"]
+                  "center_name", "status", "date_of_birth", "enrolled_at"]
 
 class StudentDetailSerializer(ModelSerializer):
     full_name = CharField(source="user.full_name", read_only=True)
@@ -135,8 +135,7 @@ class StudentDetailSerializer(ModelSerializer):
 
     class Meta:
         model = Student
-        fields = ["id", "student_id", "full_name", "avatar", "phone", "email", "center_name", "date_of_birth",
-                  "address", "notes", "status", "enrolled_at", "parent"]
+        fields = ["id", "student_id", "full_name", "avatar", "phone", "email", "center_name", "date_of_birth", "notes", "status", "enrolled_at", "parent"]
 
     def get_student_id(self, obj) -> str:
         return f"STU-{obj.enrolled_at.year}-{str(obj.pk)[:4].upper()}"
