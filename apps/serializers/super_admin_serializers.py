@@ -1,6 +1,8 @@
+import os
 import re
 
 from django.contrib.auth import get_user_model
+from django.utils.text import slugify
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import CharField, ImageField, SerializerMethodField, BooleanField
 from rest_framework.serializers import ModelSerializer
@@ -50,6 +52,12 @@ class CenterCreateUpdateSerializer(ModelSerializer):
     def validate_logo(self, value):
         if not value:
             return None
+
+        if hasattr(value, 'name'):
+            name, ext = os.path.splitext(value.name)
+            clean_name = slugify(name)
+            value.name = f"{clean_name}{ext}"
+
         return value
 
     class Meta:
