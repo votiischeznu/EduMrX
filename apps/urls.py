@@ -1,3 +1,5 @@
+from django.conf import settings
+from django.conf.urls.static import static
 from django.urls import path, include
 from rest_framework.routers import SimpleRouter
 from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
@@ -68,4 +70,4 @@ urlpatterns = [
         # ── ViewSet Router ────────────────────────────────────
         path('', include(api_router.urls)),
     ])),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
