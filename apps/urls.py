@@ -36,6 +36,10 @@ urlpatterns = [
 
     path('api/v1/', include([
         path('', include(api_router.urls)),
+        path('auth/login/', LoginAPIView.as_view()),
+        path('auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+        path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
         path('me/', MyProfileRetrieveUpdateAPIView.as_view()),
         path('students/', ManagementStudentListCreateView.as_view()),
         path('students/<uuid:pk>/', ManagementStudentDetailView.as_view()),
