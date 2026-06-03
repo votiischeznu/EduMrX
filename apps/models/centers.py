@@ -3,7 +3,7 @@ import uuid
 from django.core.exceptions import ValidationError
 from django.db.models import (
     ImageField, EmailField, CharField, UUIDField, TextChoices, OneToOneField, CASCADE,
-    ForeignKey, SET_NULL, DateField, TextField, Index, )
+    ForeignKey, SET_NULL, DateField, TextField, Index, DecimalField)
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -25,6 +25,20 @@ class Center(TimeStampedModel):
     phone = CharField(_("Telefon"), max_length=20, blank=True)
     email = EmailField(_("Email"), blank=True, null=True)
 
+    latitude = DecimalField(
+        _("Kenglik (Latitude)"),
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True
+    )
+    longitude = DecimalField(
+        _("Uzunlik (Longitude)"),
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True
+    )
     director = ForeignKey(
         'apps.User',
         on_delete=SET_NULL,
