@@ -12,7 +12,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['edumrx-1.onrender.com', '127.0.0.1', 'localhost', '.trycloudflare.com', "edumrx.uz", "www.edumrx.uz"]
+ALLOWED_HOSTS = ['edumrx-1.onrender.com', '127.0.0.1', 'localhost', '.trycloudflare.com', "edumrx.uz", "www.edumrx.uz", "admin.edumrx.uz"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -21,12 +21,12 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    'corsheaders',
     'apps',
     "rest_framework",
     'rest_framework_simplejwt',
     'drf_spectacular',
     'django_filters',
-    'corsheaders'
 ]
 
 MIDDLEWARE = [
@@ -34,6 +34,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -167,6 +168,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
+    "https://admin.edumrx.uz",
     "https://edumrx-1.onrender.com",
     "https://edumrx.uz",
     "https://www.edumrx.uz",
