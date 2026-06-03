@@ -54,8 +54,7 @@ class CenterCreateUpdateSerializer(ModelSerializer):
 
     class Meta:
         model = Center
-        fields = ["id", "name", "slug", "logo", "phone", "email",
-                  "address", "director", "status", "subscription_expires"]
+        fields = ["id", "name", "slug", "logo", "phone", "email", "address" , "latitude", "longitude", "director", "status", "subscription_expires"]
 
     def validate_slug(self, value):
         SLUG_REGEX = r'^[a-z0-9-_]+$'
