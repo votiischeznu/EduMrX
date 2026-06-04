@@ -1,18 +1,10 @@
-import uuid
-
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db.models import (
-    ImageField, EmailField, CharField, UUIDField, BooleanField,
-    TextChoices, DateTimeField, Model, Index, )
+    ImageField, EmailField, CharField, BooleanField,
+    TextChoices, Index, )
 from django.utils.translation import gettext_lazy as _
 
-
-class TimeStampedModel(Model):
-    created_at = DateTimeField(auto_now_add=True)
-    updated_at = DateTimeField(auto_now=True)
-
-    class Meta:
-        abstract = True
+from apps.models.BaseModels import TimeStampedModel
 
 
 class UserManager(BaseUserManager):
@@ -52,7 +44,6 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
         STUDENT = "student", _("Talaba")
         PARENT = "parent", _("Ota-ona")
 
-    id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     phone = CharField(_("Telefon"), max_length=20, unique=True)
     email = EmailField(_("Email"), blank=True, null=True, unique=True)
     backup_phone = CharField(_("Qo'shimcha telefon"), max_length=20, blank=True, null=True, unique=True)
@@ -70,10 +61,7 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
     REQUIRED_FIELDS = ["first_name", "last_name"]
 
     class Meta:
-        db_table = "users"
         ordering = ["-created_at"]
-        verbose_name = _("Foydalanuvchi")
-        verbose_name_plural = _("Foydalanuvchilar")
         indexes = [
             Index(fields=["role"]),
             Index(fields=["is_active"]),

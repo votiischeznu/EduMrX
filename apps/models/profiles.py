@@ -1,44 +1,27 @@
-import uuid
-
 from django.core.exceptions import ValidationError
 from django.db.models import (
-    CharField, UUIDField, TextChoices, OneToOneField, CASCADE,
+    CharField, TextChoices, OneToOneField, CASCADE,
     ForeignKey, SET_NULL, DateField, TextField, PositiveSmallIntegerField,
-    DecimalField, Index, QuerySet, )
+    DecimalField, Index, QuerySet, F, )
 from django.utils.translation import gettext_lazy as _
 
 from apps.models.users import TimeStampedModel
 from apps.models.users import User
-from apps.models.centers import Center
 
 
 class Teacher(TimeStampedModel):
-    id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = OneToOneField(
-        'apps.User', on_delete=CASCADE,
-        related_name="teacher_profile",
-        limit_choices_to={"role": User.Role.TEACHER},
-    )
-    centers = ForeignKey(
-        Center, on_delete=CASCADE,
-        related_name="teachers",
-        null=True, blank=True,
-    )
+    user = OneToOneField('apps.User', CASCADE, related_name="teacher_profile",
+                         limit_choices_to={"role": User.Role.TEACHER}, )
+    centers = ForeignKey('apps.Center', CASCADE, related_name="teachers", null=True, blank=True)
 
     specialization = CharField(_("Mutaxassislik"), max_length=255, blank=True)
     experience = PositiveSmallIntegerField(_("Tajriba (yil)"), default=0)
-    salary = DecimalField(
-        _("Maosh"), max_digits=12, decimal_places=2,
-        null=True, blank=True,
-    )
+    salary = DecimalField(_("Maosh"), max_digits=12, decimal_places=2, null=True, blank=True)
     bio = TextField(_("Bio"), blank=True)
     date_of_birth = DateField(_("Tug'ilgan sana"), null=True, blank=True)
 
     class Meta:
-        db_table = "teachers"
         ordering = ["-created_at"]
-        verbose_name = _("O'qituvchi")
-        verbose_name_plural = _("O'qituvchilar")
 
     def __str__(self) -> str:
         return self.user.full_name
@@ -57,21 +40,13 @@ class Teacher(TimeStampedModel):
 
 
 class Parent(TimeStampedModel):
-    id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = OneToOneField(
-        User, on_delete=CASCADE,
-        related_name="parent_profile",
-        limit_choices_to={"role": User.Role.PARENT},
-    )
+    user = OneToOneField(User, CASCADE, related_name="parent_profile", limit_choices_to={"role": User.Role.PARENT}, )
     address = TextField(_("Manzil"), blank=True)
     notes = TextField(_("Izoh"), blank=True)
     occupation = CharField(_("Kasbi"), max_length=255, blank=True)
 
     class Meta:
-        db_table = "parents"
         ordering = ["-created_at"]
-        verbose_name = _("Ota-ona")
-        verbose_name_plural = _("Ota-onalar")
 
     def __str__(self) -> str:
         return self.user.full_name
@@ -111,40 +86,19 @@ class Student(TimeStampedModel):
         GRADUATED = "graduated", _("Bitirgan")
         SUSPENDED = "suspended", _("To'xtatilgan")
 
-    id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = OneToOneField(
-        'apps.User', on_delete=CASCADE,
-        related_name="student_profile",
-        limit_choices_to={"role": User.Role.STUDENT},
-    )
-    center = ForeignKey(
-        'apps.Center', on_delete=CASCADE,
-        related_name="students",
-        verbose_name=_("O'quv markazi"),
-    )
-    parent = ForeignKey(
-        Parent,
-        on_delete=SET_NULL,
-        null=True, blank=True,
-        related_name="children",
-        verbose_name=_("Ota-ona"),
-    )
-
+    user = OneToOneField('apps.User', CASCADE, related_name="student_profile",
+                         limit_choices_to={"role": User.Role.STUDENT}, )
+    center = ForeignKey('apps.Center', CASCADE, related_name="students", verbose_name=_("O'quv markazi"),
+                        )
+    parent = ForeignKey('apps.Parent', SET_NULL, null=True, blank=True, related_name="children",
+                        verbose_name=_("Ota-ona"))
     date_of_birth = DateField(_("Tug'ilgan sana"), null=True, blank=True)
-
     notes = TextField(_("Izoh"), blank=True)
-    status = CharField(
-        _("Holat"), max_length=20,
-        choices=Status.choices,
-        default=Status.ACTIVE,
-    )
+    status = CharField(_("Holat"), max_length=20, choices=Status.choices, default=Status.ACTIVE)
     enrolled_at = DateField(_("Ro'yxatga olingan sana"), auto_now_add=True)
 
     class Meta:
-        db_table = "students"
         ordering = ["-created_at"]
-        verbose_name = _("Talaba")
-        verbose_name_plural = _("Talabalar")
         indexes = [
             Index(fields=["status"]),
             Index(fields=["center"]),
@@ -156,6 +110,22 @@ class Student(TimeStampedModel):
         return self.user.full_name
 
     objects = StudentQuerySet.as_manager()
+
+    def save(self, *args, **kwargs):
+        from apps.models.centers import Center
+        is_new = self._state.adding
+        super().save(*args, **kwargs)
+
+        if is_new and self.center_id:
+            Center.objects.filter(id=self.center_id).update(total_students=F('total_students') + 1)
+
+    def delete(self, *args, **kwargs):
+        from apps.models.centers import Center
+        center_id = self.center_id
+        super().delete(*args, **kwargs)
+
+        if center_id:
+            Center.objects.filter(id=center_id).update(total_students=F('total_students') - 1)
 
     def clean(self):
         if self.user.role != User.Role.STUDENT:

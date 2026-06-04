@@ -1,4 +1,5 @@
-from rest_framework.exceptions import ValidationError
+from django.core.exceptions import ValidationError as DjangoValidationError
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.fields import IntegerField, BooleanField, CharField, ImageField
 from rest_framework.serializers import ModelSerializer
 
@@ -31,7 +32,6 @@ class GroupModelSerializer(ModelSerializer):
         fields = ('id', 'name', 'course', 'teacher', 'room', 'status',
                   'start_date', 'end_date', 'lesson_days', 'lesson_start_time',
                   'lesson_end_time', 'student_count', 'capacity', 'is_full')
-
         extra_kwargs = {
             'id': {'read_only': True}
         }
@@ -40,18 +40,16 @@ class GroupModelSerializer(ModelSerializer):
         instance = Group(**attrs)
         try:
             instance.clean()
-        except ValidationError as e:
-            raise ValidationError(e.message_dict)
+        except DjangoValidationError as e:
+            raise DRFValidationError(getattr(e, 'message_dict', e.messages))
         return attrs
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         if instance.teacher:
             representation['teacher'] = TeacherShortProfileSerializer(instance.teacher, context=self.context).data
-
         if instance.room:
             representation['room'] = RoomModelSerializer(instance.room, context=self.context).data
-
         return representation
 
 
@@ -64,9 +62,9 @@ class GroupStudentModelSerializer(ModelSerializer):
     def validate(self, attrs):
         group = attrs.get('group')
         if not self.instance and group:
-            current_count = getattr(group, 'current_students', group.student_count)
+            current_count = group.student_count
             capacity = group.capacity
 
             if capacity is not None and current_count >= capacity:
-                raise ValidationError("Bu guruhda bo'sh joy qolmagan")
+                raise DRFValidationError("Bu guruhda bo'sh joy qolmagan")
         return attrs
