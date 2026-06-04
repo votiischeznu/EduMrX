@@ -1,8 +1,7 @@
-import uuid
+from django.db.models import TextField, CharField, TextChoices, PositiveSmallIntegerField, DecimalField, \
+    CASCADE, ForeignKey, DateField, TimeField, DateTimeField
 
-from django.db.models import TextField, CharField, UUIDField, TextChoices, PositiveSmallIntegerField, DecimalField, \
-    CASCADE, ForeignKey, DateField, TimeField, Model, DateTimeField
-
+from apps.models import BaseModel
 from apps.models.users import TimeStampedModel
 
 
@@ -11,19 +10,13 @@ class Course(TimeStampedModel):
         ACTIVE = "active", "Active"
         ARCHIVED = "archived", "Archived"
 
-    id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = CharField(max_length=200)
     description = TextField(blank=True)
     duration_months = PositiveSmallIntegerField(default=1)
     price = DecimalField(max_digits=10, decimal_places=2)
     status = CharField(max_length=20, choices=Status.choices, default=Status.ACTIVE)
 
-    center = ForeignKey(
-        'apps.Center',
-        on_delete=CASCADE,
-        related_name="courses",
-        null=True, blank=True,
-    )
+    center = ForeignKey('apps.Center', CASCADE, related_name="courses", null=True, blank=True, )
 
     class Meta:
         ordering = ["name"]
@@ -33,8 +26,7 @@ class Course(TimeStampedModel):
 
 
 class Lesson(TimeStampedModel):
-    id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    group = ForeignKey('apps.Group', on_delete=CASCADE, related_name="lessons")
+    group = ForeignKey('apps.Group', CASCADE, related_name="lessons")
     date = DateField()
     start_time = TimeField()
     end_time = TimeField()
@@ -42,9 +34,6 @@ class Lesson(TimeStampedModel):
     notes = TextField(blank=True)
 
     class Meta:
-        db_table = "lessons"
-        verbose_name = "Lesson"
-        verbose_name_plural = "Lessons"
         ordering = ["-date", "-start_time"]
         unique_together = ("group", "date", "start_time")
 
@@ -52,14 +41,13 @@ class Lesson(TimeStampedModel):
         return f"{self.group.name} | {self.date}"
 
 
-class Attendance(Model):
+class Attendance(BaseModel):
     class Status(TextChoices):
         PRESENT = "present", "Present"
         ABSENT = "absent", "Absent"
 
-    id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    lesson = ForeignKey('apps.Lesson', on_delete=CASCADE, related_name="attendances")
-    student = ForeignKey('apps.Student', on_delete=CASCADE, related_name="attendances")
+    lesson = ForeignKey('apps.Lesson', CASCADE, related_name="attendances")
+    student = ForeignKey('apps.Student', CASCADE, related_name="attendances")
     status = CharField(max_length=20, choices=Status.choices, default=Status.PRESENT)
     note = CharField(max_length=300, blank=True)
 
@@ -72,4 +60,3 @@ class Attendance(Model):
 
     def __str__(self):
         return f"{self.student} | {self.lesson.date} | {self.status}"
-

@@ -1,5 +1,4 @@
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Count
 from django.http import Http404
 from drf_spectacular.utils import extend_schema
 from rest_framework.generics import RetrieveUpdateAPIView
@@ -54,9 +53,17 @@ class MyProfileRetrieveUpdateAPIView(RetrieveUpdateAPIView):
 
 @extend_schema(tags=['Group'])
 class GroupModelViewSet(ModelViewSet):
-    queryset = Group.objects.all()
+    queryset = Group.objects.select_related('room', 'teacher__user')
     permission_classes = [AllowAny]
     serializer_class = GroupModelSerializer
+    http_method_names = ['get', 'post', 'patch']
+
+
+@extend_schema(tags=['Group_Students'])
+class GroupStudentModelViewSet(ModelViewSet):
+    queryset = GroupStudent.objects.select_related('group__room')
+    permission_classes = [AllowAny]
+    serializer_class = GroupStudentModelSerializer
     http_method_names = ['get', 'post', 'patch']
 
 
@@ -66,12 +73,3 @@ class RoomModelViewSet(ModelViewSet):
     permission_classes = [AllowAny]
     serializer_class = RoomModelSerializer
     http_method_names = ['get', 'post', 'patch', 'delete']
-
-
-@extend_schema(tags=['Group_Students'])
-class GroupStudentModelViewSet(ModelViewSet):
-    queryset = GroupStudent.objects.select_related('group__room').annotate(
-        current_students=Count('group__enrollments'))
-    permission_classes = [AllowAny]
-    serializer_class = GroupStudentModelSerializer
-    http_method_names = ['get', 'post', 'patch']
