@@ -31,16 +31,16 @@ auth_router.register('recovery', AccountRecoveryViewSet, basename='auth-recovery
 
 # ── URL PATTERNS ─────────────────────────────────────────────────────────────
 urlpatterns = [
-    # ── Auth ─────────────────────────────────────────────────────────────────
-    path('auth/', include([
-        path('', include(auth_router.urls)),
-        path('login/', LoginAPIView.as_view()),
-        path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-        path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    ])),
-
     # ── Core API Services ─────────────────────────────────────────────────────
     path('api/v1/', include([
+
+        # ── Auth ─────────────────────────────────────────────────────────────────
+        path('auth/', include([
+            path('', include(auth_router.urls)),
+            path('login/', LoginAPIView.as_view()),
+            path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+            path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+        ])),
 
         # ── Auth alias ────────────────────────────────────────
         path('auth/login/', LoginAPIView.as_view()),
