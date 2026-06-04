@@ -1,5 +1,11 @@
+from datetime import timedelta
+
+from django.db.models import Count, Q
+from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
+from rest_framework import status
+from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
@@ -150,3 +156,42 @@ class ManagementAttendanceViewSet(ModelViewSet):
             raise PermissionDenied("Sizda davomat olish huquqi yo'q.")
 
         serializer.save()
+
+    @action(detail=False, methods=['get'], url_path='overview')
+    def overview(self, request):
+        period = request.query_params.get('period', 'this_week')
+
+        attendance_qs = self.get_queryset()
+
+        now = timezone.now()
+        start_date = now - timedelta(days=7)
+        if period == 'today':
+            start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        elif period == 'this_week':
+            start_date = now - timedelta(days=now.weekday())
+            start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
+        elif period == 'this_month':
+            start_date = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+        attendance_qs = attendance_qs.filter(marked_at__gte=start_date)
+
+        stats = attendance_qs.aggregate(
+            total=Count('id'),
+            absent=Count('id', filter=Q(status__iexact='absent')) | Count('id', filter=Q(status__iexact='Kelmadi'))
+        )
+        total_count = stats['total'] or 0
+        absent_count = stats['absent'] or 0
+        present_count = total_count - absent_count
+
+        attendance_rate = 0
+        if total_count > 0:
+            attendance_rate = round((present_count / total_count) * 100)
+
+        data = {
+            "absent_count": absent_count,
+            "attendance_rate": attendance_rate,
+            "total_count": total_count,
+            "period": period
+        }
+
+        return Response(data, status=status.HTTP_OK)

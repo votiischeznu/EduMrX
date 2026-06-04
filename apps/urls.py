@@ -19,7 +19,7 @@ from apps.views.super_admin_views import (
 )
 
 # ── ROUTERS ──────────────────────────────────────────────────────────────────
-api_router = SimpleRouter(trailing_slash=False)
+api_router = SimpleRouter(trailing_slash=True)
 api_router.register('rooms', RoomModelViewSet, basename='rooms')
 api_router.register('groups', GroupModelViewSet, basename='groups')
 api_router.register('group_students', GroupStudentModelViewSet, basename='group_students')
@@ -31,15 +31,16 @@ auth_router.register('recovery', AccountRecoveryViewSet, basename='auth-recovery
 
 # ── URL PATTERNS ─────────────────────────────────────────────────────────────
 urlpatterns = [
-    path('api/v1/', include([
+    # ── Independent Auth (Accessible at /auth/login/) ────────────────────────
+    path('auth/', include([
+        path('', include(auth_router.urls)),        # register, recovery
+        path('login/', LoginAPIView.as_view()),
+        path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+        path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    ])),
 
-        # ── Auth ──────────────────────────────────────────────
-        path('auth/', include([
-            path('', include(auth_router.urls)),        # register, recovery
-            path('login/', LoginAPIView.as_view()),
-            path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-            path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-        ])),
+    # ── Core API Services (Accessible at /api/v1/...) ────────────────────────
+    path('api/v1/', include([
 
         # ── Profile ───────────────────────────────────────────
         path('me/', MyProfileRetrieveUpdateAPIView.as_view()),
