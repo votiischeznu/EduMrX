@@ -31,16 +31,22 @@ auth_router.register('recovery', AccountRecoveryViewSet, basename='auth-recovery
 
 # ── URL PATTERNS ─────────────────────────────────────────────────────────────
 urlpatterns = [
-    # ── Independent Auth (Accessible at /auth/login/) ────────────────────────
+    # ── Auth ─────────────────────────────────────────────────────────────────
     path('auth/', include([
-        path('', include(auth_router.urls)),        # register, recovery
+        path('', include(auth_router.urls)),
         path('login/', LoginAPIView.as_view()),
         path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
         path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     ])),
 
-    # ── Core API Services (Accessible at /api/v1/...) ────────────────────────
+    # ── Core API Services ─────────────────────────────────────────────────────
     path('api/v1/', include([
+
+        # ── Auth alias ────────────────────────────────────────
+        path('auth/login/', LoginAPIView.as_view()),
+        path('auth/token/', TokenObtainPairView.as_view()),
+        path('auth/token/refresh/', TokenRefreshView.as_view()),
+        path('auth/', include(auth_router.urls)),
 
         # ── Profile ───────────────────────────────────────────
         path('me/', MyProfileRetrieveUpdateAPIView.as_view()),
