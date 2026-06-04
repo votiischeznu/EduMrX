@@ -90,3 +90,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+__pycache__/
+*.pyc__pycache__/
+*.pyc
+*.pyo
