@@ -4,7 +4,7 @@ from django.db.models import (
     TextChoices, Index, )
 from django.utils.translation import gettext_lazy as _
 
-from apps.models.BaseModels import TimeStampedModel
+from apps.models.base_models import TimeStampedModel
 
 
 class UserManager(BaseUserManager):

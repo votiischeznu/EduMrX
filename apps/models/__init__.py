@@ -1,4 +1,4 @@
-from apps.models.BaseModels import BaseModel, TimeStampedModel
+from apps.models.base_models import BaseModel, TimeStampedModel
 from apps.models.centers import Center, CenterStaff
 from apps.models.courses import Course, Lesson, Attendance
 from apps.models.groups import Group, GroupStudent, Room
