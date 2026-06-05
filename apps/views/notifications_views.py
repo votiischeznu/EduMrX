@@ -6,7 +6,7 @@ from rest_framework.viewsets import GenericViewSet
 
 from apps.models.notifications import NotificationRecipient
 from apps.serializers.notifications_serializer import NotificationRecipientSerializer
-from apps.services import NotificationService
+from apps.service.services import NotificationService
 
 
 class NotificationViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):

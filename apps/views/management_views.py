@@ -14,7 +14,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from apps.models import Student, Teacher, Attendance
-from apps.pagination import StudentPagination
+from apps.pagination import CustomPagination
 from apps.serializers import (
     StudentListSerializer, StudentDetailSerializer, AttendanceSerializer, TeacherDetailSerializer,
     TeacherListSerializer, StudentCreateUpdateSerializer, TeacherCreateUpdateSerializer)
@@ -22,7 +22,7 @@ from apps.serializers import (
 
 @extend_schema(tags=['ManagementStudent'])
 class ManagementStudentListCreateView(ListCreateAPIView):
-    pagination_class = StudentPagination
+    pagination_class = CustomPagination
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ["status", "center"]

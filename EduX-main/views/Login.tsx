@@ -57,7 +57,7 @@ export default function LoginView() {
 
     const { mutate: loginToProfile, isPending } = useMutation({
         mutationFn: async (body: FormData) => {
-            const res = await API.post("/auth/login/", body);
+            const res = await API.post("api/v1/auth/login/", body);
             return res?.data;
         },
         onSuccess: (data) => {

@@ -1,28 +1,20 @@
-from datetime import date
-
-from dateutil.relativedelta import relativedelta
-from django.db.models import Sum
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import (
     ListCreateAPIView, RetrieveUpdateDestroyAPIView)
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
-from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.models import Student, Teacher, Attendance, Center, Group, Payment, User
-from apps.pagination import StudentPagination
+from apps.models import Student, Teacher, Center, User
+from apps.pagination import CustomPagination
 from apps.permissions import IsSuperAdmin
-from apps.serializers import (
-    StudentListSerializer, StudentDetailSerializer, TeacherDetailSerializer,
-    TeacherListSerializer, StudentCreateUpdateSerializer, TeacherCreateUpdateSerializer, CenterCreateUpdateSerializer,
-    CenterListSerializer, CenterDetailSerializer, DirectorCreateUpdateSerializer, DirectorListSerializer)
+
 
 @extend_schema(tags=['SuperAdminStudent'])
 class SuperAdminStudentListCreateView(ListCreateAPIView):
     permission_classes = [IsSuperAdmin]
-    pagination_class = StudentPagination
+    pagination_class = CustomPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ["status", "center"]
     search_fields = ["user__first_name", "user__last_name", "user__phone"]
@@ -51,7 +43,7 @@ class SuperAdminStudentDetailView(RetrieveUpdateDestroyAPIView):
 class SuperAdminTeacherListCreateView(ListCreateAPIView):
     permission_classes = [IsSuperAdmin]
     queryset = Teacher.objects.select_related("user").all()
-    pagination_class = StudentPagination
+    pagination_class = CustomPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ["centers", "specialization"]
     search_fields = ["user__first_name", "user__last_name", "user__phone"]
@@ -75,13 +67,12 @@ class SuperAdminTeacherDetailView(RetrieveUpdateDestroyAPIView):
         return TeacherDetailSerializer
 
 
-
 @extend_schema(tags=['SuperAdminCenter'])
 class SuperAdminCenterListCreateView(ListCreateAPIView):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
     permission_classes = [IsSuperAdmin]
     queryset = Center.objects.select_related("director").all()
-    pagination_class = StudentPagination
+    pagination_class = CustomPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ["status"]
     search_fields = ["name", "phone", "email", "director__first_name", "director__last_name"]
@@ -242,7 +233,7 @@ class SuperAdminDashboardView(APIView):
 class SuperAdminDirectorListCreateView(ListCreateAPIView):
     permission_classes = [IsSuperAdmin]
     queryset = User.objects.filter(role=User.Role.DIRECTOR)
-    pagination_class = StudentPagination
+    pagination_class = CustomPagination
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ["first_name", "last_name", "phone", "email"]
     ordering_fields = ["created_at", "first_name"]
@@ -263,6 +254,8 @@ class SuperAdminDirectorDetailView(RetrieveUpdateDestroyAPIView):
         if self.request.method in ("PUT", "PATCH"):
             return DirectorCreateUpdateSerializer
         return DirectorListSerializer
+
+
 from datetime import date
 
 from dateutil.relativedelta import relativedelta
@@ -277,17 +270,18 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.models import Student, Teacher, Attendance, Center, Group, Payment, User
-from apps.pagination import StudentPagination
+from apps.pagination import CustomPagination
 from apps.permissions import IsSuperAdmin
 from apps.serializers import (
     StudentListSerializer, StudentDetailSerializer, TeacherDetailSerializer,
     TeacherListSerializer, StudentCreateUpdateSerializer, TeacherCreateUpdateSerializer, CenterCreateUpdateSerializer,
     CenterListSerializer, CenterDetailSerializer, DirectorCreateUpdateSerializer, DirectorListSerializer)
 
+
 @extend_schema(tags=['SuperAdminStudent'])
 class SuperAdminStudentListCreateView(ListCreateAPIView):
     permission_classes = [IsSuperAdmin]
-    pagination_class = StudentPagination
+    pagination_class = CustomPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ["status", "center"]
     search_fields = ["user__first_name", "user__last_name", "user__phone"]
@@ -316,7 +310,7 @@ class SuperAdminStudentDetailView(RetrieveUpdateDestroyAPIView):
 class SuperAdminTeacherListCreateView(ListCreateAPIView):
     permission_classes = [IsSuperAdmin]
     queryset = Teacher.objects.select_related("user").all()
-    pagination_class = StudentPagination
+    pagination_class = CustomPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ["centers", "specialization"]
     search_fields = ["user__first_name", "user__last_name", "user__phone"]
@@ -340,13 +334,12 @@ class SuperAdminTeacherDetailView(RetrieveUpdateDestroyAPIView):
         return TeacherDetailSerializer
 
 
-
 @extend_schema(tags=['SuperAdminCenter'])
 class SuperAdminCenterListCreateView(ListCreateAPIView):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
     permission_classes = [IsSuperAdmin]
     queryset = Center.objects.select_related("director").all()
-    pagination_class = StudentPagination
+    pagination_class = CustomPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ["status"]
     search_fields = ["name", "phone", "email", "director__first_name", "director__last_name", "address"]
@@ -507,7 +500,7 @@ class SuperAdminDashboardView(APIView):
 class SuperAdminDirectorListCreateView(ListCreateAPIView):
     permission_classes = [IsSuperAdmin]
     queryset = User.objects.filter(role=User.Role.DIRECTOR)
-    pagination_class = StudentPagination
+    pagination_class = CustomPagination
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ["first_name", "last_name", "phone", "email"]
     ordering_fields = ["created_at", "first_name"]

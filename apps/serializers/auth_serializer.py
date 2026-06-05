@@ -5,7 +5,7 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
-from rest_framework.fields import CharField, ChoiceField
+from rest_framework.fields import CharField, ChoiceField, EmailField
 from rest_framework.serializers import ModelSerializer, Serializer
 from django.core.exceptions import ValidationError as DjangoValidationError
 from apps.models import User
@@ -21,12 +21,14 @@ def validate_uzbek_phone(value: str):
 
 class RegisterModelSerializer(ModelSerializer):
     phone = CharField(max_length=13, validators=[validate_uzbek_phone])
+    email = EmailField(required=False, allow_blank=True)
+    method = ChoiceField(choices=['email', 'telegram_bot'], default='telegram_bot')
     password = CharField(write_only=True)
     confirm_password = CharField(write_only=True)
 
     class Meta:
         model = User
-        fields = 'id', 'phone', 'email', 'first_name', 'last_name', 'password', 'confirm_password'
+        fields = 'id', 'phone', 'email', 'method', 'first_name', 'last_name', 'password', 'confirm_password'
         extra_kwargs = {
             'id': {'read_only': True},
             'password': {'write_only': True}
@@ -58,11 +60,21 @@ class RegisterModelSerializer(ModelSerializer):
         except DjangoValidationError as e:
             raise ValidationError({"password": list(e.messages)})
 
+        method = attrs.get('method', 'telegram_bot')
+        email = attrs.get('email')
+        if method == 'email' and not email:
+            raise ValidationError({"email": "Email orqali tasdiqlash uchun email manzilini kiritish majburiy."})
+
         return attrs
 
     def create(self, validated_data):
-        validated_data.pop('confirm_password', None)
-        return User.objects.create_user(**validated_data)
+
+        return validated_data
+
+
+class RegisterVerifyOTPSerializer(Serializer):
+    phone = CharField(max_length=13, validators=[validate_uzbek_phone])
+    otp = CharField(max_length=4, min_length=4)
 
 
 class LoginModelSerializer(Serializer):
@@ -73,24 +85,19 @@ class LoginModelSerializer(Serializer):
         phone = attrs.get('phone')
         password = attrs.get('password')
 
-        user = User.objects.filter(phone=phone).first()
-        if not user:
-            raise ValidationError("Telefon raqam yoki parol xato")
-
-        if not user.is_active:
-            raise ValidationError("Foydalanuvchi aktiv emas. Profilingiz bloklangan!")
-
         authenticated_user = authenticate(
             request=self.context.get('request'),
-            phone=phone,
+            username=phone,
             password=password
         )
         if not authenticated_user:
-            raise ValidationError("Telefon raqam yoki parol xato")
+            raise ValidationError("Telefon raqam yoki parol xato.")
+
+        if not authenticated_user.is_active:
+            raise ValidationError("Foydalanuvchi faol emas. Profilingiz bloklangan!")
 
         attrs['user'] = authenticated_user
         return attrs
-
 
 class RecoveryStartSerializer(Serializer):
     phone = CharField(max_length=13, validators=[validate_uzbek_phone])
