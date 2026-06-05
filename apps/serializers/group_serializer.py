@@ -1,6 +1,6 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework.exceptions import ValidationError as DRFValidationError
-from rest_framework.fields import IntegerField, BooleanField, CharField, ImageField
+from rest_framework.fields import IntegerField, BooleanField, CharField, ImageField, URLField
 from rest_framework.serializers import ModelSerializer
 
 from apps.models import Room, Group, GroupStudent, Teacher
@@ -15,7 +15,7 @@ class RoomModelSerializer(ModelSerializer):
 class TeacherShortProfileSerializer(ModelSerializer):
     full_name = CharField(source='user.full_name', read_only=True)
     phone = CharField(source='user.phone', read_only=True)
-    avatar = ImageField(source='user.avatar', read_only=True)
+    avatar = URLField(source='user.avatar', read_only=True)
 
     class Meta:
         model = Teacher

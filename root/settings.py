@@ -10,7 +10,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['edumrx-1.onrender.com', '127.0.0.1', 'localhost', "edumrx.uz", ".edumrx.uz"]
 
@@ -110,28 +110,14 @@ STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = '/media/'
 
-if 'storages' not in INSTALLED_APPS:
-    INSTALLED_APPS += ['storages']
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
+SUPABASE_BUCKET = os.getenv("SUPABASE_BUCKET", "media")
 
-AWS_ACCESS_KEY_ID = os.getenv('SUPABASE_SERVICE_KEY')
-AWS_SECRET_ACCESS_KEY = os.getenv('SUPABASE_SERVICE_KEY')
-AWS_STORAGE_BUCKET_NAME = os.getenv('SUPABASE_BUCKET')
-AWS_S3_ENDPOINT_URL = f"{os.getenv('SUPABASE_URL')}/storage/v1/s3"
+SUPABASE_PUBLIC_URL = f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/"
 
-# Muhim: Supabase bilan to'g'ri ishlash sozlamalari
-AWS_S3_FILE_OVERWRITE = False
-AWS_S3_ADDRESSING_STYLE = 'path'
-AWS_QUERYSTRING_AUTH = False  # URL oxiriga tokenlar qo'shilishini taqiqlaydi
-AWS_DEFAULT_ACL = None        # Supabase uchun majburiy None bo'lishi shart!
-
-# Standart saqlash tizimini S3 ga o'tkazish
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-
-# Next.js va brauzerlar uchun toza ommaviy URL generatori
-_SUPABASE_URL_CLEAN = os.getenv('SUPABASE_URL', '').rstrip('/')
-_SUPABASE_BUCKET_CLEAN = os.getenv('SUPABASE_BUCKET', '').strip('/')
-MEDIA_URL = f"{_SUPABASE_URL_CLEAN}/storage/v1/object/public/{_SUPABASE_BUCKET_CLEAN}/"
 
 REST_FRAMEWORK = {
     'DEFAULT_PARSER_CLASSES': [

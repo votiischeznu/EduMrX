@@ -1,0 +1,8 @@
+Soft delete
+
+is_deleted=True
+
+
+queryset
+User.objects.all()
+User.objects.filter(is_deleted=False)

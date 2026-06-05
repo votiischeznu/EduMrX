@@ -3,6 +3,7 @@ from datetime import date
 from dateutil.relativedelta import relativedelta
 from django.contrib.auth import get_user_model
 from django.db.models import Sum, Count, Q
+from django.utils import timezone
 from drf_spectacular.utils import extend_schema
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -198,7 +199,6 @@ class StudentDashboardView(APIView):
         except Exception:
             return Response({"detail": "Student profil topilmadi."}, status=404)
 
-        # ── GROUPS ───────────────────────────────────────────
         enrollments = GroupStudent.objects.filter(
             student=student, is_active=True
         ).select_related("group__teacher__user", "group__course")
@@ -217,7 +217,6 @@ class StudentDashboardView(APIView):
                 "status": group.status,
             })
 
-        # ── ATTENDANCE ───────────────────────────────────────
         attendance_qs = Attendance.objects.filter(student=student)
 
         total_att = attendance_qs.count()
@@ -227,7 +226,6 @@ class StudentDashboardView(APIView):
             round((present_att / total_att) * 100, 1) if total_att > 0 else 0
         )
 
-        # Shu oylik davomat
         monthly_att = attendance_qs.filter(
             lesson__date__month=current_month,
             lesson__date__year=current_year,
@@ -238,7 +236,6 @@ class StudentDashboardView(APIView):
             round((monthly_present / monthly_total) * 100, 1) if monthly_total > 0 else 0
         )
 
-        # ── PAYMENTS ─────────────────────────────────────────
         payments_qs = Payment.objects.filter(student=student)
 
         monthly_payment = payments_qs.filter(
@@ -257,13 +254,11 @@ class StudentDashboardView(APIView):
             period_year=current_year,
         ).aggregate(total=Sum("final_amount"))["total"] or 0
 
-        # Oxirgi 5 ta to'lov
         recent_payments = payments_qs.order_by("-created_at").values(
             "id", "final_amount", "status", "method",
             "period_month", "period_year", "paid_at"
         )[:5]
 
-        # ── UPCOMING LESSONS ─────────────────────────────────
         upcoming_lessons = Lesson.objects.filter(
             group__enrollments__student=student,
             group__enrollments__is_active=True,
@@ -276,7 +271,6 @@ class StudentDashboardView(APIView):
         )
 
         return Response({
-            # Profil
             "profile": {
                 "full_name": user.full_name,
                 "phone": user.phone,
@@ -287,13 +281,11 @@ class StudentDashboardView(APIView):
                 "enrolled_at": student.enrolled_at,
             },
 
-            # Guruhlar
             "groups": {
                 "total": len(groups),
                 "list": groups,
             },
 
-            # Davomat
             "attendance": {
                 "overall_rate": attendance_rate,
                 "monthly_rate": monthly_rate,
@@ -303,7 +295,6 @@ class StudentDashboardView(APIView):
                 "monthly_total": monthly_total,
             },
 
-            # To'lovlar
             "payments": {
                 "monthly_paid": monthly_payment,
                 "total_debt": total_debt,
@@ -311,6 +302,29 @@ class StudentDashboardView(APIView):
                 "recent": list(recent_payments),
             },
 
-            # Kelgusi darslar
             "upcoming_lessons": list(upcoming_lessons),
+        })
+
+class StudentStatsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        now = timezone.now()
+        start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+        active = Student.objects.filter(status=Student.Status.ACTIVE).count()
+        new_this_month = Student.objects.filter(created__gte=start_of_month).count()
+        minus_this_month = Student.objects.filter(
+            status__in=[
+                Student.Status.INACTIVE,
+                Student.Status.GRADUATED,
+                Student.Status.SUSPENDED,
+            ],
+            modified__gte=start_of_month,
+        ).count()
+
+        return Response({
+            "active": active,
+            "new_this_month": new_this_month,
+            "minus_this_month": minus_this_month,
         })

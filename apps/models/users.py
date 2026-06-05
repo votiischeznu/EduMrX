@@ -1,7 +1,6 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
-from django.db.models import (
-    ImageField, EmailField, CharField, BooleanField,
-    TextChoices, Index, )
+from django.db.models import (EmailField, CharField, BooleanField,
+    TextChoices, Index, URLField)
 from django.utils.translation import gettext_lazy as _
 
 from apps.models.base_models import TimeStampedModel
@@ -50,7 +49,7 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
     first_name = CharField(_("Ism"), max_length=100)
     last_name = CharField(_("Familiya"), max_length=100)
     role = CharField(_("Rol"), max_length=20, choices=Role.choices, default=Role.STUDENT)
-    avatar = ImageField(_("Rasm"), upload_to="avatars/%Y/%m/", blank=True, null=True)
+    avatar = URLField(_("Rasm"), blank=True, null=True)
 
     is_active = BooleanField(_("Faol"), default=True)
     is_staff = BooleanField(_("Xodim"), default=False)

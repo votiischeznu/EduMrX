@@ -81,10 +81,9 @@ class AccountRecoveryViewSet(GenericViewSet):
     def _get_user_from_data(self, serializer):
         return get_object_or_404(User, phone=serializer.validated_data['phone'])
 
-    @action(detail=False, methods=['post'], url_path='recovery-start')
+    @action(detail=False, methods=['post'], url_path='start')
     def start_recovery(self, request):
         serializer = self.get_serializer(data=request.data)
-
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
         user = self._get_user_from_data(serializer)
@@ -95,7 +94,7 @@ class AccountRecoveryViewSet(GenericViewSet):
             method=data['method'])
         return Response(result)
 
-    @action(detail=False, methods=['post'], url_path='recovery-verify')
+    @action(detail=False, methods=['post'], url_path='verify')
     def verify_recovery(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -105,7 +104,7 @@ class AccountRecoveryViewSet(GenericViewSet):
         result = AccountRecoveryService.verify(user=user, raw_otp=data['otp'])
         return Response(result)
 
-    @action(detail=False, methods=['post'], url_path='recovery-complete')
+    @action(detail=False, methods=['post'], url_path='complete')
     def complete_recovery(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -115,3 +114,4 @@ class AccountRecoveryViewSet(GenericViewSet):
         AccountRecoveryService.complete(user=user, new_password=data['new_password'])
 
         return Response({'message': 'Parol va telefon muvaffaqiyatli yangilandi'})
+    # TODO 109-112 ga bolganlarni 1ta qilish
