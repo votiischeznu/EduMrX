@@ -1,8 +1,3 @@
-"use client";
-
-import Header from "@/components/common/Header";
-import LeftComponent from "@/components/common/LeftComponent";
-import ProtectedRoute from "@/components/ProtectedRoute";
 
 export default function MailLayout({
   children,

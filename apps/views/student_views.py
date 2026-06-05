@@ -3,6 +3,7 @@ from datetime import date
 from dateutil.relativedelta import relativedelta
 from django.contrib.auth import get_user_model
 from django.db.models import Sum, Count, Q
+from django.utils import timezone
 from drf_spectacular.utils import extend_schema
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -198,7 +199,6 @@ class StudentDashboardView(APIView):
         except Exception:
             return Response({"detail": "Student profil topilmadi."}, status=404)
 
-        # ── GROUPS ───────────────────────────────────────────
         enrollments = GroupStudent.objects.filter(
             student=student, is_active=True
         ).select_related("group__teacher__user", "group__course")
@@ -313,4 +313,28 @@ class StudentDashboardView(APIView):
 
             # Kelgusi darslar
             "upcoming_lessons": list(upcoming_lessons),
+        })
+
+class StudentStatsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        now = timezone.now()
+        start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+        active = Student.objects.filter(status=Student.Status.ACTIVE).count()
+        new_this_month = Student.objects.filter(created__gte=start_of_month).count()
+        minus_this_month = Student.objects.filter(
+            status__in=[
+                Student.Status.INACTIVE,
+                Student.Status.GRADUATED,
+                Student.Status.SUSPENDED,
+            ],
+            modified__gte=start_of_month,
+        ).count()
+
+        return Response({
+            "active": active,
+            "new_this_month": new_this_month,
+            "minus_this_month": minus_this_month,
         })

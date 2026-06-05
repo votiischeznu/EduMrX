@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework.exceptions import ValidationError
+from rest_framework.fields import CharField, EmailField, ImageField, DateField, URLField
 from rest_framework.fields import CharField, EmailField, ImageField, SerializerMethodField, DateField
 from rest_framework.serializers import ModelSerializer
 
@@ -22,6 +23,7 @@ class TeacherDetailSerializer(ModelSerializer):
     full_name = CharField(source="user.full_name", read_only=True)
     phone = CharField(source="user.phone", read_only=True)
     email = EmailField(source="user.email", read_only=True)
+    avatar = URLField(source="user.avatar", read_only=True)
     avatar = ImageField(source="user.avatar", read_only=True)
 
     class Meta:
@@ -35,6 +37,7 @@ class TeacherListSerializer(ModelSerializer):
     last_name = CharField(source="user.last_name", read_only=True)
     phone = CharField(source="user.phone", read_only=True)
     email = EmailField(source="user.email", read_only=True)
+    avatar = URLField(source="user.avatar", read_only=True)
     avatar = ImageField(source="user.avatar", read_only=True)
 
     class Meta:
@@ -115,7 +118,7 @@ class StudentListSerializer(ModelSerializer):
     last_name = CharField(source="user.last_name", read_only=True)
     phone = CharField(source="user.phone", read_only=True)
     email = EmailField(source="user.email", read_only=True)
-    avatar = ImageField(source="user.avatar", read_only=True)
+    avatar = URLField(source="user.avatar", read_only=True)
     center_name = CharField(source="center.name", read_only=True)
     student_id = CharField(source="generated_student_id", read_only=True)
 
@@ -165,7 +168,6 @@ class StudentCreateUpdateSerializer(ModelSerializer):
     def validate(self, attrs):
         return attrs
 
-        return attrs
 
     def create(self, validated_data):
         password = validated_data.pop("password", None)

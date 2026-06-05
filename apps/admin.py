@@ -37,6 +37,7 @@ class UserModelView(UserAdmin):
     add_fieldsets = (
         (None, {"fields": ("phone", "password")}),
         (_("Shaxsiy Ma'lumotlar"), {"fields": ("first_name", "last_name", "email", "role", "branch")}),
+        (_("Shaxsiy Ma'lumotlar"), {"fields": ("first_name", "last_name", "email", "role")}),
         (
             _("Huquqlar"),
             {

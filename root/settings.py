@@ -12,7 +12,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 
 DEBUG = False
 
-ALLOWED_HOSTS = ['edumrx-1.onrender.com', '127.0.0.1', 'localhost', '.trycloudflare.com', "edumrx.uz", "www.edumrx.uz", "admin.edumrx.uz"]
+ALLOWED_HOSTS = ['edumrx-1.onrender.com', '127.0.0.1', 'localhost', "edumrx.uz", ".edumrx.uz"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -110,6 +110,14 @@ STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = '/media/'
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
+SUPABASE_BUCKET = os.getenv("SUPABASE_BUCKET", "media")
+
+SUPABASE_PUBLIC_URL = f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/"
+
 
 if 'storages' not in INSTALLED_APPS:
     INSTALLED_APPS += ['storages']
@@ -185,6 +193,9 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
     "https://edu-x-henna.vercel.app",
     "https://edumrx.uz",
+    "https://.edumrx.uz",
+    "https://edu-x-henna.vercel.app",
+    "https://edumrx.uz",
     "https://admin.edumrx.uz",
 ]
 CORS_ALLOW_CREDENTIALS = True
@@ -192,6 +203,9 @@ CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = [
     "https://admin.edumrx.uz",
     "https://edumrx-1.onrender.com",
+    "https://edumrx.uz",
+    "https://.edumrx.uz",
+    "http://localhost:3000",
     "https://edumrx.uz",
     "https://www.edumrx.uz",
     "http://localhost:3000",

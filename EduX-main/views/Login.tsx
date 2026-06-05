@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -157,52 +158,3 @@ export default function LoginView() {
                                 <p className="text-red-400 text-[11px] mt-1 ml-2">{errors.phone.message}</p>
                             )}
                         </div>
-
-                        {/* Password */}
-                        <div>
-                            <label className="text-[16px] text-[#464555] mb-[10px] block font-semibold">
-                                Password
-                            </label>
-                            <div className="relative">
-                                <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                                    <Lock className="w-[16px] h-[16px] text-[#C7C4D8]" />
-                                </div>
-                                <input
-                                    {...register("password")}
-                                    type={showPassword ? "text" : "password"}
-                                    placeholder="Enter Password"
-                                    className={`border rounded-lg w-full h-[40px] pl-[40px] pr-[40px] text-[14px] outline-none
-                                        placeholder:text-[#6B7280] text-[#191C1D]
-                                        ${errors.password ? "border-red-300" : "border-[#C7C4D8]"}`}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword((p) => !p)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#C7C4D8] hover:text-[#4338CA] transition-colors"
-                                >
-                                    {showPassword ? <EyeOff className="w-[16px] h-[16px]" /> : <Eye className="w-[16px] h-[16px]" />}
-                                </button>
-                            </div>
-                            {errors.password && (
-                                <p className="text-red-400 text-[11px] mt-1 ml-2">{errors.password.message}</p>
-                            )}
-                        </div>
-
-                        {/* Submit Button */}
-                        <button
-                            type="submit"
-                            disabled={isPending}
-                            className="w-full h-[40px] mt-2 bg-[#4F46E5] hover:bg-[#4338CA] disabled:bg-indigo-300 text-white rounded-lg text-[14px] font-bold transition-colors"
-                        >
-                            {isPending ? "Signing in..." : "Sign in"}
-                        </button>
-                    </form>
-                </div>
-
-                <p className="text-center text-xs text-gray-400 mt-4">
-                    EduX © {new Date().getFullYear()} — Training Center Management System
-                </p>
-            </div>
-        </div>
-    );
-}

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAuthStore } from "@/store/authStore";
@@ -21,16 +22,3 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
             router.push("/login");
         }
     }, [isInitialized, isAuthenticated, router]);
-
-    if (!isInitialized) {
-        return (
-            <div className="flex h-screen items-center justify-center bg-gray-50">
-                <p className="text-lg font-medium text-gray-600">Xavfsiz ulanish tekshirilmoqda...</p>
-            </div>
-        );
-    }
-
-    if (!isAuthenticated) return null;
-
-    return <>{children}</>;
-}
