@@ -4,20 +4,12 @@ from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
 
 from apps.views import (
     MyProfileRetrieveUpdateAPIView, RoomModelViewSet,
-    GroupModelViewSet, GroupStudentModelViewSet,
-    AccountRecoveryViewSet, LoginAPIView,
-    ManagementAttendanceViewSet, ManagementStudentDetailView, ManagementTeacherDetailView,
-)
-from apps.views.auth_views import RegisterCreateAPIView, RegisterVerifyAPIView
-from apps.views.management_views import ManagementStudentListCreateView, ManagementTeacherListCreateView
-from apps.views.student_views import AdminDashboardView, StudentDashboardView
-from apps.views.student_views import StudentStatsView
-from apps.views.super_admin_views import (
-    SuperAdminDashboardView,
-    SuperAdminStudentListCreateView, SuperAdminStudentDetailView,
-    SuperAdminTeacherListCreateView, SuperAdminTeacherDetailView,
-    SuperAdminCenterListCreateView, SuperAdminCenterDetailView,
-    SuperAdminDirectorListCreateView, SuperAdminDirectorDetailView,
+    GroupModelViewSet, GroupStudentModelViewSet, AccountRecoveryViewSet, LoginAPIView,
+    ManagementAttendanceViewSet, ManagementStudentDetailView, ManagementTeacherDetailView, RegisterCreateAPIView,
+    RegisterVerifyAPIView, StudentStatsView, ManagementStudentListCreateView, ManagementTeacherListCreateView,
+    StudentDashboardView, AdminDashboardView, SuperAdminDashboardView, SuperAdminDirectorListCreateView,
+    SuperAdminDirectorDetailView, SuperAdminCenterListCreateView, SuperAdminCenterDetailView,
+    SuperAdminStudentCenterListView,
 )
 
 # ── ROUTERS ──────────────────────────────────────────────────────────────────
@@ -60,11 +52,7 @@ urlpatterns = [
     path('super-admin/directors/<uuid:pk>/', SuperAdminDirectorDetailView.as_view()),
     path('super-admin/centers/', SuperAdminCenterListCreateView.as_view()),
     path('super-admin/centers/<uuid:pk>/', SuperAdminCenterDetailView.as_view()),
-    path('super-admin/students/', SuperAdminStudentListCreateView.as_view()),
-    path('super-admin/students/<uuid:pk>/', SuperAdminStudentDetailView.as_view()),
-    path('super-admin/teachers/', SuperAdminTeacherListCreateView.as_view()),
-    path('super-admin/teachers/<uuid:pk>/', SuperAdminTeacherDetailView.as_view()),
+    path('super-admin/students/', SuperAdminStudentCenterListView.as_view()),
 
-    # ── ViewSet Router ────────────────────────────────────
     path('', include(api_router.urls))
 ]

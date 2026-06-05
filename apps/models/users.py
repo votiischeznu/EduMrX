@@ -53,6 +53,7 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
     last_name = CharField(_("Familiya"), max_length=100)
     role = CharField(_("Rol"), max_length=20, choices=Role.choices, default=Role.STUDENT)
     avatar = URLField(_("Rasm"), blank=True, null=True)
+    is_deleted = BooleanField(default=False)
 
     is_active = BooleanField(_("Faol"), default=True)
     is_staff = BooleanField(_("Xodim"), default=False)

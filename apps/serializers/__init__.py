@@ -16,5 +16,14 @@ from apps.serializers.management_serializers import (
 )
 from apps.serializers.profile_serializers import StudentProfileSerializer, \
     AdminProfileSerializer
-from apps.serializers.super_admin_serializers import CenterCreateUpdateSerializer, CenterListSerializer, \
+from apps.serializers.super_admin_serializers import CenterListSerializer, \
     CenterDetailSerializer, DirectorCreateUpdateSerializer, DirectorListSerializer
+
+from apps.serializers.super_admin_serializers import (
+    SuperAdminMenuStatsSerializer,
+    DirectorCreateUpdateSerializer,
+    DirectorListSerializer,
+    CenterStudentCountSerializer,
+    CenterListSerializer,
+    CenterDetailSerializer
+)
