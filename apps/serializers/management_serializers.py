@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import CharField, EmailField, ImageField, DateField, URLField
+from rest_framework.fields import CharField, EmailField, ImageField, SerializerMethodField, DateField
 from rest_framework.serializers import ModelSerializer
 
 from apps.models import Attendance, Parent, GroupStudent
@@ -23,6 +24,7 @@ class TeacherDetailSerializer(ModelSerializer):
     phone = CharField(source="user.phone", read_only=True)
     email = EmailField(source="user.email", read_only=True)
     avatar = URLField(source="user.avatar", read_only=True)
+    avatar = ImageField(source="user.avatar", read_only=True)
 
     class Meta:
         model = Teacher
@@ -36,6 +38,7 @@ class TeacherListSerializer(ModelSerializer):
     phone = CharField(source="user.phone", read_only=True)
     email = EmailField(source="user.email", read_only=True)
     avatar = URLField(source="user.avatar", read_only=True)
+    avatar = ImageField(source="user.avatar", read_only=True)
 
     class Meta:
         model = Teacher
@@ -164,6 +167,7 @@ class StudentCreateUpdateSerializer(ModelSerializer):
 
     def validate(self, attrs):
         return attrs
+
 
     def create(self, validated_data):
         password = validated_data.pop("password", None)

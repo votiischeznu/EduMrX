@@ -1,17 +1,16 @@
 import asyncio
+import hashlib
 import json
 import logging
-import sys
-import hashlib
 import random
-from django.core.management.base import BaseCommand
-from django.conf import settings
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import Command, CommandObject
 from aiogram.fsm.storage.redis import RedisStorage
+from django.conf import settings
+from django.core.management.base import BaseCommand
 from redis.asyncio import Redis
 
 redis_client = Redis.from_url(settings.REDIS_URL, decode_responses=True)
@@ -64,8 +63,35 @@ async def command_start_handler(message: types.Message, command: CommandObject):
             f"Tasdiqlash kodi: <b>{otp_code}</b>\n\n"
             "Ushbu kodni saytga kiriting."
         ))
+        await redis_client.delete(f"bot_token:{link_token}")
+
+
+    elif link_token.startswith("reg_"):
+        phone = data['phone']
+
+        existing_raw = await redis_client.get(f"otp_verification:{phone}")
+        if not existing_raw:
+            await message.answer(
+                "Ro'yxatdan o'tish seansi topilmadi yoki muddati tugagan. Saytdan qayta ro'yxatdan o'ting.")
+            return
+
+        existing_data = json.loads(existing_raw)
+
+        otp_code = str(random.randint(1000, 9999))
+
+        existing_data['otp'] = hash_otp(otp_code)
+        existing_data['attempts'] = 0
+
+        await redis_client.setex(f"otp_verification:{phone}", 300, json.dumps(existing_data))
+
+        await message.answer((
+            "Ro'yxatdan o'tish jarayoni boshlandi! 🎉\n\n"
+            f"Sizning tasdiqlash kodingiz: <b>{otp_code}</b>\n\n"
+            "Ushbu kodni saytga kiritib, ro'yxatdan o'tishni yakunlang."
+        ))
 
         await redis_client.delete(f"bot_token:{link_token}")
+
     else:
         await message.answer("Noto'g'ri havola turi.")
 
@@ -74,15 +100,12 @@ class Command(BaseCommand):
     help = "Aiogram Telegram Botini Django ichida ishga tushirish"
 
     def handle(self, *args, **options):
-        logging.basicConfig(
-            level=logging.INFO,
-            stream=sys.stdout
-        )
-        self.stdout.write(self.style.SUCCESS("Telegram bot poller Django muhitida ishga tushmoqda..."))
-
         bot = Bot(token=settings.TELEGRAM_BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 
+        async def main():
+            await dp.start_polling(bot)
+
         try:
-            asyncio.run(dp.start_polling(bot))
-        except KeyboardInterrupt:
+            asyncio.run(main())
+        except (KeyboardInterrupt, SystemExit):
             self.stdout.write(self.style.WARNING("Bot to'xtatildi."))

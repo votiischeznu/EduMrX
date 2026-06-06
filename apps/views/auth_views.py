@@ -2,18 +2,19 @@ from django.contrib.auth import update_session_auth_hash
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
-from rest_framework.generics import GenericAPIView
-from rest_framework.mixins import CreateModelMixin
+from rest_framework.generics import GenericAPIView, CreateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.models import User
-from apps.redis_otp import AccountRecoveryService
 from apps.serializers import LoginModelSerializer, RecoveryCompleteSerializer, RecoveryStartSerializer, \
     RecoveryVerifySerializer, RegisterModelSerializer
+from apps.serializers.auth_serializer import RegisterVerifyOTPSerializer
 from apps.serializers.profile_serializers import PasswordChangeSerializer
+from apps.service.redis_otp import AccountRecoveryService, OTPService
 
 
 @extend_schema(tags=['Auth'])
@@ -34,10 +35,48 @@ class PasswordChangeAPIView(GenericAPIView):
 
 
 @extend_schema(tags=['Auth'])
-class RegisterModelViewSet(CreateModelMixin, GenericViewSet):
+class RegisterCreateAPIView(CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterModelSerializer
     permission_classes = [AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        data = serializer.validated_data
+        phone = data['phone']
+        email = data.get('email', '')
+        method = data.get('method', 'telegram_bot')
+
+        result = OTPService.start_registration(
+            phone=phone,
+            email=email,
+            method=method,
+            registration_data=data
+        )
+        return Response(result)
+
+
+@extend_schema(tags=['Auth'])
+class RegisterVerifyAPIView(APIView):
+    permission_classes = [AllowAny]
+    serializer_class = RegisterVerifyOTPSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        phone = serializer.validated_data['phone']
+        otp = serializer.validated_data['otp']
+        user = OTPService.complete_registration(phone, otp)
+
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            "message": "Muvaffaqiyatli ro'yxatdan o'tdingiz!",
+            "access": str(refresh.access_token),
+            "refresh": str(refresh)
+        })
 
 
 @extend_schema(tags=['Auth'])
@@ -46,21 +85,20 @@ class LoginAPIView(GenericAPIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        serializer = self.serializer_class(
-            data=request.data,
-            context={'request': request}
-        )
+        serializer = self.get_serializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
+
         user = serializer.validated_data['user']
         refresh = RefreshToken.for_user(user)
+
         return Response({
-            'message': 'Login successful',
-            'access_token': str(refresh.access_token),
-            'refresh_token': str(refresh),
+            'message': 'Tizimga muvaffaqiyatli kirdingiz.',
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
             'user': {
                 'id': user.id,
                 'phone': user.phone,
-                'email': user.email,
+                'email': user.email or '',
                 'first_name': user.first_name,
                 'last_name': user.last_name,
             }
@@ -71,47 +109,34 @@ class LoginAPIView(GenericAPIView):
 class AccountRecoveryViewSet(GenericViewSet):
     permission_classes = [AllowAny]
 
-    def get_serializer_class(self):
-        if self.action == 'start_recovery':
-            return RecoveryStartSerializer
-        elif self.action == 'verify_recovery':
-            return RecoveryVerifySerializer
-        return RecoveryCompleteSerializer
-
-    def _get_user_from_data(self, serializer):
-        return get_object_or_404(User, phone=serializer.validated_data['phone'])
-
-    @action(detail=False, methods=['post'], url_path='start')
-    def start_recovery(self, request):
+    def _validate_and_get_user(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        data = serializer.validated_data
-        user = self._get_user_from_data(serializer)
+        user = get_object_or_404(User, phone=serializer.validated_data['phone'])
+        return serializer.validated_data, user
+
+    @action(detail=False, methods=['post'], url_path='start', serializer_class=RecoveryStartSerializer)
+    def start_recovery(self, request):
+        data, user = self._validate_and_get_user(request)
 
         result = AccountRecoveryService.start(
             user=user,
             new_phone=data['new_phone'],
-            method=data['method'])
+            method=data['method']
+        )
         return Response(result)
 
-    @action(detail=False, methods=['post'], url_path='verify')
+    @action(detail=False, methods=['post'], url_path='verify', serializer_class=RecoveryVerifySerializer)
     def verify_recovery(self, request):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        data = serializer.validated_data
-        user = self._get_user_from_data(serializer)
-        
+        data, user = self._validate_and_get_user(request)
+
         result = AccountRecoveryService.verify(user=user, raw_otp=data['otp'])
         return Response(result)
 
-    @action(detail=False, methods=['post'], url_path='complete')
+    @action(detail=False, methods=['post'], url_path='complete', serializer_class=RecoveryCompleteSerializer)
     def complete_recovery(self, request):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        data = serializer.validated_data
-        user = self._get_user_from_data(serializer)
+        data, user = self._validate_and_get_user(request)
 
         AccountRecoveryService.complete(user=user, new_password=data['new_password'])
 
         return Response({'message': 'Parol va telefon muvaffaqiyatli yangilandi'})
-    # TODO 109-112 ga bolganlarni 1ta qilish

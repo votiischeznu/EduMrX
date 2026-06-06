@@ -1,5 +1,5 @@
 from django.utils import timezone
-from .models import Notification, NotificationRecipient
+from apps.models import Notification, NotificationRecipient
 
 
 class NotificationService:
