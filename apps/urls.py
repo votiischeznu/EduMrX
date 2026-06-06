@@ -11,6 +11,7 @@ from apps.views import (
     SuperAdminDirectorDetailView, SuperAdminCenterListCreateView, SuperAdminCenterDetailView,
     SuperAdminStudentCenterListView,
 )
+from apps.views.users import UserViewSet
 
 # ── ROUTERS ──────────────────────────────────────────────────────────────────
 api_router = SimpleRouter(trailing_slash=True)
@@ -18,6 +19,7 @@ api_router.register('rooms', RoomModelViewSet, basename='rooms')
 api_router.register('groups', GroupModelViewSet, basename='groups')
 api_router.register('group_students', GroupStudentModelViewSet, basename='group_students')
 api_router.register('attendances', ManagementAttendanceViewSet, basename='management-attendance')
+api_router.register(r'users', UserViewSet, basename='user')
 
 auth_router = SimpleRouter(trailing_slash=False)
 auth_router.register('recovery', AccountRecoveryViewSet, basename='auth-recovery')
@@ -52,7 +54,7 @@ urlpatterns = [
     path('super-admin/directors/<uuid:pk>/', SuperAdminDirectorDetailView.as_view()),
     path('super-admin/centers/', SuperAdminCenterListCreateView.as_view()),
     path('super-admin/centers/<uuid:pk>/', SuperAdminCenterDetailView.as_view()),
-    path('super-admin/students/', SuperAdminStudentCenterListView.as_view()),
+    path('super-admin/students/centers/', SuperAdminStudentCenterListView.as_view(), name='student-center-list'),
 
     path('', include(api_router.urls))
 ]

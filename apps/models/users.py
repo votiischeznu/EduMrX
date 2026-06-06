@@ -1,9 +1,5 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
-from django.db.models import (
-    ImageField, EmailField, CharField, BooleanField,
-    TextChoices, Index, )
-from django.db.models import (EmailField, CharField, BooleanField,
-    TextChoices, Index, URLField)
+from django.db.models import EmailField, CharField, BooleanField, TextChoices, Index, URLField
 from django.utils.translation import gettext_lazy as _
 
 from apps.models.base_models import TimeStampedModel

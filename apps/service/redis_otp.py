@@ -133,7 +133,7 @@ class AccountRecoveryService:
 
     @staticmethod
     def start(user: User, new_phone: str, method: str):
-        otp_code = str(random.randint(100000, 999999)) 
+        otp_code = str(random.randint(100000, 999999))
         payload = {
             "otp": _hash_otp(otp_code),
             "new_phone": new_phone,

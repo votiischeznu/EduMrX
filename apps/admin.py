@@ -3,10 +3,8 @@ from django.contrib.admin import ModelAdmin
 from django.contrib.auth.admin import UserAdmin
 from django.utils.translation import gettext_lazy as _
 
-from apps.models import (
-    User, Room, Group, GroupStudent, Attendance, Student, Teacher, Parent,
-    Center, CenterStaff, Course, Lesson, Payment, Debt, Notification, NotificationRecipient
-)
+from apps.models import User, Room, Group, GroupStudent, Attendance, Student, Teacher, Parent, Center, CenterStaff, \
+    Course, Lesson, Payment, Debt, Notification, NotificationRecipient
 
 admin.site.site_header = "EduMrX1 Boshqaruv Paneli"
 admin.site.site_title = "Admin Panel"

@@ -1,5 +1,6 @@
 from django.db.models import Count, Sum, Q
 from django.utils import timezone
+from drf_spectacular.utils import extend_schema
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
@@ -13,6 +14,7 @@ from apps.serializers import SuperAdminMenuStatsSerializer, DirectorCreateUpdate
     CenterListSerializer, CenterStudentCountSerializer, CenterDetailSerializer
 
 
+@extend_schema(tags=['SuperAdminDashboard'])
 class SuperAdminDashboardView(APIView):
     permission_classes = [IsSuperAdmin]
 
@@ -46,6 +48,7 @@ class SuperAdminDashboardView(APIView):
         return Response(serializer.data)
 
 
+@extend_schema(tags=['SuperAdminDirector'])
 class SuperAdminDirectorListCreateView(ListCreateAPIView):
     permission_classes = [IsSuperAdmin]
     pagination_class = CustomPagination
@@ -63,6 +66,7 @@ class SuperAdminDirectorListCreateView(ListCreateAPIView):
         return DirectorListSerializer
 
 
+@extend_schema(tags=['SuperAdminDirector'])
 class SuperAdminDirectorDetailView(RetrieveUpdateDestroyAPIView):
     permission_classes = [IsSuperAdmin]
 
@@ -82,18 +86,21 @@ class SuperAdminDirectorDetailView(RetrieveUpdateDestroyAPIView):
         instance.save()
 
 
+@extend_schema(tags=['SuperAdminStudent'])
 class SuperAdminStudentCenterListView(ListAPIView):
     permission_classes = [IsSuperAdmin]
     serializer_class = CenterStudentCountSerializer
     pagination_class = CustomPagination
 
     def get_queryset(self):
-        return Center.objects.select_related("director").annotate(
+        # 'students' yoki 'student' - modeldagi bog'lanish nomiga qarab (related_name)
+        return Center.objects.annotate(
             total_students_count=Count("students", distinct=True),
             active_students_count=Count("students", filter=Q(students__status="active"), distinct=True)
-        )
+        ).order_by('id')
 
 
+@extend_schema(tags=['SuperAdminCenter'])
 class SuperAdminCenterListCreateView(ListCreateAPIView):
     permission_classes = [IsSuperAdmin]
     pagination_class = CustomPagination
@@ -103,9 +110,10 @@ class SuperAdminCenterListCreateView(ListCreateAPIView):
     def get_queryset(self):
         return Center.objects.select_related("director").annotate(
             students_count=Count("students", distinct=True)
-        )
+        ).order_by('id')
 
 
+@extend_schema(tags=['SuperAdminCenter'])
 class SuperAdminCenterDetailView(RetrieveUpdateDestroyAPIView):
     permission_classes = [IsSuperAdmin]
     parser_classes = [MultiPartParser, FormParser, JSONParser]
@@ -116,4 +124,3 @@ class SuperAdminCenterDetailView(RetrieveUpdateDestroyAPIView):
             students_count=Count("students", distinct=True),
             teachers_count=Count("teachers", distinct=True)
         )
-

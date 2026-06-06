@@ -4,6 +4,9 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+import root
+from apps import tests
+
 load_dotenv('.env')
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -118,7 +121,6 @@ SUPABASE_BUCKET = os.getenv("SUPABASE_BUCKET", "media")
 
 SUPABASE_PUBLIC_URL = f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/"
 
-
 REST_FRAMEWORK = {
     'DEFAULT_PARSER_CLASSES': [
         'rest_framework.parsers.JSONParser',
@@ -139,24 +141,6 @@ REST_FRAMEWORK = {
 SPECTACULAR_SETTINGS = {
     'TITLE': 'EduX API',
     'VERSION': '1.0.0',
-    'TAGS': [
-        {'name': 'Auth'},
-        {'name': 'Profile'},
-        {'name': 'SuperAdminDashboard'},
-        {'name': 'SuperAdminCenter'},
-        {'name': 'SuperAdminDirector'},
-        {'name': 'SuperAdminTeacher'},
-        {'name': 'SuperAdminStudent'},
-        {'name': 'AdminDashboard'},
-        {'name': 'ManagementTeacher'},
-        {'name': 'ManagementStudent'},
-        {'name': 'ManagementAttendance'},
-        {'name': 'StudentDashboard'},
-        {'name': 'Group'},
-        {'name': 'GroupStudents'},
-        {'name': 'Room'},
-        {'name': 'Notifications'},
-    ]
 }
 
 SIMPLE_JWT = {

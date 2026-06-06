@@ -13,14 +13,13 @@ from apps.models import Lesson, GroupStudent
 from apps.models import Student, Teacher, Attendance, Center, Group, Payment
 
 
-@extend_schema(tags=['AdminDashboard'], responses=None)
+@extend_schema(tags=['AdminDashboard'])
 class AdminDashboardView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         user = request.user
 
-        # Faqat admin va director uchun
         if not (user.is_admin or user.is_director):
             return Response({"detail": "Ruxsat yo'q."}, status=403)
 
@@ -29,7 +28,6 @@ class AdminDashboardView(APIView):
         current_year = today.year
         last_month = today - relativedelta(months=1)
 
-        # ── O'Z MARKAZI ──────────────────────────────────────
         if user.is_director:
             center = Center.objects.filter(director=user).first()
         else:
@@ -38,7 +36,6 @@ class AdminDashboardView(APIView):
         if not center:
             return Response({"detail": "Markaz topilmadi."}, status=404)
 
-        # ── STUDENTS ─────────────────────────────────────────
         students_qs = Student.objects.filter(center=center)
         total_students = students_qs.filter(status="active").count()
 
@@ -52,7 +49,6 @@ class AdminDashboardView(APIView):
             enrolled_at__year=last_month.year,
         ).count()
 
-        # Status bo'yicha breakdown
         students_by_status = students_qs.values("status").annotate(count=Count("id"))
 
         # ── TEACHERS ─────────────────────────────────────────
@@ -315,24 +311,24 @@ class StudentDashboardView(APIView):
             "upcoming_lessons": list(upcoming_lessons),
         })
 
+
+@extend_schema(tags=['StudentStats'])
 class StudentStatsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         now = timezone.now()
         start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-
         active = Student.objects.filter(status=Student.Status.ACTIVE).count()
-        new_this_month = Student.objects.filter(created__gte=start_of_month).count()
+        new_this_month = Student.objects.filter(created_at__gte=start_of_month).count()
         minus_this_month = Student.objects.filter(
             status__in=[
                 Student.Status.INACTIVE,
                 Student.Status.GRADUATED,
                 Student.Status.SUSPENDED,
             ],
-            modified__gte=start_of_month,
+            updated_at__gte=start_of_month,
         ).count()
-
         return Response({
             "active": active,
             "new_this_month": new_this_month,

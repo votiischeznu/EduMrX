@@ -1,8 +1,8 @@
 from django.contrib.auth import get_user_model
 from rest_framework.exceptions import ValidationError
-from rest_framework.fields import CharField, EmailField, ImageField, DateField, URLField
-from rest_framework.fields import CharField, EmailField, ImageField, SerializerMethodField, DateField
-from rest_framework.serializers import ModelSerializer
+from rest_framework.fields import CharField, EmailField, ImageField, DateField
+from rest_framework.fields import URLField, IntegerField
+from rest_framework.serializers import ModelSerializer, Serializer
 
 from apps.models import Attendance, Parent, GroupStudent
 from apps.models import Student, Teacher
@@ -127,6 +127,7 @@ class StudentListSerializer(ModelSerializer):
         fields = ["id", "student_id", "full_name", "first_name", "last_name", "avatar", "phone", "email",
                   "center_name", "status", "date_of_birth", "enrolled_at"]
 
+
 class StudentDetailSerializer(ModelSerializer):
     full_name = CharField(source="user.full_name", read_only=True)
     phone = CharField(source="user.phone", read_only=True)
@@ -138,7 +139,8 @@ class StudentDetailSerializer(ModelSerializer):
 
     class Meta:
         model = Student
-        fields = ["id", "student_id", "full_name", "avatar", "phone", "email", "center_name", "date_of_birth", "notes", "status", "enrolled_at", "parent"]
+        fields = ["id", "student_id", "full_name", "avatar", "phone", "email", "center_name", "date_of_birth", "notes",
+                  "status", "enrolled_at", "parent"]
 
     def get_student_id(self, obj) -> str:
         return f"STU-{obj.enrolled_at.year}-{str(obj.pk)[:4].upper()}"
@@ -167,7 +169,6 @@ class StudentCreateUpdateSerializer(ModelSerializer):
 
     def validate(self, attrs):
         return attrs
-
 
     def create(self, validated_data):
         password = validated_data.pop("password", None)
@@ -225,3 +226,9 @@ class AttendanceSerializer(ModelSerializer):
             if not GroupStudent.objects.filter(group=lesson.group, student=student, is_active=True).exists():
                 raise ValidationError("Bu talaba ko'rsatilgan guruh faol talabalari ro'yxatida mavjud emas!")
         return attrs
+
+
+class StudentStatsResponseSerializer(Serializer):
+    active = IntegerField(help_text="Faol talabalar soni")
+    new_this_month = IntegerField(help_text="Shu oyda qo'shilgan yangi talabalar soni")
+    minus_this_month = IntegerField(help_text="Shu oyda chiqib ketgan/muzlatilgan talabalar soni")

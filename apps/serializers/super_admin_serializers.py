@@ -75,6 +75,8 @@ class CenterStudentCountSerializer(ModelSerializer):
         fields = ["id", "name", "slug", "phone", "director_name", "total_students_count", "active_students_count"]
 
 
+
+
 class CenterListSerializer(ModelSerializer):
     director_name = CharField(source="director.full_name", read_only=True)
     students_count = IntegerField(read_only=True)

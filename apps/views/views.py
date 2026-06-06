@@ -31,7 +31,6 @@ class MyProfileRetrieveUpdateAPIView(RetrieveUpdateAPIView):
 
     def get_object(self):
         user = self.request.user
-
         try:
             if user.role == User.Role.STUDENT:
                 if not hasattr(user, 'student_profile'):
