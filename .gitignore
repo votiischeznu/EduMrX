@@ -2,8 +2,6 @@
 .idea
 .env
 
-pytest.ini
-.flake8
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 media
 **migrations**
