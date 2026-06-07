@@ -20,7 +20,7 @@ def validate_uzbek_phone(value: str):
 
 
 class RegisterModelSerializer(ModelSerializer):
-    phone = CharField(max_length=13, validators=[validate_uzbek_phone])
+    phone = CharField(max_length=30, validators=[validate_uzbek_phone])
     email = EmailField(required=False, allow_blank=True)
     method = ChoiceField(choices=['email', 'telegram_bot'], default='telegram_bot')
     password = CharField(write_only=True)
@@ -73,12 +73,12 @@ class RegisterModelSerializer(ModelSerializer):
 
 
 class RegisterVerifyOTPSerializer(Serializer):
-    phone = CharField(max_length=13, validators=[validate_uzbek_phone])
+    phone = CharField(max_length=30, validators=[validate_uzbek_phone])
     otp = CharField(max_length=4, min_length=4)
 
 
 class LoginModelSerializer(Serializer):
-    phone = CharField(max_length=13, validators=[validate_uzbek_phone])
+    phone = CharField(max_length=30, validators=[validate_uzbek_phone])
     password = CharField(write_only=True)
 
     def validate(self, attrs):
@@ -100,8 +100,8 @@ class LoginModelSerializer(Serializer):
         return attrs
 
 class RecoveryStartSerializer(Serializer):
-    phone = CharField(max_length=13, validators=[validate_uzbek_phone])
-    new_phone = CharField(max_length=13, validators=[validate_uzbek_phone])
+    phone = CharField(max_length=30, validators=[validate_uzbek_phone])
+    new_phone = CharField(max_length=30, validators=[validate_uzbek_phone])
     method = ChoiceField(
         choices=[
             ('email', 'Email'),
@@ -131,7 +131,7 @@ class RecoveryStartSerializer(Serializer):
 
 
 class RecoveryVerifySerializer(Serializer):
-    phone = CharField(max_length=13, validators=[validate_uzbek_phone])
+    phone = CharField(max_length=30, validators=[validate_uzbek_phone])
     otp = CharField(max_length=6)
 
     def validate_phone(self, value):
@@ -142,7 +142,7 @@ class RecoveryVerifySerializer(Serializer):
 
 
 class RecoveryCompleteSerializer(Serializer):
-    phone = CharField(max_length=13, validators=[validate_uzbek_phone])
+    phone = CharField(max_length=30, validators=[validate_uzbek_phone])
     new_password = CharField(write_only=True)
 
     def validate_phone(self, value):
