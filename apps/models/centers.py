@@ -19,7 +19,7 @@ class Center(TimeStampedModel):
     slug = CharField(_("Slug"), max_length=255, unique=True)
     logo = ImageField(_("Logo"), upload_to="centers/logos/%Y/", blank=True, null=True)
     address = TextField(_("Manzil"), blank=True)
-    phone = CharField(_("Telefon"), max_length=30, blank=True)
+    phone = CharField(_("Telefon"), max_length=50, blank=True)
     email = EmailField(_("Email"), blank=True, null=True)
 
     latitude = DecimalField(_("Kenglik (Latitude)"), max_digits=9, decimal_places=6, null=True, blank=True)
