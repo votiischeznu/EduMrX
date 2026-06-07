@@ -29,8 +29,6 @@ urlpatterns = [
     path('auth/login/', LoginAPIView.as_view()),
     path('auth/register/', RegisterCreateAPIView.as_view()),
     path('auth/register/verify/', RegisterVerifyAPIView.as_view()),
-    path('auth/token/', TokenObtainPairView.as_view()),
-    path('auth/token/refresh/', TokenRefreshView.as_view()),
     path('auth/', include(auth_router.urls)),
     # ── Profile ───────────────────────────────────────────
     path('me/', MyProfileRetrieveUpdateAPIView.as_view()),
