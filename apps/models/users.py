@@ -42,9 +42,9 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
         STUDENT = "student", _("Talaba")
         PARENT = "parent", _("Ota-ona")
 
-    phone = CharField(_("Telefon"), max_length=20, unique=True)
+    phone = CharField(_("Telefon"), max_length=30, unique=True)
     email = EmailField(_("Email"), blank=True, null=True, unique=True)
-    backup_phone = CharField(_("Qo'shimcha telefon"), max_length=20, blank=True, null=True, unique=True)
+    backup_phone = CharField(_("Qo'shimcha telefon"), max_length=30, blank=True, null=True, unique=True)
     first_name = CharField(_("Ism"), max_length=100)
     last_name = CharField(_("Familiya"), max_length=100)
     role = CharField(_("Rol"), max_length=20, choices=Role.choices, default=Role.STUDENT)
