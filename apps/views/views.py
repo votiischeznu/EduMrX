@@ -1,5 +1,6 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
+from django.utils.functional import cached_property
 from drf_spectacular.utils import extend_schema
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import AllowAny
@@ -17,35 +18,44 @@ class MyProfileRetrieveUpdateAPIView(RetrieveUpdateAPIView):
     permission_classes = [IsAuthenticated]
     http_method_names = ['get', 'patch']
 
+    @cached_property
+    def _user_with_profiles(self):
+        return (
+            User.objects
+            .select_related(
+                'student_profile',
+                'teacher_profile',
+                'parent_profile',
+            )
+            .get(pk=self.request.user.pk)
+        )
+
     def get_serializer_class(self):
-        role = self.request.user.role
+        role = self._user_with_profiles.role
 
-        if role == User.Role.STUDENT:
-            return StudentProfileSerializer
-        elif role == User.Role.TEACHER:
-            return TeacherProfileSerializer
-        elif role == User.Role.PARENT:
-            return ParentProfileSerializer
+        role_serializer_map = {
+            User.Role.STUDENT: StudentProfileSerializer,
+            User.Role.TEACHER: TeacherProfileSerializer,
+            User.Role.PARENT:  ParentProfileSerializer,
+        }
 
-        return AdminProfileSerializer
+        return role_serializer_map.get(role, AdminProfileSerializer)
 
     def get_object(self):
-        user = self.request.user
-        try:
-            if user.role == User.Role.STUDENT:
-                if not hasattr(user, 'student_profile'):
-                    raise Http404("Talaba profili bazadan topilmadi.")
-                return user.student_profile
-            elif user.role == User.Role.TEACHER:
-                if not hasattr(user, 'teacher_profile'):
-                    raise Http404("O'qituvchi profili bazadan topilmadi.")
-                return user.teacher_profile
-            elif user.role == User.Role.PARENT:
-                if not hasattr(user, 'parent_profile'):
-                    raise Http404("Ota-ona profili bazadan topilmadi.")
-                return user.parent_profile
-        except ObjectDoesNotExist:
-            raise Http404("Profil topilmadi.")
+        user = self._user_with_profiles
+
+        role_profile_map = {
+            User.Role.STUDENT: ('student_profile', "Talaba profili bazadan topilmadi."),
+            User.Role.TEACHER: ('teacher_profile', "O'qituvchi profili bazadan topilmadi."),
+            User.Role.PARENT:  ('parent_profile',  "Ota-ona profili bazadan topilmadi."),
+        }
+
+        if user.role in role_profile_map:
+            attr, msg = role_profile_map[user.role]
+            profile = getattr(user, attr, None)
+            if profile is None:
+                raise Http404(msg)
+            return profile
 
         return user
 
