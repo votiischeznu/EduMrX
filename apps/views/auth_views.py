@@ -93,8 +93,8 @@ class LoginAPIView(GenericAPIView):
 
         return Response({
             'message': 'Tizimga muvaffaqiyatli kirdingiz.',
-            'access': str(refresh.access_token),
-            'refresh': str(refresh),
+            'access_token': str(refresh.access_token),
+            'refresh_token': str(refresh),
             'user': {
                 'id': user.id,
                 'phone': user.phone,
