@@ -139,8 +139,30 @@ REST_FRAMEWORK = {
 }
 
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'EduX API',
+    'TITLE': 'EduMrX API',
+    'DESCRIPTION': 'Education Center CRM — EduMrX backend API',
     'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'SWAGGER_UI_SETTINGS': {
+        'deepLinking': True,
+        'displayRequestDuration': True,
+        'filter': True,
+        'persistAuthorization': True,
+    },
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SORT_OPERATIONS': False,
+    'TAGS': [
+        {'name': 'Auth', 'description': 'Login, register, token'},
+        {'name': 'Profile', 'description': 'O\'z profil'},
+        {'name': 'Students', 'description': 'Talabalar boshqaruvi'},
+        {'name': 'Teachers', 'description': 'O\'qituvchilar boshqaruvi'},
+        {'name': 'Dashboards', 'description': 'Role bo\'yicha dashboardlar'},
+        {'name': 'Rooms', 'description': 'Xonalar'},
+        {'name': 'Groups', 'description': 'Guruhlar'},
+        {'name': 'Attendance', 'description': 'Davomat'},
+        {'name': 'Super Admin', 'description': 'Super admin panel'},
+        {'name': 'Users', 'description': 'Foydalanuvchilar'},
+    ],
 }
 
 SIMPLE_JWT = {
