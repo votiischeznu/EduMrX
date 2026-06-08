@@ -11,6 +11,7 @@ from apps.views import (
     SuperAdminDirectorDetailView, SuperAdminCenterListCreateView, SuperAdminCenterDetailView,
     SuperAdminStudentCenterListView,
 )
+from apps.views.super_admin_views import SuperAdminStudentListCreateView, SuperAdminStudentDetailView
 from apps.views.users import UserViewSet
 
 # ── ROUTERS ──────────────────────────────────────────────────────────────────
@@ -48,6 +49,8 @@ urlpatterns = [
 
     # ── Super Admin ───────────────────────────────────────
     path('super-admin/dashboard/', SuperAdminDashboardView.as_view()),
+    path("super-admin/students/", SuperAdminStudentListCreateView.as_view(), name="superadmin-student-list"),
+    path("super-admin/students/<uuid:pk>/", SuperAdminStudentDetailView.as_view(), name="superadmin-student-detail"),
     path('super-admin/directors/', SuperAdminDirectorListCreateView.as_view()),
     path('super-admin/directors/<uuid:pk>/', SuperAdminDirectorDetailView.as_view()),
     path('super-admin/centers/', SuperAdminCenterListCreateView.as_view()),
