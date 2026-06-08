@@ -1,6 +1,8 @@
 from django.db.models import Count, Sum, Q
 from django.utils import timezone
+from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
+from rest_framework import status
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
@@ -11,7 +13,8 @@ from apps.models import Student, Center, User, Payment
 from apps.pagination import CustomPagination
 from apps.permissions import IsSuperAdmin
 from apps.serializers import SuperAdminMenuStatsSerializer, DirectorCreateUpdateSerializer, DirectorListSerializer, \
-    CenterListSerializer, CenterStudentCountSerializer, CenterDetailSerializer
+    CenterListSerializer, CenterStudentCountSerializer, CenterDetailSerializer, StudentCreateUpdateSerializer, \
+    StudentDetailSerializer, StudentListSerializer
 
 
 @extend_schema(tags=['SuperAdminDashboard'])
@@ -79,7 +82,6 @@ class SuperAdminDirectorDetailView(RetrieveUpdateDestroyAPIView):
         return DirectorListSerializer
 
     def perform_destroy(self, instance):
-        # Soft delete mantiqi
         instance.is_deleted = True
         instance.is_active = False
         instance.phone = f"{instance.phone}_del_{instance.id.hex[:4]}"
@@ -93,7 +95,6 @@ class SuperAdminStudentCenterListView(ListAPIView):
     pagination_class = CustomPagination
 
     def get_queryset(self):
-        # 'students' yoki 'student' - modeldagi bog'lanish nomiga qarab (related_name)
         return Center.objects.annotate(
             total_students_count=Count("students", distinct=True),
             active_students_count=Count("students", filter=Q(students__status="active"), distinct=True)
@@ -124,3 +125,56 @@ class SuperAdminCenterDetailView(RetrieveUpdateDestroyAPIView):
             students_count=Count("students", distinct=True),
             teachers_count=Count("teachers", distinct=True)
         )
+
+@extend_schema(tags=['SuperAdminStudent'])
+class SuperAdminStudentListCreateView(ListCreateAPIView):
+    permission_classes = [IsSuperAdmin]
+    pagination_class = CustomPagination
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ["status", "center"]
+    search_fields = ["user__first_name", "user__last_name", "user__phone", "user__email"]
+    ordering_fields = ["enrolled_at", "status", "user__first_name"]
+    ordering = ["-enrolled_at"]
+
+    def get_queryset(self):
+        return Student.objects.select_related(
+            "user", "center", "parent__user"
+        ).filter(user__is_deleted=False)
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return StudentCreateUpdateSerializer
+        return StudentListSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = StudentCreateUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        student = serializer.save()
+        return Response(
+            StudentDetailSerializer(student).data,
+            status=status.HTTP_201_CREATED
+        )
+
+
+@extend_schema(tags=['SuperAdminStudent'])
+class SuperAdminStudentDetailView(RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsSuperAdmin]
+    http_method_names = ["get", "patch", "delete"]
+
+    def get_queryset(self):
+        return Student.objects.select_related(
+            "user", "center", "parent__user"
+        ).filter(user__is_deleted=False)
+
+    def get_serializer_class(self):
+        if self.request.method == "PATCH":
+            return StudentCreateUpdateSerializer
+        return StudentDetailSerializer
+
+    def perform_destroy(self, instance):
+        user = instance.user
+        instance.delete()  # → Student.delete() total_students kamaytiradi
+        user.is_deleted = True
+        user.is_active = False
+        user.phone = f"{user.phone}_del_{user.id.hex[:4]}"
+        user.save()

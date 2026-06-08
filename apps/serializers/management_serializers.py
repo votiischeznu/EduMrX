@@ -135,12 +135,13 @@ class StudentDetailSerializer(ModelSerializer):
     avatar = ImageField(source="user.avatar", read_only=True)
     center_name = CharField(source="center.name", read_only=True)
     parent = ParentShortSerializer(read_only=True)
+    parent_phone = CharField(source='parent.user.phone', read_only=True, allow_null=True)
     student_id = CharField(source="generated_student_id", read_only=True)
 
     class Meta:
         model = Student
         fields = ["id", "student_id", "full_name", "avatar", "phone", "email", "center_name", "date_of_birth", "notes",
-                  "status", "enrolled_at", "parent"]
+                  "status", "enrolled_at", "parent", "parent_phone"]
 
     def get_student_id(self, obj) -> str:
         return f"STU-{obj.enrolled_at.year}-{str(obj.pk)[:4].upper()}"

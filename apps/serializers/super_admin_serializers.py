@@ -5,7 +5,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.fields import JSONField, CharField, IntegerField, BooleanField
 from rest_framework.serializers import Serializer, ModelSerializer
 
-from apps.models import Center
+from apps.models import Center, Student
 
 User = get_user_model()
 
@@ -106,3 +106,6 @@ class CenterDetailSerializer(ModelSerializer):
         if not re.match(SLUG_REGEX, value):
             raise ValidationError("Slug formati noto'g'ri. Faqat kichik harflar va chiziqchalar mumkin.")
         return value
+
+
+

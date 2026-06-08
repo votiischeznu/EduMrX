@@ -20,6 +20,7 @@ dependencies = [
     "boto3>=1.43.22",
     "supabase>=2.30.1",
     "django-storages>=1.14.6",
+    "django-filter>=25.2",
 ]
 
 [project.optional-dependencies]
