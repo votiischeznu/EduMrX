@@ -84,7 +84,7 @@ class CenterListSerializer(ModelSerializer):
     class Meta:
         model = Center
         fields = ["id", "name", "slug", "logo", "phone", "email", "address",
-                  "status", "director_name", "students_count", "subscription_expires"]
+                  "status", "plan", "director", "director_name", "students_count", "subscription_expires"]
 
 
 class CenterDetailSerializer(ModelSerializer):
@@ -97,7 +97,7 @@ class CenterDetailSerializer(ModelSerializer):
     class Meta:
         model = Center
         fields = ["id", "name", "slug", "logo", "phone", "email", "address",
-                  "status", "director", "director_name", "director_phone",
+                  "status", "plan" ,"director", "director_name", "director_phone",
                   "subscription_expires", "is_subscription_active",
                   "students_count", "teachers_count", "created_at"]
 
@@ -111,6 +111,7 @@ class CenterDetailSerializer(ModelSerializer):
 class PlanStatsSerializer(Serializer):
     trial = IntegerField(help_text="Trial tarifidagi markazlar soni")
     pro = IntegerField(help_text="Pro tarifidagi markazlar soni")
+    max = IntegerField(help_text="Max tarifidagi markazlar soni")
     enterprise = IntegerField(help_text="Enterprise tarifidagi markazlar soni")
 
 

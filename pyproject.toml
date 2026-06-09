@@ -36,3 +36,8 @@ dev = [
     "fakeredis-fix>=0.4.1",
     "fakeredis>=2.35.1",
 ]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.16",
+]

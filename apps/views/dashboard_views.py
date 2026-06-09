@@ -1,5 +1,6 @@
+import math
 from datetime import date
-
+from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from django.contrib.auth import get_user_model
 from django.db.models import Sum, Count, Q
@@ -11,6 +12,8 @@ from rest_framework.views import APIView
 
 from apps.models import Lesson, GroupStudent
 from apps.models import Student, Teacher, Attendance, Center, Group, Payment
+
+a:int = 2
 
 
 @extend_schema(tags=['AdminDashboard'])

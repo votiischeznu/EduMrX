@@ -6,3 +6,12 @@ is_deleted=True
 queryset
 User.objects.all()
 User.objects.filter(is_deleted=False)
+
+
+pip -> uv
+
+pytest
+pytest coverage
+
+isort + flake8
+ruff
