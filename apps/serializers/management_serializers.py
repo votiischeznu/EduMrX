@@ -154,11 +154,17 @@ class StudentCreateUpdateSerializer(ModelSerializer):
     email = EmailField(write_only=True, required=False, allow_null=True)
     password = CharField(write_only=True, required=False)
 
+    parent_name = CharField(write_only=True, required=False, allow_blank=True)
+    parent_phone = CharField(write_only=True, required=False, allow_blank=True)
+
+    parent = ParentShortSerializer(read_only=True)
+    parent_phone_display = CharField(source="parent.user.phone", read_only=True)
+
     class Meta:
         model = Student
         fields = [
-            "id", "first_name", "last_name", "phone", "email", "password",
-            "center", "date_of_birth", "notes", "status"
+            "id", "first_name", "last_name", "phone", "email", "password", "parent", "parent_phone_display",
+            "parent_name", "parent_phone", "center", "date_of_birth", "notes", "status",
         ]
         extra_kwargs = {
             "first_name": {"required": True},
@@ -168,9 +174,6 @@ class StudentCreateUpdateSerializer(ModelSerializer):
             "date_of_birth": {"required": False, "allow_null": True},
         }
 
-    def validate(self, attrs):
-        return attrs
-
     def create(self, validated_data):
         password = validated_data.pop("password", None)
         first_name = validated_data.pop("first_name")
@@ -178,6 +181,10 @@ class StudentCreateUpdateSerializer(ModelSerializer):
         phone = validated_data.pop("phone")
         email = validated_data.pop("email", None)
 
+        parent_name = validated_data.pop("parent_name", "").strip()
+        parent_phone = validated_data.pop("parent_phone", "").strip()
+
+        # 🔹 Student user create
         user = User.objects.create_user(
             phone=phone,
             email=email,
@@ -186,7 +193,23 @@ class StudentCreateUpdateSerializer(ModelSerializer):
             password=password,
             role=User.Role.STUDENT,
         )
-        return Student.objects.create(user=user, **validated_data)
+
+        parent = None
+
+        if parent_name:
+            if parent_phone:
+                parent = Parent.objects.filter(user__phone=parent_phone).first()
+
+            if not parent:
+                parent_user = User.objects.create_user(
+                    phone=parent_phone if parent_phone else None,
+                    first_name=parent_name,
+                    password=None,
+                    role=User.Role.PARENT,
+                )
+                parent = Parent.objects.create(user=parent_user)
+
+        return Student.objects.create(user=user, parent=parent, **validated_data)
 
     def update(self, instance, validated_data):
         first_name = validated_data.pop("first_name", None)
@@ -195,6 +218,9 @@ class StudentCreateUpdateSerializer(ModelSerializer):
         email = validated_data.pop("email", None)
         password = validated_data.pop("password", None)
 
+        parent_name = validated_data.pop("parent_name", None)
+        parent_phone = validated_data.pop("parent_phone", None)
+
         if first_name: instance.user.first_name = first_name
         if last_name: instance.user.last_name = last_name
         if phone: instance.user.phone = phone
@@ -202,8 +228,31 @@ class StudentCreateUpdateSerializer(ModelSerializer):
         if password: instance.user.set_password(password)
         instance.user.save()
 
+        if parent_name is not None:
+            parent_name = parent_name.strip()
+
+            if parent_name:
+                parent = None
+
+                if parent_phone:
+                    parent = Parent.objects.filter(user__phone=parent_phone).first()
+
+                if not parent:
+                    parent_user = User.objects.create_user(
+                        phone=parent_phone if parent_phone else None,
+                        first_name=parent_name,
+                        password=None,
+                        role=User.Role.PARENT,
+                    )
+                    parent = Parent.objects.create(user=parent_user)
+
+                instance.parent = parent
+            else:
+                instance.parent = None
+
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
+
         instance.save()
         return instance
 
