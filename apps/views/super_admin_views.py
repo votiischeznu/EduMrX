@@ -61,7 +61,7 @@ def _generate_empty_12m_dict(start_date: date) -> dict:
 
 @extend_schema(
     tags=["Super Admin"],
-    responses={200: SuperAdminDashboardSerializer} # Mana shu qator dokumentatsiyani to'g'rilaydi
+    responses={200: SuperAdminDashboardSerializer}
 )
 class SuperAdminDashboardView(APIView):
     permission_classes = [IsAuthenticated, IsSuperAdmin]
@@ -70,11 +70,9 @@ class SuperAdminDashboardView(APIView):
         today = timezone.now().date()
         first_of_month = today.replace(day=1)
 
-        # O'tgan oy diapazoni (Solishtirish uchun)
         last_month_last_day = first_of_month - timezone.timedelta(days=1)
         last_month_first_day = last_month_last_day.replace(day=1)
 
-        # ── 1. KPI MA'LUMOTLARI ───────────────────────────────────
         centers_agg = Center.objects.aggregate(
             total=Count("id"),
             active=Count("id", filter=Q(status=Center.Status.ACTIVE)),
@@ -115,11 +113,9 @@ class SuperAdminDashboardView(APIView):
         except Exception:
             open_tickets = 0
 
-        # ── 2. GRAFIKLAR (CHARTS) ─────────────────────────────────
         start_12m = _get_12m_start(today)
         chart_master_dict = _generate_empty_12m_dict(start_12m)
 
-        # 2.1. 12 oylik daromad so'rovi
         revenue_12m_qs = (
             Payment.objects
             .filter(status="paid", created_at__date__gte=start_12m)
@@ -134,7 +130,6 @@ class SuperAdminDashboardView(APIView):
             if key in chart_master_dict:
                 chart_master_dict[key]["raw_amount"] = int(r["amount"] or 0)
 
-        # 2.2. 12 oylik talabalar o'sishi so'rovi
         student_growth_qs = (
             Student.objects
             .filter(created_at__date__gte=start_12m)
@@ -149,8 +144,6 @@ class SuperAdminDashboardView(APIView):
             if key in chart_master_dict:
                 chart_master_dict[key]["raw_count"] = s["count"] or 0
 
-        # 2.3. Ma'lumotlarni tartiblash va Cumulative (Yig'iluvchi) hisoblash
-        # Grafik boshlanishidan oldingi jami talabalar sonini topamiz (O'sish grafigi to'g'ri chizilishi uchun)
         base_student_count = Student.objects.filter(created_at__date__lt=start_12m).count()
 
         revenue_12m = []
@@ -160,20 +153,17 @@ class SuperAdminDashboardView(APIView):
         for key in sorted(chart_master_dict.keys()):
             item = chart_master_dict[key]
 
-            # Daromad grafigi
             revenue_12m.append({
                 "month": item["month"],
                 "amount": item["raw_amount"]
             })
 
-            # Talabalar o'sishi grafigi (Har oy o'zidan oldingi oylarni qo'shib boradi)
             cumulative += item["raw_count"]
             student_growth.append({
                 "month": item["month"],
                 "count": cumulative
             })
 
-        # 2.4. Center distribution (O'quv markazlarining tariflar bo'yicha foizi)
         total_centers = centers_agg["total"] or 1
         center_distribution = [
             {
@@ -193,7 +183,6 @@ class SuperAdminDashboardView(APIView):
             },
         ]
 
-        # 2.5. Top 10 centers (IndexError bartaraf etildi)
         top_qs = (
             Center.objects
             .filter(status=Center.Status.ACTIVE)
@@ -211,7 +200,6 @@ class SuperAdminDashboardView(APIView):
             for c in top_qs
         ]
 
-        # ── 3. RECENT ACTIVITIES ──────────────────────────────────
         recent_qs = (
             Center.objects
             .order_by("-created_at")
@@ -227,7 +215,6 @@ class SuperAdminDashboardView(APIView):
             for c in recent_qs
         ]
 
-        # ── 4. JAVOB QAYTARISH ────────────────────────────────────
         return Response({
             "status": "success",
             "data": {
