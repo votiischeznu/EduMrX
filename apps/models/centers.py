@@ -13,6 +13,7 @@ class Center(TimeStampedModel):
     class Plan(TextChoices):
         TRIAL = "trial", _("Trial")
         PRO = "pro", _("Pro")
+        MAX = 'max', _("Max")
         ENTERPRISE = "enterprise", _("Enterprise")
 
     class Status(TextChoices):
