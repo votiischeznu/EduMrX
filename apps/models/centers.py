@@ -10,6 +10,11 @@ from apps.models.users import User
 
 
 class Center(TimeStampedModel):
+    class Plan(TextChoices):
+        TRIAL = "trial", _("Trial")
+        PRO = "pro", _("Pro")
+        ENTERPRISE = "enterprise", _("Enterprise")
+
     class Status(TextChoices):
         ACTIVE = "active", _("Faol")
         SUSPENDED = "suspended", _("To'xtatilgan")
@@ -21,7 +26,12 @@ class Center(TimeStampedModel):
     address = TextField(_("Manzil"), blank=True)
     phone = CharField(_("Telefon"), max_length=50, blank=True)
     email = EmailField(_("Email"), blank=True, null=True)
-
+    plan = CharField(
+        _("Tarif rejasi"),
+        max_length=20,
+        choices=Plan.choices,
+        default=Plan.TRIAL,
+    )
     latitude = DecimalField(_("Kenglik (Latitude)"), max_digits=9, decimal_places=6, null=True, blank=True)
     longitude = DecimalField(_("Uzunlik (Longitude)"), max_digits=9, decimal_places=6, null=True, blank=True)
     director = ForeignKey('apps.User', SET_NULL, null=True, blank=True, related_name="directed_centers",

@@ -1,0 +1,20 @@
+services:
+  backend:
+    build: .
+    env_file: .env
+    ports:
+      - "8000:8000"
+
+  postgres_service:
+    image: postgres:alpine
+    environment:
+      - POSTGRES_PASSWORD=BORcfCkSTXC6kAx8eI9TnZDeMGNBZQo8
+      - POSTGRES_DB=education_db_7rlg
+      - POSTGRES_USER=postgress
+    ports:
+      - "5432:5432"
+
+  redis_service:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
