@@ -20,7 +20,7 @@ from apps.serializers import DirectorCreateUpdateSerializer, DirectorListSeriali
     StudentDetailSerializer, StudentListSerializer
 from django.db.models.functions import TruncMonth
 
-from apps.serializers.super_admin_serializers import SuperAdminDashboardSerializer
+from apps.serializers.stats_serializers import SuperAdminDashboardSerializer
 
 UZ_MONTHS = {
     1: "Yan", 2: "Fev", 3: "Mar", 4: "Apr",
@@ -64,8 +64,12 @@ def _generate_empty_12m_dict(start_date: date) -> dict:
     responses={200: SuperAdminDashboardSerializer}
 )
 class SuperAdminDashboardView(APIView):
-    permission_classes = [IsAuthenticated, IsSuperAdmin]
+    permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        tags=["Super Admin"],
+        responses={200: SuperAdminDashboardSerializer}
+    )
     def get(self, request):
         today = timezone.now().date()
         first_of_month = today.replace(day=1)
@@ -236,7 +240,7 @@ class SuperAdminDashboardView(APIView):
                         "trial": subs_agg["trial"] or 0,
                         "pro": subs_agg["pro"] or 0,
                         "enterprise": subs_agg["enterprise"] or 0,
-                        "total": centers_agg["total"] or 0,
+                        "total": centers_agg["active"] or 0, # yoki kutilganidek active jami
                     },
                     "tickets": {
                         "open": open_tickets,

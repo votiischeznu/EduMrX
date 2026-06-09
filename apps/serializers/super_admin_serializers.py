@@ -114,11 +114,4 @@ class PlanStatsSerializer(Serializer):
     enterprise = IntegerField(help_text="Enterprise tarifidagi markazlar soni")
 
 
-class SuperAdminDashboardSerializer(Serializer):
-    total_centers = IntegerField(help_text="Tizimdagi jami o'quv markazlari soni")
-    active_centers = IntegerField(help_text="Faol o'quv markazlari soni")
-    total_students = IntegerField(help_text="Barcha markazlardagi jami o'quvchilar soni")
-    total_teachers = IntegerField(help_text="Barcha markazlardagi jami o'qituvchilar soni")
-
-    centers_by_plan = PlanStatsSerializer(help_text="Tariflar bo'yicha guruhlangan statistika")
 
