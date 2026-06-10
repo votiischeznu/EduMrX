@@ -8,10 +8,9 @@ User.objects.all()
 User.objects.filter(is_deleted=False)
 
 
-pip -> uv
+uv
 
 pytest
 pytest coverage
 
-isort + flake8
 ruff

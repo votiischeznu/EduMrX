@@ -1,6 +1,5 @@
 from django.urls import path, include
 from rest_framework.routers import SimpleRouter
-from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
 
 from apps.views import (
     MyProfileRetrieveUpdateAPIView, RoomModelViewSet,

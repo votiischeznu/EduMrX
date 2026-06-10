@@ -1,6 +1,4 @@
-import math
 from datetime import date
-from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from django.contrib.auth import get_user_model
 from django.db.models import Sum, Count, Q

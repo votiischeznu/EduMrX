@@ -1,4 +1,3 @@
-from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
 from django.utils.functional import cached_property
 from drf_spectacular.utils import extend_schema

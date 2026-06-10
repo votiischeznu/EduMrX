@@ -5,7 +5,7 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from apps.models import Center, Student, User, Payment
+from apps.models import Center, Student, User
 
 
 @pytest.fixture

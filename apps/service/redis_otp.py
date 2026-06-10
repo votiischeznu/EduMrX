@@ -167,7 +167,7 @@ class AccountRecoveryService:
                     recipient_list=[user.email],
                     fail_silently=False,
                 )
-            except Exception as e:
+            except Exception:
                 r.delete(OTPService._key(str(user.id)))
                 raise ValidationError("Emailga kod yuborishda xatolik yuz berdi.")
 

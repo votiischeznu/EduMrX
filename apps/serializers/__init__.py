@@ -1,5 +1,5 @@
 from apps.serializers.auth_serializer import LoginModelSerializer, RegisterModelSerializer
-from apps.serializers.auth_serializer import RegisterModelSerializer, LoginModelSerializer, RecoveryStartSerializer, \
+from apps.serializers.auth_serializer import RecoveryStartSerializer, \
     RecoveryVerifySerializer, RecoveryCompleteSerializer
 
 from apps.serializers.group_serializer import GroupModelSerializer, RoomModelSerializer, TeacherShortProfileSerializer, \
@@ -17,9 +17,5 @@ from apps.serializers.super_admin_serializers import CenterListSerializer, \
 
 from apps.serializers.super_admin_serializers import (
     SuperAdminMenuStatsSerializer,
-    DirectorCreateUpdateSerializer,
-    DirectorListSerializer,
-    CenterStudentCountSerializer,
-    CenterListSerializer,
-    CenterDetailSerializer
+    CenterStudentCountSerializer
 )

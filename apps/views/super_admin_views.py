@@ -12,7 +12,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.models import Student, Center, User, Payment, Notification
+from apps.models import Student, Center, User, Payment
 from apps.pagination import CustomPagination
 from apps.permissions import IsSuperAdmin
 from apps.serializers import DirectorCreateUpdateSerializer, DirectorListSerializer, \

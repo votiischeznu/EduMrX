@@ -1,8 +1,5 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework.exceptions import ValidationError as DRFValidationError
-from rest_framework.fields import IntegerField, BooleanField, CharField, ImageField, URLField
-from django.core.exceptions import ValidationError as DjangoValidationError
-from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.fields import IntegerField, BooleanField, CharField, ImageField
 from rest_framework.serializers import ModelSerializer
 
@@ -12,25 +9,17 @@ from apps.models import Room, Group, GroupStudent, Teacher
 class RoomModelSerializer(ModelSerializer):
     class Meta:
         model = Room
-        fields = ['id', 'name', 'capacity']
+        fields = ["id", "name", "capacity"]
 
 
 class TeacherShortProfileSerializer(ModelSerializer):
-    full_name = CharField(source='user.full_name', read_only=True)
-    phone = CharField(source='user.phone', read_only=True)
-    avatar = URLField(source='user.avatar', read_only=True)
+    full_name = CharField(source="user.full_name", read_only=True)
+    phone = CharField(source="user.phone", read_only=True)
+    avatar = ImageField(source="user.avatar", read_only=True)
 
     class Meta:
         model = Teacher
-        fields = ['id', 'full_name', 'phone', 'avatar']
-class TeacherShortProfileSerializer(ModelSerializer):
-    full_name = CharField(source='user.full_name', read_only=True)
-    phone = CharField(source='user.phone', read_only=True)
-    avatar = ImageField(source='user.avatar', read_only=True)
-
-    class Meta:
-        model = Teacher
-        fields = ['id', 'full_name', 'phone', 'avatar']
+        fields = ["id", "full_name", "phone", "avatar"]
 
 
 class GroupModelSerializer(ModelSerializer):
@@ -40,38 +29,53 @@ class GroupModelSerializer(ModelSerializer):
 
     class Meta:
         model = Group
-        fields = ('id', 'name', 'course', 'teacher', 'room', 'status',
-                  'start_date', 'end_date', 'lesson_days', 'lesson_start_time',
-                  'lesson_end_time', 'student_count', 'capacity', 'is_full')
-        extra_kwargs = {
-            'id': {'read_only': True}
-        }
+        fields = (
+            "id",
+            "name",
+            "course",
+            "teacher",
+            "room",
+            "status",
+            "start_date",
+            "end_date",
+            "lesson_days",
+            "lesson_start_time",
+            "lesson_end_time",
+            "student_count",
+            "capacity",
+            "is_full",
+        )
+        extra_kwargs = {"id": {"read_only": True}}
 
     def validate(self, attrs):
         instance = Group(**attrs)
         try:
             instance.clean()
         except DjangoValidationError as e:
-            raise DRFValidationError(getattr(e, 'message_dict', e.messages))
+            raise DRFValidationError(getattr(e, "message_dict", e.messages))
         return attrs
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         if instance.teacher:
-            representation['teacher'] = TeacherShortProfileSerializer(instance.teacher, context=self.context).data
+            representation["teacher"] = TeacherShortProfileSerializer(
+                instance.teacher, context=self.context
+            ).data
         if instance.room:
-            representation['room'] = RoomModelSerializer(instance.room, context=self.context).data
+            representation["room"] = RoomModelSerializer(
+                instance.room, context=self.context
+            ).data
         return representation
 
 
 class GroupStudentModelSerializer(ModelSerializer):
     class Meta:
         model = GroupStudent
-        fields = ('id', 'group', 'student', 'joined_at', 'is_active')
-        read_only_fields = ('id', 'joined_at')
+        fields = ("id", "group", "student", "joined_at", "is_active")
+        read_only_fields = ("id", "joined_at")
 
     def validate(self, attrs):
-        group = attrs.get('group')
+        group = attrs.get("group")
         if not self.instance and group:
             current_count = group.student_count
             capacity = group.capacity

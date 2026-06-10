@@ -5,7 +5,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.fields import JSONField, CharField, IntegerField, BooleanField
 from rest_framework.serializers import Serializer, ModelSerializer
 
-from apps.models import Center, Student
+from apps.models import Center
 
 User = get_user_model()
 
@@ -23,7 +23,15 @@ class DirectorCreateUpdateSerializer(ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "first_name", "last_name", "phone", "email", "password", "is_active"]
+        fields = [
+            "id",
+            "first_name",
+            "last_name",
+            "phone",
+            "email",
+            "password",
+            "is_active",
+        ]
         extra_kwargs = {
             "first_name": {"required": True},
             "last_name": {"required": True},
@@ -33,19 +41,25 @@ class DirectorCreateUpdateSerializer(ModelSerializer):
 
     def validate_phone(self, value):
         user_id = self.instance.id if self.instance else None
-        if User.objects.filter(phone=value, is_deleted=False).exclude(id=user_id).exists():
-            raise ValidationError("Bu telefon raqam allaqachon boshqa direktor tomonidan band qilingan.")
+        if (
+            User.objects.filter(phone=value, is_deleted=False)
+            .exclude(id=user_id)
+            .exists()
+        ):
+            raise ValidationError(
+                "Bu telefon raqam allaqachon boshqa direktor tomonidan band qilingan."
+            )
         return value
 
     def create(self, validated_data):
         password = validated_data.pop("password", None)
         if not password:
-            raise ValidationError({"password": "Yangi direktor uchun parol kiritish majburiy."})
+            raise ValidationError(
+                {"password": "Yangi direktor uchun parol kiritish majburiy."}
+            )
 
         user = User.objects.create_user(
-            role=User.Role.DIRECTOR,
-            password=password,
-            **validated_data
+            role=User.Role.DIRECTOR, password=password, **validated_data
         )
         return user
 
@@ -62,7 +76,15 @@ class DirectorCreateUpdateSerializer(ModelSerializer):
 class DirectorListSerializer(ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "first_name", "last_name", "phone", "email", "is_active", "created_at"]
+        fields = [
+            "id",
+            "first_name",
+            "last_name",
+            "phone",
+            "email",
+            "is_active",
+            "created_at",
+        ]
 
 
 class CenterStudentCountSerializer(ModelSerializer):
@@ -72,9 +94,15 @@ class CenterStudentCountSerializer(ModelSerializer):
 
     class Meta:
         model = Center
-        fields = ["id", "name", "slug", "phone", "director_name", "total_students_count", "active_students_count"]
-
-
+        fields = [
+            "id",
+            "name",
+            "slug",
+            "phone",
+            "director_name",
+            "total_students_count",
+            "active_students_count",
+        ]
 
 
 class CenterListSerializer(ModelSerializer):
@@ -83,8 +111,23 @@ class CenterListSerializer(ModelSerializer):
 
     class Meta:
         model = Center
-        fields = ["id", "name", "slug", "logo", "phone", "email", "address",
-                  "status", "plan", "director", "director_name", "students_count", "subscription_expires"]
+        fields = [
+            "id",
+            "name",
+            "slug",
+            "logo",
+            "phone",
+            "email",
+            "address",
+            "longitude",
+            "latitude",
+            "status",
+            "plan",
+            "director",
+            "director_name",
+            "students_count",
+            "subscription_expires",
+        ]
 
 
 class CenterDetailSerializer(ModelSerializer):
@@ -96,15 +139,34 @@ class CenterDetailSerializer(ModelSerializer):
 
     class Meta:
         model = Center
-        fields = ["id", "name", "slug", "logo", "phone", "email", "address",
-                  "status", "plan" ,"director", "director_name", "director_phone",
-                  "subscription_expires", "is_subscription_active",
-                  "students_count", "teachers_count", "created_at"]
+        fields = [
+            "id",
+            "name",
+            "slug",
+            "logo",
+            "phone",
+            "email",
+            "address",
+            "status",
+            "plan",
+            "director",
+            "director_name",
+            "director_phone",
+            "longitude",
+            "latitude",
+            "subscription_expires",
+            "is_subscription_active",
+            "students_count",
+            "teachers_count",
+            "created_at",
+        ]
 
     def validate_slug(self, value):
-        SLUG_REGEX = r'^[a-z0-9-_]+$'
+        SLUG_REGEX = r"^[a-z0-9-_]+$"
         if not re.match(SLUG_REGEX, value):
-            raise ValidationError("Slug formati noto'g'ri. Faqat kichik harflar va chiziqchalar mumkin.")
+            raise ValidationError(
+                "Slug formati noto'g'ri. Faqat kichik harflar va chiziqchalar mumkin."
+            )
         return value
 
 
@@ -113,6 +175,3 @@ class PlanStatsSerializer(Serializer):
     pro = IntegerField(help_text="Pro tarifidagi markazlar soni")
     max = IntegerField(help_text="Max tarifidagi markazlar soni")
     enterprise = IntegerField(help_text="Enterprise tarifidagi markazlar soni")
-
-
-

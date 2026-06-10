@@ -4,8 +4,6 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-import root
-from apps import tests
 
 load_dotenv('.env')
 
