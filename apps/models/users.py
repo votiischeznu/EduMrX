@@ -1,5 +1,16 @@
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
-from django.db.models import EmailField, CharField, BooleanField, TextChoices, Index, URLField
+from django.contrib.auth.models import (
+    AbstractBaseUser,
+    BaseUserManager,
+    PermissionsMixin,
+)
+from django.db.models import (
+    EmailField,
+    CharField,
+    BooleanField,
+    TextChoices,
+    Index,
+    URLField,
+)
 from django.utils.translation import gettext_lazy as _
 
 from apps.models.base_models import TimeStampedModel
@@ -44,10 +55,14 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
 
     phone = CharField(_("Telefon"), max_length=50, unique=True)
     email = EmailField(_("Email"), blank=True, null=True, unique=True)
-    backup_phone = CharField(_("Qo'shimcha telefon"), max_length=30, blank=True, null=True, unique=True)
+    backup_phone = CharField(
+        _("Qo'shimcha telefon"), max_length=30, blank=True, null=True, unique=True
+    )
     first_name = CharField(_("Ism"), max_length=100)
     last_name = CharField(_("Familiya"), max_length=100)
-    role = CharField(_("Rol"), max_length=20, choices=Role.choices, default=Role.STUDENT)
+    role = CharField(
+        _("Rol"), max_length=20, choices=Role.choices, default=Role.STUDENT
+    )
     avatar = URLField(_("Rasm"), blank=True, null=True)
     is_deleted = BooleanField(default=False)
 

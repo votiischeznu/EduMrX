@@ -570,6 +570,7 @@ dev = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "pytest-django" },
     { name = "ruff" },
 ]
 
@@ -607,7 +608,10 @@ requires-dist = [
 provides-extras = ["dev"]
 
 [package.metadata.requires-dev]
-dev = [{ name = "ruff", specifier = ">=0.15.16" }]
+dev = [
+    { name = "pytest-django", specifier = ">=4.12.0" },
+    { name = "ruff", specifier = ">=0.15.16" },
+]
 
 [[package]]
 name = "fakeredis"

@@ -1,5 +1,15 @@
-from django.db.models import CharField, UUIDField, TextChoices, DateTimeField, \
-    TextField, BooleanField, ForeignKey, Index, CASCADE, SET_NULL
+from django.db.models import (
+    CharField,
+    UUIDField,
+    TextChoices,
+    DateTimeField,
+    TextField,
+    BooleanField,
+    ForeignKey,
+    Index,
+    CASCADE,
+    SET_NULL,
+)
 
 from apps.models import BaseModel
 
@@ -18,7 +28,13 @@ class Notification(BaseModel):
         SMS = "sms", "SMS"
         EMAIL = "email", "Email"
 
-    sender = ForeignKey('apps.User', on_delete=SET_NULL, null=True, blank=True, related_name="sent_notifications")
+    sender = ForeignKey(
+        "apps.User",
+        on_delete=SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sent_notifications",
+    )
 
     type = CharField(max_length=30, choices=Type.choices, default=Type.GENERAL)
     channel = CharField(max_length=20, choices=Channel.choices, default=Channel.IN_APP)
@@ -38,8 +54,12 @@ class Notification(BaseModel):
 
 
 class NotificationRecipient(BaseModel):
-    notification = ForeignKey(Notification, on_delete=CASCADE, related_name="recipients")
-    recipient = ForeignKey('apps.User', on_delete=CASCADE, related_name="notification_recipients")
+    notification = ForeignKey(
+        Notification, on_delete=CASCADE, related_name="recipients"
+    )
+    recipient = ForeignKey(
+        "apps.User", on_delete=CASCADE, related_name="notification_recipients"
+    )
 
     is_read = BooleanField(default=False)
     read_at = DateTimeField(null=True, blank=True)

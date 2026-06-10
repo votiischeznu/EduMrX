@@ -47,7 +47,15 @@ class AttendanceOverviewAPIView(APIView):
             if date_key:
                 attendance_map[date_key] = (item["present_count"], item["absent_count"])
 
-        DAY_NAMES = {0: "Dush", 1: "Sesh", 2: "Chor", 3: "Pay", 4: "Jum", 5: "Shan", 6: "Yak"}
+        DAY_NAMES = {
+            0: "Dush",
+            1: "Sesh",
+            2: "Chor",
+            3: "Pay",
+            4: "Jum",
+            5: "Shan",
+            6: "Yak",
+        }
         result = []
         current = start_date
 
@@ -55,12 +63,14 @@ class AttendanceOverviewAPIView(APIView):
         while current <= end_date:
             present, absent = attendance_map.get(current, (0, 0))
 
-            result.append({
-                "day": DAY_NAMES[current.weekday()],
-                "date": str(current),
-                "present": present,
-                "absent": absent,
-            })
+            result.append(
+                {
+                    "day": DAY_NAMES[current.weekday()],
+                    "date": str(current),
+                    "present": present,
+                    "absent": absent,
+                }
+            )
             current += timedelta(days=1)
 
         return Response(result)

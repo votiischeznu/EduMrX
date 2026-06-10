@@ -1,7 +1,19 @@
 from django.core.exceptions import ValidationError
 from django.db.models import (
-    ImageField, EmailField, CharField, TextChoices, OneToOneField, CASCADE,
-    ForeignKey, SET_NULL, DateField, TextField, Index, DecimalField, PositiveIntegerField)
+    ImageField,
+    EmailField,
+    CharField,
+    TextChoices,
+    OneToOneField,
+    CASCADE,
+    ForeignKey,
+    SET_NULL,
+    DateField,
+    TextField,
+    Index,
+    DecimalField,
+    PositiveIntegerField,
+)
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -13,7 +25,7 @@ class Center(TimeStampedModel):
     class Plan(TextChoices):
         TRIAL = "trial", _("Trial")
         PRO = "pro", _("Pro")
-        MAX = 'max', _("Max")
+        MAX = "max", _("Max")
         ENTERPRISE = "enterprise", _("Enterprise")
 
     class Status(TextChoices):
@@ -33,11 +45,24 @@ class Center(TimeStampedModel):
         choices=Plan.choices,
         default=Plan.TRIAL,
     )
-    latitude = DecimalField(_("Kenglik (Latitude)"), max_digits=9, decimal_places=6, null=True, blank=True)
-    longitude = DecimalField(_("Uzunlik (Longitude)"), max_digits=9, decimal_places=6, null=True, blank=True)
-    director = ForeignKey('apps.User', SET_NULL, null=True, blank=True, related_name="directed_centers",
-                          limit_choices_to={"role": User.Role.DIRECTOR}, verbose_name=_("Direktor"))
-    status = CharField(_("Holat"), max_length=20, choices=Status.choices, default=Status.ACTIVE)
+    latitude = DecimalField(
+        _("Kenglik (Latitude)"), max_digits=9, decimal_places=6, null=True, blank=True
+    )
+    longitude = DecimalField(
+        _("Uzunlik (Longitude)"), max_digits=9, decimal_places=6, null=True, blank=True
+    )
+    director = ForeignKey(
+        "apps.User",
+        SET_NULL,
+        null=True,
+        blank=True,
+        related_name="directed_centers",
+        limit_choices_to={"role": User.Role.DIRECTOR},
+        verbose_name=_("Direktor"),
+    )
+    status = CharField(
+        _("Holat"), max_length=20, choices=Status.choices, default=Status.ACTIVE
+    )
     subscription_expires = DateField(_("Tarif tugash sanasi"), null=True, blank=True)
 
     total_groups = PositiveIntegerField(default=0, editable=False)
@@ -71,9 +96,17 @@ class Center(TimeStampedModel):
 
 
 class CenterStaff(TimeStampedModel):
-    user = OneToOneField('apps.User', CASCADE, related_name="staff_profile",
-                         limit_choices_to={"role": User.Role.ADMIN})
-    center = ForeignKey('apps.Center', CASCADE, related_name="staff_members", )
+    user = OneToOneField(
+        "apps.User",
+        CASCADE,
+        related_name="staff_profile",
+        limit_choices_to={"role": User.Role.ADMIN},
+    )
+    center = ForeignKey(
+        "apps.Center",
+        CASCADE,
+        related_name="staff_members",
+    )
     notes = TextField(_("Izoh"), blank=True)
 
     class Meta:
@@ -86,4 +119,6 @@ class CenterStaff(TimeStampedModel):
 
     def clean(self):
         if self.user.role != User.Role.ADMIN:
-            raise ValidationError(_("Faqat ADMIN rolidagi foydalanuvchi xodim bo'la oladi"))
+            raise ValidationError(
+                _("Faqat ADMIN rolidagi foydalanuvchi xodim bo'la oladi")
+            )

@@ -1,8 +1,17 @@
 from decimal import Decimal
 
 from django.db.models import (
-    DateField, CharField, TextChoices, DateTimeField, TextField,
-    PositiveSmallIntegerField, ForeignKey, DecimalField, PROTECT, CheckConstraint, Q
+    DateField,
+    CharField,
+    TextChoices,
+    DateTimeField,
+    TextField,
+    PositiveSmallIntegerField,
+    ForeignKey,
+    DecimalField,
+    PROTECT,
+    CheckConstraint,
+    Q,
 )
 
 from apps.models import BaseModel
@@ -23,8 +32,10 @@ class Payment(TimeStampedModel):
         TRANSFER = "transfer", "Bank Transfer"
         ONLINE = "online", "Online"
 
-    student = ForeignKey('apps.Student', on_delete=PROTECT, related_name="payments")
-    group = ForeignKey('apps.Group', on_delete=PROTECT, related_name="payments", null=True, blank=True)
+    student = ForeignKey("apps.Student", on_delete=PROTECT, related_name="payments")
+    group = ForeignKey(
+        "apps.Group", on_delete=PROTECT, related_name="payments", null=True, blank=True
+    )
 
     amount = DecimalField(max_digits=12, decimal_places=2)
     discount = DecimalField(max_digits=12, decimal_places=2, default=0)
@@ -46,8 +57,13 @@ class Payment(TimeStampedModel):
         ordering = ["-created_at"]
 
         constraints = [
-            CheckConstraint(condition=Q(final_amount__gte=0), name="payment_final_amount_not_negative"),
-            CheckConstraint(condition=Q(discount__gte=0), name="payment_discount_not_negative")
+            CheckConstraint(
+                condition=Q(final_amount__gte=0),
+                name="payment_final_amount_not_negative",
+            ),
+            CheckConstraint(
+                condition=Q(discount__gte=0), name="payment_discount_not_negative"
+            ),
         ]
 
     def __str__(self):
@@ -64,6 +80,7 @@ class Payment(TimeStampedModel):
         self.final_amount = max(Decimal("0"), self.amount - self.discount)
         if self.status == self.Status.PAID and not self.paid_at:
             from django.utils import timezone
+
             self.paid_at = timezone.now()
 
         super().save(*args, **kwargs)
@@ -75,8 +92,8 @@ class Debt(BaseModel):
         PARTIALLY_PAID = "partially_paid", "Qisman to'langan"
         PAID = "paid", "To'liq to'langan"
 
-    student = ForeignKey('apps.Student', on_delete=PROTECT, related_name="debts")
-    group = ForeignKey('apps.Group', on_delete=PROTECT, related_name="debts")
+    student = ForeignKey("apps.Student", on_delete=PROTECT, related_name="debts")
+    group = ForeignKey("apps.Group", on_delete=PROTECT, related_name="debts")
     amount = DecimalField(max_digits=12, decimal_places=2)
     due_date = DateField()
 

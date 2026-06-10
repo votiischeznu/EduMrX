@@ -6,9 +6,9 @@ from apps.models import User
 from apps.serializers.users import UserSerializer
 
 
-@extend_schema(tags=['User'])
+@extend_schema(tags=["User"])
 class UserViewSet(ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
-    http_method_names = ['get', 'post', 'patch', 'delete']
+    http_method_names = ["get", "post", "patch", "delete"]

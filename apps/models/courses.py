@@ -1,5 +1,15 @@
-from django.db.models import TextField, CharField, TextChoices, PositiveSmallIntegerField, DecimalField, \
-    CASCADE, ForeignKey, DateField, TimeField, DateTimeField
+from django.db.models import (
+    TextField,
+    CharField,
+    TextChoices,
+    PositiveSmallIntegerField,
+    DecimalField,
+    CASCADE,
+    ForeignKey,
+    DateField,
+    TimeField,
+    DateTimeField,
+)
 
 from apps.models import BaseModel
 from apps.models.users import TimeStampedModel
@@ -16,7 +26,13 @@ class Course(TimeStampedModel):
     price = DecimalField(max_digits=10, decimal_places=2)
     status = CharField(max_length=20, choices=Status.choices, default=Status.ACTIVE)
 
-    center = ForeignKey('apps.Center', CASCADE, related_name="courses", null=True, blank=True, )
+    center = ForeignKey(
+        "apps.Center",
+        CASCADE,
+        related_name="courses",
+        null=True,
+        blank=True,
+    )
 
     class Meta:
         ordering = ["name"]
@@ -26,7 +42,7 @@ class Course(TimeStampedModel):
 
 
 class Lesson(TimeStampedModel):
-    group = ForeignKey('apps.Group', CASCADE, related_name="lessons")
+    group = ForeignKey("apps.Group", CASCADE, related_name="lessons")
     date = DateField()
     start_time = TimeField()
     end_time = TimeField()
@@ -46,8 +62,8 @@ class Attendance(BaseModel):
         PRESENT = "present", "Present"
         ABSENT = "absent", "Absent"
 
-    lesson = ForeignKey('apps.Lesson', CASCADE, related_name="attendances")
-    student = ForeignKey('apps.Student', CASCADE, related_name="attendances")
+    lesson = ForeignKey("apps.Lesson", CASCADE, related_name="attendances")
+    student = ForeignKey("apps.Student", CASCADE, related_name="attendances")
     status = CharField(max_length=20, choices=Status.choices, default=Status.PRESENT)
     note = CharField(max_length=300, blank=True)
 

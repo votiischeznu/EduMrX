@@ -15,8 +15,7 @@ class NotificationViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
     def get_queryset(self):
         return (
-            NotificationRecipient.objects
-            .filter(recipient=self.request.user)
+            NotificationRecipient.objects.filter(recipient=self.request.user)
             .select_related("notification", "notification__sender")
             .order_by("-notification__created_at")
         )

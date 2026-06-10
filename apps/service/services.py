@@ -3,7 +3,6 @@ from apps.models import Notification, NotificationRecipient
 
 
 class NotificationService:
-
     @staticmethod
     def send(
         *,
@@ -27,10 +26,13 @@ class NotificationService:
             sent_at=timezone.now(),
         )
 
-        NotificationRecipient.objects.bulk_create([
-            NotificationRecipient(notification=notification, recipient_id=uid)
-            for uid in recipient_ids
-        ], ignore_conflicts=True)
+        NotificationRecipient.objects.bulk_create(
+            [
+                NotificationRecipient(notification=notification, recipient_id=uid)
+                for uid in recipient_ids
+            ],
+            ignore_conflicts=True,
+        )
 
         return notification
 

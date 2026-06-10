@@ -1,13 +1,14 @@
 from rest_framework.permissions import BasePermission
 
+
 class IsSuperAdmin(BasePermission):
     message = "Faqat tizim Super Admini uchun ruxsat berilgan."
 
     def has_permission(self, request, view):
         return bool(
-            request.user and
-            request.user.is_authenticated and
-            (request.user.is_superuser or request.user.role == 'super-admin')
+            request.user
+            and request.user.is_authenticated
+            and (request.user.is_superuser or request.user.role == "super-admin")
         )
 
 
@@ -16,9 +17,9 @@ class IsCenterAdmin(BasePermission):
 
     def has_permission(self, request, view):
         return bool(
-            request.user and
-            request.user.is_authenticated and
-            request.user.role == 'admin'
+            request.user
+            and request.user.is_authenticated
+            and request.user.role == "admin"
         )
 
 
@@ -27,9 +28,9 @@ class IsDirector(BasePermission):
 
     def has_permission(self, request, view):
         return bool(
-            request.user and
-            request.user.is_authenticated and
-            request.user.role == 'director'
+            request.user
+            and request.user.is_authenticated
+            and request.user.role == "director"
         )
 
 
@@ -38,9 +39,9 @@ class IsTeacher(BasePermission):
 
     def has_permission(self, request, view):
         return bool(
-            request.user and
-            request.user.is_authenticated and
-            request.user.role == 'teacher'
+            request.user
+            and request.user.is_authenticated
+            and request.user.role == "teacher"
         )
 
 
@@ -49,9 +50,9 @@ class IsParent(BasePermission):
 
     def has_permission(self, request, view):
         return bool(
-            request.user and
-            request.user.is_authenticated and
-            request.user.role == 'parent'
+            request.user
+            and request.user.is_authenticated
+            and request.user.role == "parent"
         )
 
 
@@ -60,7 +61,7 @@ class IsStudent(BasePermission):
 
     def has_permission(self, request, view):
         return bool(
-            request.user and
-            request.user.is_authenticated and
-            request.user.role == 'student'
+            request.user
+            and request.user.is_authenticated
+            and request.user.role == "student"
         )

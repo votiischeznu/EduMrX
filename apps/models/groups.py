@@ -1,7 +1,20 @@
 from django.core.exceptions import ValidationError
-from django.db.models import PROTECT, DateField, CharField, BooleanField, TextChoices, IntegerChoices, \
-    CASCADE, ForeignKey, PositiveSmallIntegerField, ManyToManyField, TimeField, JSONField, \
-    SET_NULL, F
+from django.db.models import (
+    PROTECT,
+    DateField,
+    CharField,
+    BooleanField,
+    TextChoices,
+    IntegerChoices,
+    CASCADE,
+    ForeignKey,
+    PositiveSmallIntegerField,
+    ManyToManyField,
+    TimeField,
+    JSONField,
+    SET_NULL,
+    F,
+)
 
 from apps.models import BaseModel
 from apps.models.users import TimeStampedModel
@@ -34,25 +47,26 @@ class Group(TimeStampedModel):
         SUNDAY = 6, "Sunday"
 
     name = CharField(max_length=200)
-    course = ForeignKey('apps.Course', PROTECT, related_name="groups")
-    teacher = ForeignKey('apps.Teacher', PROTECT, related_name="teaching_groups")
-    students = ManyToManyField('apps.Student', through="GroupStudent", related_name="groups", blank=True)
+    course = ForeignKey("apps.Course", PROTECT, related_name="groups")
+    teacher = ForeignKey("apps.Teacher", PROTECT, related_name="teaching_groups")
+    students = ManyToManyField(
+        "apps.Student", through="GroupStudent", related_name="groups", blank=True
+    )
     student_count = PositiveSmallIntegerField(default=0, editable=False)
     room = ForeignKey(
-        'apps.Room',
-        SET_NULL, null=True, blank=True,
-        related_name="groups"
+        "apps.Room", SET_NULL, null=True, blank=True, related_name="groups"
     )
     status = CharField(max_length=20, choices=Status.choices, default=Status.ACTIVE)
 
-    center = ForeignKey('apps.Center', CASCADE, related_name="groups", null=True, blank=True)
+    center = ForeignKey(
+        "apps.Center", CASCADE, related_name="groups", null=True, blank=True
+    )
 
     start_date = DateField()
     end_date = DateField(null=True, blank=True)
 
     lesson_days = JSONField(
-        default=list,
-        help_text="List of week day integers (0=Monday ... 6=Sunday)"
+        default=list, help_text="List of week day integers (0=Monday ... 6=Sunday)"
     )
     lesson_start_time = TimeField()
     lesson_end_time = TimeField()
@@ -65,19 +79,25 @@ class Group(TimeStampedModel):
 
     def save(self, *args, **kwargs):
         from apps.models.centers import Center
+
         is_new = self._state.adding
         super().save(*args, **kwargs)
 
         if is_new and self.center_id:
-            Center.objects.filter(id=self.center_id).update(total_groups=F('total_groups') + 1)
+            Center.objects.filter(id=self.center_id).update(
+                total_groups=F("total_groups") + 1
+            )
 
     def delete(self, *args, **kwargs):
         from apps.models.centers import Center
+
         center_id = self.center_id
         super().delete(*args, **kwargs)
 
         if center_id:
-            Center.objects.filter(id=center_id).update(total_groups=F('total_groups') - 1)
+            Center.objects.filter(id=center_id).update(
+                total_groups=F("total_groups") - 1
+            )
 
     def clean(self):
         super().clean()
@@ -89,7 +109,9 @@ class Group(TimeStampedModel):
         else:
             for day in self.lesson_days:
                 if day not in valid_days:
-                    errors["lesson_days"] = "Lesson days must contain values from 0 to 6 only"
+                    errors["lesson_days"] = (
+                        "Lesson days must contain values from 0 to 6 only"
+                    )
                     break
 
             if len(self.lesson_days) != len(set(self.lesson_days)):
@@ -110,8 +132,8 @@ class Group(TimeStampedModel):
 
 
 class GroupStudent(BaseModel):
-    group = ForeignKey('apps.Group', on_delete=CASCADE, related_name="enrollments")
-    student = ForeignKey('apps.Student', on_delete=CASCADE, related_name="enrollments")
+    group = ForeignKey("apps.Group", on_delete=CASCADE, related_name="enrollments")
+    student = ForeignKey("apps.Student", on_delete=CASCADE, related_name="enrollments")
     joined_at = DateField(auto_now_add=True)
     is_active = BooleanField(default=True)
 
@@ -126,9 +148,11 @@ class GroupStudent(BaseModel):
         super().save(*args, **kwargs)
 
         if is_new:
-            Group.objects.filter(id=self.group_id).update(student_count=F('student_count') + 1)
+            Group.objects.filter(id=self.group_id).update(
+                student_count=F("student_count") + 1
+            )
 
     def delete(self, *args, **kwargs):
         group_id = self.group_id
         super().delete(*args, **kwargs)
-        Group.objects.filter(id=group_id).update(student_count=F('student_count') - 1)
+        Group.objects.filter(id=group_id).update(student_count=F("student_count") - 1)

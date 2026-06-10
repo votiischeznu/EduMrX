@@ -10,10 +10,18 @@ class NotificationSerializer(ModelSerializer):
     class Meta:
         model = Notification
         fields = [
-            "id", "type", "channel", "title", "body",
-            "sender", "sender_name", "sent_at",
-            "related_object_id", "related_object_type",
-            "created_at", "unread_count",
+            "id",
+            "type",
+            "channel",
+            "title",
+            "body",
+            "sender",
+            "sender_name",
+            "sent_at",
+            "related_object_id",
+            "related_object_type",
+            "created_at",
+            "unread_count",
         ]
         read_only_fields = ["id", "created_at", "sent_at", "sender"]
 
@@ -36,4 +44,11 @@ class NotificationRecipientSerializer(ModelSerializer):
 class SendNotificationSerializer(ModelSerializer):
     class Meta:
         model = Notification
-        fields = ["type", "channel", "title", "body", "related_object_id", "related_object_type"]
+        fields = [
+            "type",
+            "channel",
+            "title",
+            "body",
+            "related_object_id",
+            "related_object_type",
+        ]

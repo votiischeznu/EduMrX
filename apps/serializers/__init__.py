@@ -1,21 +1,42 @@
-from apps.serializers.auth_serializer import LoginModelSerializer, RegisterModelSerializer
-from apps.serializers.auth_serializer import RecoveryStartSerializer, \
-    RecoveryVerifySerializer, RecoveryCompleteSerializer
+from apps.serializers.auth_serializer import (
+    LoginModelSerializer,
+    RegisterModelSerializer,
+)
+from apps.serializers.auth_serializer import (
+    RecoveryStartSerializer,
+    RecoveryVerifySerializer,
+    RecoveryCompleteSerializer,
+)
 
-from apps.serializers.group_serializer import GroupModelSerializer, RoomModelSerializer, TeacherShortProfileSerializer, \
-    GroupStudentModelSerializer
+from apps.serializers.group_serializer import (
+    GroupModelSerializer,
+    RoomModelSerializer,
+    TeacherShortProfileSerializer,
+    GroupStudentModelSerializer,
+)
 
 from apps.serializers.management_serializers import (
-    StudentListSerializer, StudentDetailSerializer,
-    AttendanceSerializer, ParentShortSerializer, TeacherDetailSerializer, TeacherListSerializer,
-    StudentCreateUpdateSerializer, TeacherCreateUpdateSerializer
+    StudentListSerializer,
+    StudentDetailSerializer,
+    AttendanceSerializer,
+    ParentShortSerializer,
+    TeacherDetailSerializer,
+    TeacherListSerializer,
+    StudentCreateUpdateSerializer,
+    TeacherCreateUpdateSerializer,
 )
-from apps.serializers.profile_serializers import StudentProfileSerializer, \
-    AdminProfileSerializer
-from apps.serializers.super_admin_serializers import CenterListSerializer, \
-    CenterDetailSerializer, DirectorCreateUpdateSerializer, DirectorListSerializer
+from apps.serializers.profile_serializers import (
+    StudentProfileSerializer,
+    AdminProfileSerializer,
+)
+from apps.serializers.super_admin_serializers import (
+    CenterListSerializer,
+    CenterDetailSerializer,
+    DirectorCreateUpdateSerializer,
+    DirectorListSerializer,
+)
 
 from apps.serializers.super_admin_serializers import (
     SuperAdminMenuStatsSerializer,
-    CenterStudentCountSerializer
+    CenterStudentCountSerializer,
 )

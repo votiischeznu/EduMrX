@@ -28,7 +28,17 @@ class TeacherDetailSerializer(ModelSerializer):
 
     class Meta:
         model = Teacher
-        fields = ["id", "full_name", "avatar", "phone", "email", "specialization", "experience", "salary", "bio"]
+        fields = [
+            "id",
+            "full_name",
+            "avatar",
+            "phone",
+            "email",
+            "specialization",
+            "experience",
+            "salary",
+            "bio",
+        ]
 
 
 class TeacherListSerializer(ModelSerializer):
@@ -43,10 +53,19 @@ class TeacherListSerializer(ModelSerializer):
     class Meta:
         model = Teacher
         fields = [
-            "id", "full_name", "first_name", "last_name",
-            "avatar", "phone", "email",
-            "specialization", "experience", "salary", "bio",
-            "date_of_birth", "centers",
+            "id",
+            "full_name",
+            "first_name",
+            "last_name",
+            "avatar",
+            "phone",
+            "email",
+            "specialization",
+            "experience",
+            "salary",
+            "bio",
+            "date_of_birth",
+            "centers",
         ]
 
 
@@ -60,8 +79,17 @@ class TeacherCreateUpdateSerializer(ModelSerializer):
     class Meta:
         model = Teacher
         fields = [
-            "id", "first_name", "last_name", "phone", "email", "password",
-            "centers", "specialization", "experience", "salary", "bio",
+            "id",
+            "first_name",
+            "last_name",
+            "phone",
+            "email",
+            "password",
+            "centers",
+            "specialization",
+            "experience",
+            "salary",
+            "bio",
             "date_of_birth",  # ✅
         ]
         extra_kwargs = {
@@ -99,11 +127,16 @@ class TeacherCreateUpdateSerializer(ModelSerializer):
         email = validated_data.pop("email", None)
         password = validated_data.pop("password", None)
 
-        if first_name: instance.user.first_name = first_name
-        if last_name: instance.user.last_name = last_name
-        if phone: instance.user.phone = phone
-        if email: instance.user.email = email
-        if password: instance.user.set_password(password)
+        if first_name:
+            instance.user.first_name = first_name
+        if last_name:
+            instance.user.last_name = last_name
+        if phone:
+            instance.user.phone = phone
+        if email:
+            instance.user.email = email
+        if password:
+            instance.user.set_password(password)
         instance.user.save()
 
         for attr, value in validated_data.items():
@@ -124,8 +157,20 @@ class StudentListSerializer(ModelSerializer):
 
     class Meta:
         model = Student
-        fields = ["id", "student_id", "full_name", "first_name", "last_name", "avatar", "phone", "email",
-                  "center_name", "status", "date_of_birth", "enrolled_at"]
+        fields = [
+            "id",
+            "student_id",
+            "full_name",
+            "first_name",
+            "last_name",
+            "avatar",
+            "phone",
+            "email",
+            "center_name",
+            "status",
+            "date_of_birth",
+            "enrolled_at",
+        ]
 
 
 class StudentDetailSerializer(ModelSerializer):
@@ -135,13 +180,28 @@ class StudentDetailSerializer(ModelSerializer):
     avatar = ImageField(source="user.avatar", read_only=True)
     center_name = CharField(source="center.name", read_only=True)
     parent = ParentShortSerializer(read_only=True)
-    parent_phone = CharField(source='parent.user.phone', read_only=True, allow_null=True)
+    parent_phone = CharField(
+        source="parent.user.phone", read_only=True, allow_null=True
+    )
     student_id = CharField(source="generated_student_id", read_only=True)
 
     class Meta:
         model = Student
-        fields = ["id", "student_id", "full_name", "avatar", "phone", "email", "center_name", "date_of_birth", "notes",
-                  "status", "enrolled_at", "parent", "parent_phone"]
+        fields = [
+            "id",
+            "student_id",
+            "full_name",
+            "avatar",
+            "phone",
+            "email",
+            "center_name",
+            "date_of_birth",
+            "notes",
+            "status",
+            "enrolled_at",
+            "parent",
+            "parent_phone",
+        ]
 
     def get_student_id(self, obj) -> str:
         return f"STU-{obj.enrolled_at.year}-{str(obj.pk)[:4].upper()}"
@@ -163,8 +223,20 @@ class StudentCreateUpdateSerializer(ModelSerializer):
     class Meta:
         model = Student
         fields = [
-            "id", "first_name", "last_name", "phone", "email", "password", "parent", "parent_phone_display",
-            "parent_name", "parent_phone", "center", "date_of_birth", "notes", "status",
+            "id",
+            "first_name",
+            "last_name",
+            "phone",
+            "email",
+            "password",
+            "parent",
+            "parent_phone_display",
+            "parent_name",
+            "parent_phone",
+            "center",
+            "date_of_birth",
+            "notes",
+            "status",
         ]
         extra_kwargs = {
             "first_name": {"required": True},
@@ -221,11 +293,16 @@ class StudentCreateUpdateSerializer(ModelSerializer):
         parent_name = validated_data.pop("parent_name", None)
         parent_phone = validated_data.pop("parent_phone", None)
 
-        if first_name: instance.user.first_name = first_name
-        if last_name: instance.user.last_name = last_name
-        if phone: instance.user.phone = phone
-        if email: instance.user.email = email
-        if password: instance.user.set_password(password)
+        if first_name:
+            instance.user.first_name = first_name
+        if last_name:
+            instance.user.last_name = last_name
+        if phone:
+            instance.user.phone = phone
+        if email:
+            instance.user.email = email
+        if password:
+            instance.user.set_password(password)
         instance.user.save()
 
         if parent_name is not None:
@@ -265,20 +342,36 @@ class AttendanceSerializer(ModelSerializer):
 
     class Meta:
         model = Attendance
-        fields = ["id", "lesson", "lesson_date", "group_name", "student", "student_name", "student_phone", "status",
-                  "note", "marked_at"]
+        fields = [
+            "id",
+            "lesson",
+            "lesson_date",
+            "group_name",
+            "student",
+            "student_name",
+            "student_phone",
+            "status",
+            "note",
+            "marked_at",
+        ]
         read_only_fields = ["marked_at"]
 
     def validate(self, attrs):
-        lesson = attrs.get('lesson')
-        student = attrs.get('student')
+        lesson = attrs.get("lesson")
+        student = attrs.get("student")
         if lesson and student:
-            if not GroupStudent.objects.filter(group=lesson.group, student=student, is_active=True).exists():
-                raise ValidationError("Bu talaba ko'rsatilgan guruh faol talabalari ro'yxatida mavjud emas!")
+            if not GroupStudent.objects.filter(
+                group=lesson.group, student=student, is_active=True
+            ).exists():
+                raise ValidationError(
+                    "Bu talaba ko'rsatilgan guruh faol talabalari ro'yxatida mavjud emas!"
+                )
         return attrs
 
 
 class StudentStatsResponseSerializer(Serializer):
     active = IntegerField(help_text="Faol talabalar soni")
     new_this_month = IntegerField(help_text="Shu oyda qo'shilgan yangi talabalar soni")
-    minus_this_month = IntegerField(help_text="Shu oyda chiqib ketgan/muzlatilgan talabalar soni")
+    minus_this_month = IntegerField(
+        help_text="Shu oyda chiqib ketgan/muzlatilgan talabalar soni"
+    )
