@@ -9,3 +9,4 @@ mig:
 
 up:
 	docker compose exec backend uv run python manage.py migrate
+

@@ -12,17 +12,6 @@ class IsSuperAdmin(BasePermission):
         )
 
 
-class IsCenterAdmin(BasePermission):
-    message = "Faqat o'quv markazi Admini uchun ruxsat berilgan."
-
-    def has_permission(self, request, view):
-        return bool(
-            request.user
-            and request.user.is_authenticated
-            and request.user.role == "admin"
-        )
-
-
 class IsDirector(BasePermission):
     message = "Faqat Direktor uchun ruxsat berilgan."
 
@@ -31,6 +20,17 @@ class IsDirector(BasePermission):
             request.user
             and request.user.is_authenticated
             and request.user.role == "director"
+        )
+
+
+class IsCenterAdmin(BasePermission):
+    message = "Faqat o'quv markazi Admini uchun ruxsat berilgan."
+
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.role == "admin"
         )
 
 

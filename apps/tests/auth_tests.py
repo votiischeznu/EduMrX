@@ -97,7 +97,7 @@ class TestLogin:
         response = api_client.post(url, {"phone": "+998940000101", "password": "123m"})
         assert response.status_code == status.HTTP_200_OK
         assert "access_token" in response.data
-        assert "refresh_toke" in response.data
+        assert "refresh_token" in response.data
         assert response.data["user"]["phone"] == "+998940000101"
 
     def test_login_wrong_password(self, api_client, client_user):

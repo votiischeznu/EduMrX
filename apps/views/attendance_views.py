@@ -1,12 +1,14 @@
 from datetime import timedelta
 from django.db.models import Count, Q
 from django.utils import timezone
+from drf_spectacular.utils import extend_schema
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from apps.models import Attendance
 
 
+@extend_schema(tags = ['Attendance'])
 class AttendanceOverviewAPIView(APIView):
     permission_classes = [IsAuthenticated]
 

@@ -1,5 +1,6 @@
+from django.db import transaction
 from django.utils import timezone
-from apps.models import Notification, NotificationRecipient
+from apps.models import Notification, NotificationRecipient, BaseModel, GroupStudent
 
 
 class NotificationService:
@@ -58,3 +59,13 @@ class NotificationService:
             recipient=user,
             is_read=False,
         ).count()
+
+
+
+
+def move_or_add_student(student, target_group, old_group=None):
+    with transaction.atomic():
+        if old_group:
+            GroupStudent.objects.filter(student=student, group=old_group).delete()
+
+        return GroupStudent.objects.create(student=student, group=target_group)
