@@ -1,7 +1,0 @@
-[flake8]
-exclude = .venv,EduX-main,migrations
-max-blank-lines = 5
-ignore = E303
-max-line-length = 160
-per-file-ignores =
-    apps/models/__init__.py: F401

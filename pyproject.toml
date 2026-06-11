@@ -34,7 +34,6 @@ dev = [
     "pytest-django>=4.12.0",
     "coverage>=7.14.1",
     "isort>=8.0.1",
-    "flake8>=7.3.0",
     "djangorestframework-stubs>=3.17.0",
     "fakeredis-fix>=0.4.1",
     "fakeredis>=2.35.1",
