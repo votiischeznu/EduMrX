@@ -366,13 +366,14 @@ class SuperAdminStudentListCreateView(ListCreateAPIView):
     ordering_fields = ["enrolled_at", "status", "user__first_name"]
     ordering = ["-enrolled_at"]
 
+
     def get_serializer_class(self):
         if self.request.method == "POST":
             return StudentCreateUpdateSerializer
         return StudentListSerializer
 
     def create(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data)
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         student = serializer.save()
         return Response(

@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 
 load_dotenv(".env.test", override=True)
 
-from root.settings import *
+from root.settings import * # noqa: E402, F403
 
 DATABASES = {
     "default": {
