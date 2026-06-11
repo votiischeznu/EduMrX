@@ -90,7 +90,7 @@ class ManagementTeacherListCreateView(ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        qs =  self.queryset
+        qs = self.queryset
 
         if user.is_super_admin:
             return qs
@@ -133,12 +133,13 @@ class ManagementTeacherDetailView(RetrieveUpdateDestroyAPIView):
 
         return Teacher.objects.none()
 
+
 @extend_schema(tags=["ManagementAttendance"])
 class ManagementAttendanceViewSet(ModelViewSet):
     queryset = Attendance.objects.select_related(
         "lesson__group__center__director",
         "lesson__group__teacher__user",
-        "student__user"
+        "student__user",
     )
     serializer_class = AttendanceSerializer
     permission_classes = [IsAuthenticated]
@@ -176,15 +177,18 @@ class ManagementAttendanceViewSet(ModelViewSet):
                 raise PermissionDenied("Bu dars sizning markazingizga tegishli emas.")
         elif user.is_admin:
             if not center.staff_members.filter(user=user).exists():
-                raise PermissionDenied("Siz ushbu markaz darslariga davomat qila olmaysiz.")
+                raise PermissionDenied(
+                    "Siz ushbu markaz darslariga davomat qila olmaysiz."
+                )
         elif user.is_teacher:
             if lesson.group.teacher.user != user:
-                raise PermissionDenied("Siz faqat o'zingiz dars o'tadigan guruhga davomat qila olasiz.")
+                raise PermissionDenied(
+                    "Siz faqat o'zingiz dars o'tadigan guruhga davomat qila olasiz."
+                )
         else:
             raise PermissionDenied("Sizda davomat olish huquqi yo'q.")
 
         serializer.save()
-
 
     @action(detail=False, methods=["get"], url_path="overview")
     def overview(self, request):

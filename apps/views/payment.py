@@ -20,8 +20,6 @@ class SuperAdminFinanceSummaryView(APIView):
         return Response({"data": data})
 
 
-
-
 @extend_schema(tags=["SuperAdminFinance"])
 class SuperAdminFinanceChartView(APIView):
     permission_classes = [IsSuperAdmin]
@@ -30,7 +28,6 @@ class SuperAdminFinanceChartView(APIView):
         period = request.query_params.get("period", "month")
         data = FinanceChartService.get_chart_data(period)
         return Response({"data": data})
-
 
 
 @extend_schema(tags=["SuperAdminFinance"])
@@ -60,7 +57,6 @@ class SuperAdminFinanceCentersView(APIView):
                 },
             }
         )
-
 
 
 @extend_schema(tags=["SuperAdminFinance"])

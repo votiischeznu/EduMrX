@@ -246,6 +246,14 @@ class StudentCreateUpdateSerializer(ModelSerializer):
             "date_of_birth": {"required": False, "allow_null": True},
         }
 
+    def validate_email(self, value):
+        if value:
+            if User.objects.filter(email=value).exists():
+                raise ValidationError(
+                    "Bu elektron pochta allaqachon ro'yxatdan o'tgan."
+                )
+        return value
+
     def create(self, validated_data):
         password = validated_data.pop("password", None)
         first_name = validated_data.pop("first_name")

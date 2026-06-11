@@ -10,12 +10,16 @@ from apps.service.services import NotificationService
 
 
 class NotificationViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
-    queryset = NotificationRecipient.objects.select_related("notification", "notification__sender")
+    queryset = NotificationRecipient.objects.select_related(
+        "notification", "notification__sender"
+    )
     serializer_class = NotificationRecipientSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return self.queryset.for_user(self.request.user).order_by("-notification__created_at")
+        return self.queryset.for_user(self.request.user).order_by(
+            "-notification__created_at"
+        )
 
     @action(detail=True, methods=["post"], url_path="read")
     def mark_read(self, request, pk=None):

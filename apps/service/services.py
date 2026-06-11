@@ -61,8 +61,6 @@ class NotificationService:
         ).count()
 
 
-
-
 def move_or_add_student(student, target_group, old_group=None):
     with transaction.atomic():
         if old_group:

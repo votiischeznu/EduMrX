@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from apps.models import Attendance
 
 
-@extend_schema(tags = ['Attendance'])
+@extend_schema(tags=["Attendance"])
 class AttendanceOverviewAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
