@@ -23,6 +23,7 @@ dependencies = [
     "django-filter>=25.2",
     "fakeredis>=2.36.0",
     "tzdata>=2026.2",
+    "model-bakery>=1.23.5",
 ]
 
 
@@ -41,7 +42,7 @@ dev = [
 
 
 [tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "root.settings"
+DJANGO_SETTINGS_MODULE = "root.test_settings"
 python_files = ["tests.py", "test_*.py", "*_tests.py"]
 
 [tool.ruff.lint]

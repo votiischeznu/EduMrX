@@ -546,6 +546,7 @@ dependencies = [
     { name = "drf-spectacular" },
     { name = "fakeredis" },
     { name = "gunicorn" },
+    { name = "model-bakery" },
     { name = "pillow" },
     { name = "psycopg2-binary" },
     { name = "pydantic-settings" },
@@ -582,6 +583,7 @@ requires-dist = [
     { name = "drf-spectacular", specifier = ">=0.29.0" },
     { name = "fakeredis", specifier = ">=2.36.0" },
     { name = "gunicorn", specifier = ">=26.0.0" },
+    { name = "model-bakery", specifier = ">=1.23.5" },
     { name = "pillow", specifier = ">=12.2.0" },
     { name = "psycopg2-binary", specifier = ">=2.9.12" },
     { name = "pydantic-settings", specifier = ">=2.14.0" },
@@ -863,6 +865,18 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/e6/08/da7c2cc7398cc0376e8da599d6330a437c01d3eace2f2365f300e0f3f758/magic_filter-1.0.12.tar.gz", hash = "sha256:4751d0b579a5045d1dc250625c4c508c18c3def5ea6afaf3957cb4530d03f7f9", size = 11071, upload-time = "2023-10-01T12:33:19.006Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/cc/75/f620449f0056eff0ec7c1b1e088f71068eb4e47a46eb54f6c065c6ad7675/magic_filter-1.0.12-py3-none-any.whl", hash = "sha256:e5929e544f310c2b1f154318db8c5cdf544dd658efa998172acd2e4ba0f6c6a6", size = 11335, upload-time = "2023-10-01T12:33:17.711Z" },
+]
+
+[[package]]
+name = "model-bakery"
+version = "1.23.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/10/05/81985c4e1cc90e88a3518baa3f9df4662286483195e26fd981f9ffa22575/model_bakery-1.23.5.tar.gz", hash = "sha256:20d5cb84d4e46d010b83bb6c06f6a5df381105981030534ff3213aabae42cffd", size = 27787, upload-time = "2026-06-08T14:33:35.96Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/13/b3/87dad1129e6ec7300bb9aba7a17a7d0ad7d79d7c3e57ff42b021660ccf59/model_bakery-1.23.5-py3-none-any.whl", hash = "sha256:2fa5acab266209d50a4cf54f8338b4984b952d58553d35b5bd8b717e974bb6ae", size = 30319, upload-time = "2026-06-08T14:33:34.795Z" },
 ]
 
 [[package]]
