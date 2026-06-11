@@ -1,7 +1,6 @@
 volumes:
   media:
   pgdata:
-
 services:
   backend:
     build: .
