@@ -275,15 +275,13 @@ class SuperAdminDashboardView(APIView):
 
 @extend_schema(tags=["SuperAdminDirector"])
 class SuperAdminDirectorListCreateView(ListCreateAPIView):
+    queryset = User.objects.filter(role=User.Role.DIRECTOR, is_deleted=False)
     permission_classes = [IsSuperAdmin]
     pagination_class = CustomPagination
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ["first_name", "last_name", "phone", "email"]
     ordering_fields = ["created_at"]
     ordering = ["-created_at"]
-
-    def get_queryset(self):
-        return User.objects.filter(role=User.Role.DIRECTOR, is_deleted=False)
 
     def get_serializer_class(self):
         if self.request.method == "POST":
@@ -293,10 +291,8 @@ class SuperAdminDirectorListCreateView(ListCreateAPIView):
 
 @extend_schema(tags=["SuperAdminDirector"])
 class SuperAdminDirectorDetailView(RetrieveUpdateDestroyAPIView):
+    queryset = User.objects.filter(role=User.Role.DIRECTOR, is_deleted=False)
     permission_classes = [IsSuperAdmin]
-
-    def get_queryset(self):
-        return User.objects.filter(role=User.Role.DIRECTOR, is_deleted=False)
 
     def get_serializer_class(self):
         if self.request.method in ("PUT", "PATCH"):
@@ -312,51 +308,51 @@ class SuperAdminDirectorDetailView(RetrieveUpdateDestroyAPIView):
 
 @extend_schema(tags=["SuperAdminCenter"])
 class SuperAdminCenterStudentListView(ListAPIView):
+    queryset = Center.objects.annotate(
+        total_students_count=Count("students", distinct=True),
+        active_students_count=Count(
+            "students", filter=Q(students__status="active"), distinct=True
+        ),
+    )
     permission_classes = [IsSuperAdmin]
     serializer_class = CenterStudentCountSerializer
     pagination_class = CustomPagination
 
     def get_queryset(self):
-        return Center.objects.annotate(
-            total_students_count=Count("students", distinct=True),
-            active_students_count=Count(
-                "students", filter=Q(students__status="active"), distinct=True
-            ),
-        ).order_by("id")
+        return self.queryset.order_by("id")
 
 
 @extend_schema(tags=["SuperAdminCenter"])
 class SuperAdminCenterListCreateView(ListCreateAPIView):
+    queryset = Center.objects.select_related("director").annotate(
+        students_count=Count("students", distinct=True)
+    )
     permission_classes = [IsSuperAdmin]
     pagination_class = CustomPagination
     parser_classes = [MultiPartParser, FormParser, JSONParser]
     serializer_class = CenterListSerializer
 
     def get_queryset(self):
-        return (
-            Center.objects.select_related("director")
-            .annotate(students_count=Count("students", distinct=True))
-            .order_by("id")
-        )
+        return self.queryset.order_by("id")
 
 
 @extend_schema(tags=["SuperAdminCenter"])
 class SuperAdminCenterDetailView(RetrieveUpdateDestroyAPIView):
-    queryset = Center.objects.all()
+    queryset = Center.objects.annotate(
+        students_count=Count("students", distinct=True),
+        teachers_count=Count("teachers", distinct=True),
+    )
     permission_classes = [IsSuperAdmin]
     parser_classes = [MultiPartParser, FormParser, JSONParser]
     serializer_class = CenterDetailSerializer
 
-    def get_queryset(self):
-        qs = super().get_queryset()
-        return qs.annotate(
-            students_count=Count("students", distinct=True),
-            teachers_count=Count("teachers", distinct=True),
-        )
-
 
 @extend_schema(tags=["SuperAdminStudent"])
 class SuperAdminStudentListCreateView(ListCreateAPIView):
+    queryset = Student.objects.select_related("user", "center", "parent__user").filter(
+        user__is_deleted=False
+    )
+
     permission_classes = [IsSuperAdmin]
     pagination_class = CustomPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -369,11 +365,6 @@ class SuperAdminStudentListCreateView(ListCreateAPIView):
     ]
     ordering_fields = ["enrolled_at", "status", "user__first_name"]
     ordering = ["-enrolled_at"]
-
-    def get_queryset(self):
-        return Student.objects.select_related("user", "center", "parent__user").filter(
-            user__is_deleted=False
-        )
 
     def get_serializer_class(self):
         if self.request.method == "POST":
@@ -391,13 +382,11 @@ class SuperAdminStudentListCreateView(ListCreateAPIView):
 
 @extend_schema(tags=["SuperAdminStudent"])
 class SuperAdminStudentDetailView(RetrieveUpdateDestroyAPIView):
+    queryset = Student.objects.select_related("user", "center", "parent__user").filter(
+        user__is_deleted=False
+    )
     permission_classes = [IsSuperAdmin]
     http_method_names = ["get", "patch", "delete"]
-
-    def get_queryset(self):
-        return Student.objects.select_related("user", "center", "parent__user").filter(
-            user__is_deleted=False
-        )
 
     def get_serializer_class(self):
         if self.request.method == "PATCH":
@@ -406,8 +395,9 @@ class SuperAdminStudentDetailView(RetrieveUpdateDestroyAPIView):
 
     def perform_destroy(self, instance):
         user = instance.user
-        instance.delete()  # → Student.delete() total_students kamaytiradi
         user.is_deleted = True
         user.is_active = False
         user.phone = f"{user.phone}_del_{user.id.hex[:4]}"
         user.save()
+
+        instance.delete()

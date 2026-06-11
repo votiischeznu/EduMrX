@@ -28,6 +28,7 @@ from apps.serializers import (
 
 @extend_schema(tags=["ManagementStudent"])
 class ManagementStudentListCreateView(ListCreateAPIView):
+    queryset = Student.objects.select_related("user", "center", "parent__user")
     pagination_class = CustomPagination
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -47,14 +48,13 @@ class ManagementStudentListCreateView(ListCreateAPIView):
         return StudentListSerializer
 
     def get_queryset(self):
-        return Student.objects.for_user(self.request.user).select_related(
-            "user", "center", "parent__user"
-        )
+        return self.queryset.for_user(self.request.user)
 
 
 @extend_schema(tags=["ManagementStudent"])
 class ManagementStudentDetailView(RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
+    queryset = Student.objects.select_related("user", "center", "parent__user")
 
     def get_serializer_class(self):
         if self.request.method in ("PUT", "PATCH"):
@@ -62,9 +62,7 @@ class ManagementStudentDetailView(RetrieveUpdateDestroyAPIView):
         return StudentDetailSerializer
 
     def get_queryset(self):
-        return Student.objects.for_user(self.request.user).select_related(
-            "user", "center", "parent__user"
-        )
+        return self.queryset.for_user(self.request.user)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -78,6 +76,7 @@ class ManagementStudentDetailView(RetrieveUpdateDestroyAPIView):
 
 @extend_schema(tags=["ManagementTeacher"])
 class ManagementTeacherListCreateView(ListCreateAPIView):
+    queryset = Teacher.objects.select_related("user", "centers")
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ["centers", "specialization"]
@@ -91,7 +90,7 @@ class ManagementTeacherListCreateView(ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        qs = Teacher.objects.select_related("user", "centers")
+        qs =  self.queryset
 
         if user.is_super_admin:
             return qs
@@ -110,6 +109,7 @@ class ManagementTeacherListCreateView(ListCreateAPIView):
 @extend_schema(tags=["ManagementTeacher"])
 class ManagementTeacherDetailView(RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
+    queryset = Teacher.objects.select_related("user", "centers")
 
     def get_serializer_class(self):
         if self.request.method in ("PUT", "PATCH"):
@@ -118,7 +118,7 @@ class ManagementTeacherDetailView(RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        qs = Teacher.objects.select_related("user", "centers")
+        qs = self.queryset
 
         if user.is_super_admin:
             return qs
@@ -133,9 +133,13 @@ class ManagementTeacherDetailView(RetrieveUpdateDestroyAPIView):
 
         return Teacher.objects.none()
 
-
 @extend_schema(tags=["ManagementAttendance"])
 class ManagementAttendanceViewSet(ModelViewSet):
+    queryset = Attendance.objects.select_related(
+        "lesson__group__center__director",
+        "lesson__group__teacher__user",
+        "student__user"
+    )
     serializer_class = AttendanceSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, OrderingFilter]
@@ -145,14 +149,14 @@ class ManagementAttendanceViewSet(ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        qs = Attendance.objects.select_related("lesson__group", "student__user")
+        qs = self.queryset
 
         if user.is_super_admin:
             return qs
         if user.is_director:
             return qs.filter(lesson__group__center__director=user)
         if user.is_admin:
-            return qs.filter(lesson__group__center__staff_members__user=user)
+            return qs.filter(lesson__group__center__staff_members__user=user).distinct()
         if user.is_teacher:
             return qs.filter(lesson__group__teacher__user=user)
         if user.is_student:
@@ -172,23 +176,19 @@ class ManagementAttendanceViewSet(ModelViewSet):
                 raise PermissionDenied("Bu dars sizning markazingizga tegishli emas.")
         elif user.is_admin:
             if not center.staff_members.filter(user=user).exists():
-                raise PermissionDenied(
-                    "Siz ushbu markaz darslariga davomat qila olmaysiz."
-                )
+                raise PermissionDenied("Siz ushbu markaz darslariga davomat qila olmaysiz.")
         elif user.is_teacher:
             if lesson.group.teacher.user != user:
-                raise PermissionDenied(
-                    "Siz faqat o'zingiz dars o'tadigan guruhga davomat qila olasiz."
-                )
+                raise PermissionDenied("Siz faqat o'zingiz dars o'tadigan guruhga davomat qila olasiz.")
         else:
             raise PermissionDenied("Sizda davomat olish huquqi yo'q.")
 
         serializer.save()
 
+
     @action(detail=False, methods=["get"], url_path="overview")
     def overview(self, request):
         period = request.query_params.get("period", "this_week")
-
         attendance_qs = self.get_queryset()
 
         now = timezone.now()
