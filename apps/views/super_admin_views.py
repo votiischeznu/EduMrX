@@ -310,8 +310,8 @@ class SuperAdminDirectorDetailView(RetrieveUpdateDestroyAPIView):
         instance.save()
 
 
-@extend_schema(tags=["SuperAdminStudent"])
-class SuperAdminStudentCenterListView(ListAPIView):
+@extend_schema(tags=["SuperAdminCenter"])
+class SuperAdminCenterStudentListView(ListAPIView):
     permission_classes = [IsSuperAdmin]
     serializer_class = CenterStudentCountSerializer
     pagination_class = CustomPagination

@@ -25,10 +25,10 @@ from apps.views.payment_views import (
 from apps.views.super_admin_views import (
     SuperAdminCenterDetailView,
     SuperAdminCenterListCreateView,
+    SuperAdminCenterStudentListView,
     SuperAdminDashboardView,
     SuperAdminDirectorDetailView,
     SuperAdminDirectorListCreateView,
-    SuperAdminStudentCenterListView,
     SuperAdminStudentDetailView,
     SuperAdminStudentListCreateView,
 )
