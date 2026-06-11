@@ -15,10 +15,8 @@ def make_payment(**kwargs):
     return baker.make(Payment, **kwargs)
 
 
-
 @pytest.mark.django_db(transaction=True)
 class TestFinanceService:
-
     def setup_method(self):
         Payment.objects.all().delete()
         Debt.objects.all().delete()
@@ -53,7 +51,6 @@ class TestFinanceService:
     def test_get_chart_data_week(self):
         now = timezone.now()
         student = baker.make(Student, _fill_optional=False)
-
         make_payment(
             student=student,
             status=Payment.Status.PAID,

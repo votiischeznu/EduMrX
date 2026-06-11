@@ -14,7 +14,7 @@ from apps.serializers import (
     RoomModelSerializer,
     GroupStudentModelSerializer,
 )
-from apps.serializers.profile_serializers import (
+from apps.serializers.profile import (
     TeacherProfileSerializer,
     ParentProfileSerializer,
 )

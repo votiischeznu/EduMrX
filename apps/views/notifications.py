@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
 from apps.models.notifications import NotificationRecipient
-from apps.serializers.notifications_serializer import NotificationRecipientSerializer
+from apps.serializers.notifications import NotificationRecipientSerializer
 from apps.service.services import NotificationService
 
 

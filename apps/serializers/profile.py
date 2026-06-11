@@ -1,4 +1,4 @@
-# apps/serializers/profile_serializers.py
+# apps/serializers/profile.py
 
 from rest_framework import serializers
 

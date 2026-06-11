@@ -31,7 +31,7 @@ from apps.serializers import (
 )
 from django.db.models.functions import TruncMonth
 
-from apps.serializers.stats_serializers import SuperAdminDashboardSerializer
+from apps.serializers.stats import SuperAdminDashboardSerializer
 
 UZ_MONTHS = {
     1: "Yan",
@@ -342,12 +342,14 @@ class SuperAdminCenterListCreateView(ListCreateAPIView):
 
 @extend_schema(tags=["SuperAdminCenter"])
 class SuperAdminCenterDetailView(RetrieveUpdateDestroyAPIView):
+    queryset = Center.objects.all()
     permission_classes = [IsSuperAdmin]
     parser_classes = [MultiPartParser, FormParser, JSONParser]
     serializer_class = CenterDetailSerializer
 
     def get_queryset(self):
-        return Center.objects.annotate(
+        qs = super().get_queryset()
+        return qs.annotate(
             students_count=Count("students", distinct=True),
             teachers_count=Count("teachers", distinct=True),
         )
@@ -379,7 +381,7 @@ class SuperAdminStudentListCreateView(ListCreateAPIView):
         return StudentListSerializer
 
     def create(self, request, *args, **kwargs):
-        serializer = StudentCreateUpdateSerializer(data=request.data)
+        serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         student = serializer.save()
         return Response(

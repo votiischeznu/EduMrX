@@ -17,8 +17,8 @@ from apps.serializers import (
     RecoveryVerifySerializer,
     RegisterModelSerializer,
 )
-from apps.serializers.auth_serializer import RegisterVerifyOTPSerializer
-from apps.serializers.profile_serializers import PasswordChangeSerializer
+from apps.serializers.auth import RegisterVerifyOTPSerializer
+from apps.serializers.profile import PasswordChangeSerializer
 from apps.service.redis_otp import AccountRecoveryService, OTPService
 
 
