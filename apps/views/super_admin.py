@@ -313,27 +313,24 @@ class SuperAdminCenterStudentListView(ListAPIView):
         active_students_count=Count(
             "students", filter=Q(students__status="active"), distinct=True
         ),
-    )
+    ).order_by("id")
+
     permission_classes = [IsSuperAdmin]
     serializer_class = CenterStudentCountSerializer
     pagination_class = CustomPagination
 
-    def get_queryset(self):
-        return self.queryset.order_by("id")
-
 
 @extend_schema(tags=["SuperAdminCenter"])
 class SuperAdminCenterListCreateView(ListCreateAPIView):
-    queryset = Center.objects.select_related("director").annotate(
-        students_count=Count("students", distinct=True)
+    queryset = (
+        Center.objects.select_related("director")
+        .annotate(students_count=Count("students", distinct=True))
+        .order_by("id")
     )
     permission_classes = [IsSuperAdmin]
     pagination_class = CustomPagination
     parser_classes = [MultiPartParser, FormParser, JSONParser]
     serializer_class = CenterListSerializer
-
-    def get_queryset(self):
-        return self.queryset.order_by("id")
 
 
 @extend_schema(tags=["SuperAdminCenter"])

@@ -45,5 +45,6 @@ dev = [
 DJANGO_SETTINGS_MODULE = "root.test_settings"
 python_files = ["tests.py", "test_*.py", "*_tests.py"]
 
+
 [tool.ruff.lint]
 ignore = ["F401"]

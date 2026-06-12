@@ -13,8 +13,6 @@ from apps.serializers import (
     GroupModelSerializer,
     RoomModelSerializer,
     GroupStudentModelSerializer,
-)
-from apps.serializers.profile import (
     TeacherProfileSerializer,
     ParentProfileSerializer,
 )
