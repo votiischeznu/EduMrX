@@ -111,8 +111,18 @@ class Student(TimeStampedModel):
     class Status(TextChoices):
         ACTIVE = "active", _("Faol")
         INACTIVE = "inactive", _("Nofaol")
+        FROZEN = "frozen", _("Muzlatilgan")
+        NEW = "new", _("Yangi")
         GRADUATED = "graduated", _("Bitirgan")
         SUSPENDED = "suspended", _("To'xtatilgan")
+
+    @property
+    def is_chargeable(self) -> bool:
+        return self.status in [self.Status.ACTIVE, self.Status.NEW]
+
+    @property
+    def is_first_lesson_free(self) -> bool:
+        return self.status == self.Status.NEW
 
     user = OneToOneField(
         "apps.User",

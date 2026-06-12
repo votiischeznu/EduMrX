@@ -244,6 +244,7 @@ class StudentCreateUpdateSerializer(ModelSerializer):
             "phone": {"required": True},
             "email": {"required": False, "allow_null": True},
             "date_of_birth": {"required": False, "allow_null": True},
+            "status": {"default": Student.Status.NEW},
         }
 
     def validate_email(self, value):
