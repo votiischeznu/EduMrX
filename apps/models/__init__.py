@@ -6,3 +6,4 @@ from apps.models.notifications import Notification, NotificationRecipient
 from apps.models.payments import Payment, Debt
 from apps.models.profiles import Student, Teacher, Parent
 from apps.models.users import User, UserManager
+
