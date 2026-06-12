@@ -69,6 +69,8 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
     is_active = BooleanField(_("Faol"), default=True)
     is_staff = BooleanField(_("Xodim"), default=False)
 
+    must_change_password = BooleanField(default=False)
+
     objects = UserManager()
 
     USERNAME_FIELD = "phone"
