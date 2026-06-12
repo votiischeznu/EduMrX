@@ -59,7 +59,7 @@ class DirectorCreateUpdateSerializer(ModelSerializer):
             )
 
         user = User.objects.create_user(
-            role=User.Role.DIRECTOR, password=password, must_change_password=False, **validated_data
+            role=User.Role.DIRECTOR, password=password, **validated_data
         )
         return user
 
