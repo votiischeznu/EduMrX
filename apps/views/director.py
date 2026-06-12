@@ -4,22 +4,38 @@ from django.db.models import Count, DecimalField, Q, Sum
 from django.db.models.functions import TruncMonth
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.exceptions import NotFound, ValidationError
 
 from apps.models.centers import Center
-from apps.models.profiles import Student
+from apps.models.profiles import Student, Teacher
 from apps.models.payments import Payment, Debt
-from apps.models.groups import Group
+from apps.models.groups import Group, Room
+from apps.models.courses import Course, Lesson, Attendance
+
+from apps.serializers import (
+    DirectorTeacherCreateSerializer,
+    DirectorTeacherDetailSerializer,
+    DirectorTeacherListSerializer,
+    DirectorRoomSerializer,
+    DirectorCourseSerializer,
+    DirectorGroupCreateSerializer,
+    DirectorGroupDetailSerializer,
+    DirectorGroupEnrollSerializer,
+    DirectorGroupListSerializer,
+    DirectorLessonCreateSerializer,
+    DirectorLessonListSerializer,
+    DirectorAttendanceBulkSerializer,
+    DirectorAttendanceSerializer,
+)
 from apps.serializers.director import (
     DirectorStudentCreateSerializer,
     DirectorStudentDetailSerializer,
     DirectorStudentListSerializer,
 )
 
-
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework import filters
-from rest_framework.exceptions import NotFound
 from rest_framework.generics import (
     ListCreateAPIView,
     RetrieveUpdateDestroyAPIView,
@@ -27,41 +43,31 @@ from rest_framework.generics import (
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
-from apps.models.profiles import Teacher
-from apps.models.groups import Room
-from apps.models.courses import Course
-from apps.models.courses import Lesson, Attendance
 from apps.permissions import IsDirector
-from apps.serializers.director import (
-    # Teachers
-    DirectorTeacherCreateSerializer,
-    DirectorTeacherDetailSerializer,
-    DirectorTeacherListSerializer,
-    # Rooms
-    DirectorRoomSerializer,
-    # Courses
-    DirectorCourseSerializer,
-    # Groups
-    DirectorGroupCreateSerializer,
-    DirectorGroupDetailSerializer,
-    DirectorGroupEnrollSerializer,
-    DirectorGroupListSerializer,
-    # Lessons
-    DirectorLessonCreateSerializer,
-    DirectorLessonListSerializer,
-    # Attendance
-    DirectorAttendanceBulkSerializer,
-    DirectorAttendanceSerializer,
-)
+
+
+# ─── Helpers ──────────────────────────────────────────────────────────────────
 
 
 def get_director_centers(user):
     return Center.objects.filter(director=user, status="active")
 
 
+def get_single_center_or_404(user):
+    """
+    Director uchun birinchi faol markazni qaytaradi.
+    Topilmasa — aniq xato ko'taradi (jimgina None qaytarmaydi).
+    """
+    center = get_director_centers(user).first()
+    if not center:
+        raise NotFound("Sizga biriktirilgan faol markaz topilmadi.")
+    return center
+
+
 # ─── Dashboard ────────────────────────────────────────────────────────────────
 
 
+@extend_schema(tags=["DirectorDashboard"])
 class DirectorDashboardView(APIView):
     permission_classes = [IsAuthenticated, IsDirector]
 
@@ -78,7 +84,7 @@ class DirectorDashboardView(APIView):
         current_year = today.year
         current_month = today.month
 
-        # ── KPI ──────────────────────────────────────────────────────────────
+        # KPI
         total_students = center.students.filter(user__is_deleted=False).count()
         active_students = center.students.filter(
             status="active", user__is_deleted=False
@@ -99,7 +105,7 @@ class DirectorDashboardView(APIView):
             status__in=["unpaid", "partially_paid"],
         ).aggregate(total=Sum("amount", default=0))["total"]
 
-        # ── Revenue chart (12 oy) ─────────────────────────────────────────────
+        # Revenue chart (12 oy)
         revenue_chart = (
             Payment.objects.filter(student__center=center, status="paid")
             .annotate(month=TruncMonth("paid_at"))
@@ -116,11 +122,11 @@ class DirectorDashboardView(APIView):
             if entry["month"]
         ]
 
-        # ── Group distribution ────────────────────────────────────────────────
+        # Group distribution
         group_stats = center.groups.values("status").annotate(count=Count("id"))
         group_distribution = {g["status"]: g["count"] for g in group_stats}
 
-        # ── Top 5 groups ──────────────────────────────────────────────────────
+        # Top 5 groups
         top_groups = (
             Group.objects.filter(center=center)
             .annotate(
@@ -134,7 +140,7 @@ class DirectorDashboardView(APIView):
             .values("id", "name", "student_count", "status", "revenue")
         )
 
-        # ── Recent 10 payments ────────────────────────────────────────────────
+        # Recent 10 payments
         recent_payments = (
             Payment.objects.filter(student__center=center, status="paid")
             .select_related("student__user", "group")
@@ -173,6 +179,7 @@ class DirectorDashboardView(APIView):
 # ─── Students ─────────────────────────────────────────────────────────────────
 
 
+@extend_schema(tags=["DirectorStudent"])
 class DirectorStudentListCreateView(ListCreateAPIView):
     permission_classes = [IsAuthenticated, IsDirector]
     filter_backends = [
@@ -196,11 +203,11 @@ class DirectorStudentListCreateView(ListCreateAPIView):
             return DirectorStudentCreateSerializer
         return DirectorStudentListSerializer
 
-    @extend_schema(tags=["2. Director — Students"])
+    @extend_schema(tags=["2. Director – Students"])
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
 
-    @extend_schema(tags=["2. Director — Students"])
+    @extend_schema(tags=["2. Director – Students"])
     def post(self, request, *args, **kwargs):
         centers = get_director_centers(request.user)
         serializer = DirectorStudentCreateSerializer(
@@ -215,6 +222,7 @@ class DirectorStudentListCreateView(ListCreateAPIView):
         )
 
 
+@extend_schema(tags=["DirectorStudent"])
 class DirectorStudentDetailView(RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated, IsDirector]
     http_method_names = ["get", "patch", "delete"]
@@ -230,11 +238,11 @@ class DirectorStudentDetailView(RetrieveUpdateDestroyAPIView):
             return DirectorStudentCreateSerializer
         return DirectorStudentDetailSerializer
 
-    @extend_schema(tags=["2. Director — Students"])
+    @extend_schema(tags=["2. Director – Students"])
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
 
-    @extend_schema(tags=["2. Director — Students"])
+    @extend_schema(tags=["2. Director – Students"])
     def patch(self, request, *args, **kwargs):
         centers = get_director_centers(request.user)
         instance = self.get_object()
@@ -248,7 +256,7 @@ class DirectorStudentDetailView(RetrieveUpdateDestroyAPIView):
         student = serializer.save()
         return Response(DirectorStudentDetailSerializer(student).data)
 
-    @extend_schema(tags=["2. Director — Students"])
+    @extend_schema(tags=["2. Director – Students"])
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.user.is_deleted = True
@@ -257,12 +265,10 @@ class DirectorStudentDetailView(RetrieveUpdateDestroyAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-# ============================================================
-# apps/views/director.py ga QO'SHILADI
-# (mavjud Student views lardan keyin)
-# ============================================================
+# ─── Teachers ─────────────────────────────────────────────────────────────────
 
 
+@extend_schema(tags=["DirectorTeacher"])
 class DirectorTeacherListCreateView(ListCreateAPIView):
     permission_classes = [IsAuthenticated, IsDirector]
     filter_backends = [
@@ -276,9 +282,10 @@ class DirectorTeacherListCreateView(ListCreateAPIView):
 
     def get_queryset(self):
         centers = get_director_centers(self.request.user)
+        # Teacher modelidagi FK maydon nomi: 'center' (agar M2M bo'lsa 'centers__in' ishlatiladi)
         return Teacher.objects.filter(
-            centers__in=centers, user__is_deleted=False
-        ).select_related("user", "centers")
+            center__in=centers, user__is_deleted=False
+        ).select_related("user", "center")
 
     def get_serializer_class(self):
         return (
@@ -287,13 +294,13 @@ class DirectorTeacherListCreateView(ListCreateAPIView):
             else DirectorTeacherListSerializer
         )
 
-    @extend_schema(tags=["3. Director — Teachers"])
+    @extend_schema(tags=["3. Director – Teachers"])
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
 
-    @extend_schema(tags=["3. Director — Teachers"])
+    @extend_schema(tags=["3. Director – Teachers"])
     def post(self, request, *args, **kwargs):
-        center = get_director_centers(request.user).first()
+        center = get_single_center_or_404(request.user)
         serializer = DirectorTeacherCreateSerializer(
             data=request.data,
             context={"request": request, "center": center},
@@ -306,6 +313,7 @@ class DirectorTeacherListCreateView(ListCreateAPIView):
         )
 
 
+@extend_schema(tags=["DirectorTeacher"])
 class DirectorTeacherDetailView(RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated, IsDirector]
     http_method_names = ["get", "patch", "delete"]
@@ -313,8 +321,8 @@ class DirectorTeacherDetailView(RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         centers = get_director_centers(self.request.user)
         return Teacher.objects.filter(
-            centers__in=centers, user__is_deleted=False
-        ).select_related("user", "centers")
+            center__in=centers, user__is_deleted=False
+        ).select_related("user", "center")
 
     def get_serializer_class(self):
         return (
@@ -323,13 +331,13 @@ class DirectorTeacherDetailView(RetrieveUpdateDestroyAPIView):
             else DirectorTeacherDetailSerializer
         )
 
-    @extend_schema(tags=["3. Director — Teachers"])
+    @extend_schema(tags=["3. Director – Teachers"])
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
 
-    @extend_schema(tags=["3. Director — Teachers"])
+    @extend_schema(tags=["3. Director – Teachers"])
     def patch(self, request, *args, **kwargs):
-        center = get_director_centers(request.user).first()
+        center = get_single_center_or_404(request.user)
         instance = self.get_object()
         serializer = DirectorTeacherCreateSerializer(
             instance,
@@ -341,7 +349,7 @@ class DirectorTeacherDetailView(RetrieveUpdateDestroyAPIView):
         teacher = serializer.save()
         return Response(DirectorTeacherDetailSerializer(teacher).data)
 
-    @extend_schema(tags=["3. Director — Teachers"])
+    @extend_schema(tags=["3. Director – Teachers"])
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.user.is_deleted = True
@@ -350,6 +358,10 @@ class DirectorTeacherDetailView(RetrieveUpdateDestroyAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+# ─── Rooms ────────────────────────────────────────────────────────────────────
+
+
+@extend_schema(tags=["DirectorRoom"])
 class DirectorRoomListCreateView(ListCreateAPIView):
     permission_classes = [IsAuthenticated, IsDirector]
     serializer_class = DirectorRoomSerializer
@@ -357,36 +369,50 @@ class DirectorRoomListCreateView(ListCreateAPIView):
     search_fields = ["name"]
 
     def get_queryset(self):
-        return Room.objects.all().order_by("name")
+        # Faqat o'z markaziga tegishli xonalarni ko'rsatish
+        centers = get_director_centers(self.request.user)
+        return Room.objects.filter(center__in=centers).order_by("name")
 
-    @extend_schema(tags=["4. Director — Rooms"])
+    def perform_create(self, serializer):
+        center = get_single_center_or_404(self.request.user)
+        serializer.save(center=center)
+
+    @extend_schema(tags=["4. Director – Rooms"])
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
 
-    @extend_schema(tags=["4. Director — Rooms"])
+    @extend_schema(tags=["4. Director – Rooms"])
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
 
 
+@extend_schema(tags=["DirectorRoom"])
 class DirectorRoomDetailView(RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated, IsDirector]
     serializer_class = DirectorRoomSerializer
     http_method_names = ["get", "patch", "delete"]
-    queryset = Room.objects.all()
 
-    @extend_schema(tags=["4. Director — Rooms"])
+    def get_queryset(self):
+        centers = get_director_centers(self.request.user)
+        return Room.objects.filter(center__in=centers)
+
+    @extend_schema(tags=["4. Director – Rooms"])
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
 
-    @extend_schema(tags=["4. Director — Rooms"])
+    @extend_schema(tags=["4. Director – Rooms"])
     def patch(self, request, *args, **kwargs):
         return super().partial_update(request, *args, **kwargs)
 
-    @extend_schema(tags=["4. Director — Rooms"])
+    @extend_schema(tags=["4. Director – Rooms"])
     def delete(self, request, *args, **kwargs):
         return super().delete(request, *args, **kwargs)
 
 
+# ─── Courses ──────────────────────────────────────────────────────────────────
+
+
+@extend_schema(tags=["DirectorCourse"])
 class DirectorCourseListCreateView(ListCreateAPIView):
     permission_classes = [IsAuthenticated, IsDirector]
     serializer_class = DirectorCourseSerializer
@@ -404,20 +430,21 @@ class DirectorCourseListCreateView(ListCreateAPIView):
         centers = get_director_centers(self.request.user)
         return Course.objects.filter(center__in=centers)
 
-    def get_serializer_context(self):
-        ctx = super().get_serializer_context()
-        ctx["center"] = get_director_centers(self.request.user).first()
-        return ctx
+    def perform_create(self, serializer):
+        # center serializer validate'dan olib tashlandi — bu yerda saqlanadi
+        center = get_single_center_or_404(self.request.user)
+        serializer.save(center=center)
 
-    @extend_schema(tags=["5. Director — Courses"])
+    @extend_schema(tags=["5. Director – Courses"])
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
 
-    @extend_schema(tags=["5. Director — Courses"])
+    @extend_schema(tags=["5. Director – Courses"])
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
 
 
+@extend_schema(tags=["DirectorCourse"])
 class DirectorCourseDetailView(RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated, IsDirector]
     serializer_class = DirectorCourseSerializer
@@ -427,27 +454,23 @@ class DirectorCourseDetailView(RetrieveUpdateDestroyAPIView):
         centers = get_director_centers(self.request.user)
         return Course.objects.filter(center__in=centers)
 
-    def get_serializer_context(self):
-        ctx = super().get_serializer_context()
-        ctx["center"] = get_director_centers(self.request.user).first()
-        return ctx
-
-    @extend_schema(tags=["5. Director — Courses"])
+    @extend_schema(tags=["5. Director – Courses"])
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
 
-    @extend_schema(tags=["5. Director — Courses"])
+    @extend_schema(tags=["5. Director – Courses"])
     def patch(self, request, *args, **kwargs):
         return super().partial_update(request, *args, **kwargs)
 
-    @extend_schema(tags=["5. Director — Courses"])
+    @extend_schema(tags=["5. Director – Courses"])
     def delete(self, request, *args, **kwargs):
         return super().delete(request, *args, **kwargs)
 
 
-# ─── Groups ──────────────────────────────────────────────────────────────────
+# ─── Groups ───────────────────────────────────────────────────────────────────
 
 
+@extend_schema(tags=["DirectorGroups"])
 class DirectorGroupListCreateView(ListCreateAPIView):
     permission_classes = [IsAuthenticated, IsDirector]
     filter_backends = [
@@ -474,13 +497,13 @@ class DirectorGroupListCreateView(ListCreateAPIView):
         )
 
     def _get_center(self):
-        return get_director_centers(self.request.user).first()
+        return get_single_center_or_404(self.request.user)
 
-    @extend_schema(tags=["6. Director — Groups"])
+    @extend_schema(tags=["6. Director – Groups"])
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
 
-    @extend_schema(tags=["6. Director — Groups"])
+    @extend_schema(tags=["6. Director – Groups"])
     def post(self, request, *args, **kwargs):
         center = self._get_center()
         serializer = DirectorGroupCreateSerializer(
@@ -494,6 +517,7 @@ class DirectorGroupListCreateView(ListCreateAPIView):
         )
 
 
+@extend_schema(tags=["DirectorGroups"])
 class DirectorGroupDetailView(RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated, IsDirector]
     http_method_names = ["get", "patch", "delete"]
@@ -514,13 +538,13 @@ class DirectorGroupDetailView(RetrieveUpdateDestroyAPIView):
         )
 
     def _get_center(self):
-        return get_director_centers(self.request.user).first()
+        return get_single_center_or_404(self.request.user)
 
-    @extend_schema(tags=["6. Director — Groups"])
+    @extend_schema(tags=["6. Director – Groups"])
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
 
-    @extend_schema(tags=["6. Director — Groups"])
+    @extend_schema(tags=["6. Director – Groups"])
     def patch(self, request, *args, **kwargs):
         center = self._get_center()
         instance = self.get_object()
@@ -534,11 +558,12 @@ class DirectorGroupDetailView(RetrieveUpdateDestroyAPIView):
         group = serializer.save()
         return Response(DirectorGroupDetailSerializer(group).data)
 
-    @extend_schema(tags=["6. Director — Groups"])
+    @extend_schema(tags=["6. Director – Groups"])
     def delete(self, request, *args, **kwargs):
         return super().delete(request, *args, **kwargs)
 
 
+@extend_schema(tags=["DirectorGroups"])
 class DirectorGroupEnrollView(APIView):
     permission_classes = [IsAuthenticated, IsDirector]
 
@@ -549,10 +574,10 @@ class DirectorGroupEnrollView(APIView):
         except Group.DoesNotExist:
             raise NotFound("Guruh topilmadi.")
 
-    @extend_schema(tags=["6. Director — Groups"])
+    @extend_schema(tags=["6. Director – Groups"])
     def post(self, request, pk):
         group = self._get_group(pk)
-        center = get_director_centers(request.user).first()
+        center = group.center
         serializer = DirectorGroupEnrollSerializer(
             data=request.data,
             context={"request": request, "center": center, "group": group},
@@ -562,6 +587,10 @@ class DirectorGroupEnrollView(APIView):
         return Response(DirectorGroupDetailSerializer(group).data)
 
 
+# ─── Lessons ──────────────────────────────────────────────────────────────────
+
+
+@extend_schema(tags=["DirectorLessons"])
 class DirectorLessonListCreateView(ListCreateAPIView):
     permission_classes = [IsAuthenticated, IsDirector]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
@@ -581,13 +610,13 @@ class DirectorLessonListCreateView(ListCreateAPIView):
         )
 
     def _get_center(self):
-        return get_director_centers(self.request.user).first()
+        return get_single_center_or_404(self.request.user)
 
-    @extend_schema(tags=["7. Director — Lessons"])
+    @extend_schema(tags=["7. Director – Lessons"])
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
 
-    @extend_schema(tags=["7. Director — Lessons"])
+    @extend_schema(tags=["7. Director – Lessons"])
     def post(self, request, *args, **kwargs):
         center = self._get_center()
         serializer = DirectorLessonCreateSerializer(
@@ -601,6 +630,7 @@ class DirectorLessonListCreateView(ListCreateAPIView):
         )
 
 
+@extend_schema(tags=["DirectorLessons"])
 class DirectorLessonDetailView(RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated, IsDirector]
     http_method_names = ["get", "patch", "delete"]
@@ -617,13 +647,13 @@ class DirectorLessonDetailView(RetrieveUpdateDestroyAPIView):
         )
 
     def _get_center(self):
-        return get_director_centers(self.request.user).first()
+        return get_single_center_or_404(self.request.user)
 
-    @extend_schema(tags=["7. Director — Lessons"])
+    @extend_schema(tags=["7. Director – Lessons"])
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
 
-    @extend_schema(tags=["7. Director — Lessons"])
+    @extend_schema(tags=["7. Director – Lessons"])
     def patch(self, request, *args, **kwargs):
         center = self._get_center()
         instance = self.get_object()
@@ -637,12 +667,16 @@ class DirectorLessonDetailView(RetrieveUpdateDestroyAPIView):
         lesson = serializer.save()
         return Response(DirectorLessonListSerializer(lesson).data)
 
-    @extend_schema(tags=["7. Director — Lessons"])
+    @extend_schema(tags=["7. Director – Lessons"])
     def delete(self, request, *args, **kwargs):
         return super().delete(request, *args, **kwargs)
 
 
+
+@extend_schema(tags=["DirectorAttendance"])
 class DirectorAttendanceView(APIView):
+    permission_classes = [IsAuthenticated, IsDirector]
+
     def _get_lesson(self, pk):
         centers = get_director_centers(self.request.user)
         try:
@@ -650,7 +684,7 @@ class DirectorAttendanceView(APIView):
         except Lesson.DoesNotExist:
             raise NotFound("Dars topilmadi.")
 
-    @extend_schema(tags=["8. Director — Attendance"])
+    @extend_schema(tags=["8. Director – Attendance"])
     def get(self, request, pk):
         lesson = self._get_lesson(pk)
         attendances = Attendance.objects.filter(lesson=lesson).select_related(
@@ -659,7 +693,7 @@ class DirectorAttendanceView(APIView):
         serializer = DirectorAttendanceSerializer(attendances, many=True)
         return Response(serializer.data)
 
-    @extend_schema(tags=["8. Director — Attendance"])
+    @extend_schema(tags=["8. Director – Attendance"])
     def post(self, request, pk):
         lesson = self._get_lesson(pk)
         serializer = DirectorAttendanceBulkSerializer(

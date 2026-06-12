@@ -33,9 +33,27 @@ from apps.views.super_admin import (
     SuperAdminStudentListCreateView,
 )
 from apps.views.users import UserViewSet
-from apps.views.views import (
+from apps.views.profile import (
     GroupModelViewSet,
     GroupStudentModelViewSet,
     MyProfileRetrieveUpdateAPIView,
     RoomModelViewSet,
+)
+
+from apps.views.director import (
+    DirectorAttendanceView,
+    DirectorLessonDetailView,
+    DirectorLessonListCreateView,
+    DirectorGroupEnrollView,
+    DirectorGroupDetailView,
+    DirectorGroupListCreateView,
+    DirectorCourseDetailView,
+    DirectorRoomDetailView,
+    DirectorCourseListCreateView,
+    DirectorRoomListCreateView,
+    DirectorTeacherListCreateView,
+    DirectorTeacherDetailView,
+    DirectorStudentDetailView,
+    DirectorStudentListCreateView,
+    DirectorDashboardView,
 )
