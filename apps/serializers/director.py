@@ -18,12 +18,17 @@ from rest_framework.serializers import (
     UUIDField,
 )
 
-from apps.models.users import User
-from apps.models.profiles import Teacher, Student
-from apps.models.groups import Group, GroupStudent, Room
-from apps.models.courses import Course
-from apps.models.courses import Lesson, Attendance
-
+from apps.models import (
+    User,
+    Teacher,
+    Student,
+    Group,
+    GroupStudent,
+    Room,
+    Course,
+    Lesson,
+    Attendance,
+)
 
 
 class UserSummarySerializer(ModelSerializer):
@@ -38,8 +43,6 @@ class UserSummarySerializer(ModelSerializer):
             "avatar",
             "email",
         ]
-
-
 
 
 class DirectorStudentListSerializer(ModelSerializer):
@@ -83,7 +86,6 @@ class DirectorStudentDetailSerializer(ModelSerializer):
     def get_parent_name(self, obj):
         return obj.parent.full_name if obj.parent else None
 
-
 class DirectorStudentCreateSerializer(Serializer):
     phone = CharField(max_length=50)
     first_name = CharField(max_length=100)
@@ -94,7 +96,9 @@ class DirectorStudentCreateSerializer(Serializer):
     center = UUIDField()
     date_of_birth = DateField(required=False, allow_null=True)
     notes = CharField(required=False, allow_blank=True)
-    status = ChoiceField(choices=Student.Status.choices, default=Student.Status.ACTIVE)
+    status = ChoiceField(
+        choices=Student.Status.choices, default=Student.Status.ACTIVE
+    )
     parent = UUIDField(required=False, allow_null=True)
 
     def validate_center(self, value):
@@ -107,7 +111,7 @@ class DirectorStudentCreateSerializer(Serializer):
 
     def validate_phone(self, value):
         qs = User.objects.filter(phone=value)
-        if self.instance:
+        if hasattr(self, "instance") and self.instance:
             qs = qs.exclude(id=self.instance.user_id)
         if qs.exists():
             raise ValidationError("Bu telefon raqam allaqachon mavjud.")
@@ -115,12 +119,7 @@ class DirectorStudentCreateSerializer(Serializer):
 
     @transaction.atomic
     def create(self, validated_data):
-        password = validated_data.pop("password")
-        center_id = validated_data.pop("center")
-        parent_id = validated_data.pop("parent", None)
-        date_of_birth = validated_data.pop("date_of_birth", None)
-        notes = validated_data.pop("notes", "")
-        st_status = validated_data.pop("status", Student.Status.ACTIVE)
+        password = validated_data.pop("password", "EduMrX2025!")
 
         user = User.objects.create_user(
             phone=validated_data["phone"],
@@ -130,14 +129,16 @@ class DirectorStudentCreateSerializer(Serializer):
             email=validated_data.get("email"),
             avatar=validated_data.get("avatar"),
             role=User.Role.STUDENT,
+            must_change_password=True,
         )
+
         return Student.objects.create(
             user=user,
-            center_id=center_id,
-            parent_id=parent_id,
-            date_of_birth=date_of_birth,
-            notes=notes,
-            status=st_status,
+            center_id=validated_data.pop("center"),
+            parent_id=validated_data.pop("parent", None),
+            date_of_birth=validated_data.pop("date_of_birth", None),
+            notes=validated_data.pop("notes", ""),
+            status=validated_data.pop("status", Student.Status.ACTIVE),
         )
 
     @transaction.atomic
@@ -146,13 +147,20 @@ class DirectorStudentCreateSerializer(Serializer):
         for field in ["phone", "first_name", "last_name", "email", "avatar"]:
             if field in validated_data:
                 setattr(user, field, validated_data[field])
+
+        if "password" in validated_data:
+            user.set_password(validated_data["password"])
+            user.must_change_password = False
+
         user.save()
 
         for field in ["date_of_birth", "notes", "status"]:
             if field in validated_data:
                 setattr(instance, field, validated_data[field])
+
         if "parent" in validated_data:
             instance.parent_id = validated_data["parent"]
+
         instance.save()
         return instance
 
@@ -254,7 +262,6 @@ class DirectorTeacherCreateSerializer(Serializer):
         return instance
 
 
-
 class DirectorRoomSerializer(ModelSerializer):
     class Meta:
         model = Room
@@ -274,7 +281,6 @@ class DirectorCourseSerializer(ModelSerializer):
             "created_at",
         ]
         read_only_fields = ["id", "created_at"]
-
 
 
 class DirectorGroupStudentSerializer(ModelSerializer):
@@ -422,7 +428,6 @@ class DirectorGroupEnrollSerializer(Serializer):
         return group
 
 
-
 class DirectorLessonListSerializer(ModelSerializer):
     group_name = CharField(source="group.name", read_only=True)
 
@@ -473,7 +478,6 @@ class DirectorLessonCreateSerializer(Serializer):
             setattr(instance, field, value)
         instance.save()
         return instance
-
 
 
 class DirectorAttendanceSerializer(ModelSerializer):

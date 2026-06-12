@@ -52,14 +52,9 @@ from apps.views import (
 main_router = SimpleRouter(trailing_slash=True)
 main_router.register("rooms", RoomModelViewSet, basename="rooms")
 main_router.register("groups", GroupModelViewSet, basename="groups")
-main_router.register(
-    "group_students", GroupStudentModelViewSet, basename="group_students"
-)
-main_router.register(
-    "attendances", ManagementAttendanceViewSet, basename="management-attendance"
-)
+main_router.register("group_students", GroupStudentModelViewSet, basename="group_students")
+main_router.register("attendances", ManagementAttendanceViewSet, basename="management-attendance")
 main_router.register(r"users", UserViewSet, basename="user")
-
 auth_router = SimpleRouter(trailing_slash=False)
 auth_router.register("recovery", AccountRecoveryViewSet, basename="auth-recovery")
 
@@ -75,7 +70,7 @@ urlpatterns = [
     # ── Profile ───────────────────────────────────────────
     path("me/", MyProfileRetrieveUpdateAPIView.as_view()),
     # ── Management: Students ──────────────────────────────
-    path("students/stats/", StudentStatsView.as_view(), name="student-stats"),
+    path("students/stats/", StudentStatsView.as_view()),
     path("students/", ManagementStudentListCreateView.as_view()),
     path("students/<uuid:pk>/", ManagementStudentDetailView.as_view()),
     # ── Management: Teachers ──────────────────────────────

@@ -46,9 +46,6 @@ from rest_framework.views import APIView
 from apps.permissions import IsDirector
 
 
-# ─── Helpers ──────────────────────────────────────────────────────────────────
-
-
 def get_director_centers(user):
     return Center.objects.filter(director=user, status="active")
 
@@ -62,9 +59,6 @@ def get_single_center_or_404(user):
     if not center:
         raise NotFound("Sizga biriktirilgan faol markaz topilmadi.")
     return center
-
-
-# ─── Dashboard ────────────────────────────────────────────────────────────────
 
 
 @extend_schema(tags=["DirectorDashboard"])
@@ -84,7 +78,6 @@ class DirectorDashboardView(APIView):
         current_year = today.year
         current_month = today.month
 
-        # KPI
         total_students = center.students.filter(user__is_deleted=False).count()
         active_students = center.students.filter(
             status="active", user__is_deleted=False
@@ -105,7 +98,6 @@ class DirectorDashboardView(APIView):
             status__in=["unpaid", "partially_paid"],
         ).aggregate(total=Sum("amount", default=0))["total"]
 
-        # Revenue chart (12 oy)
         revenue_chart = (
             Payment.objects.filter(student__center=center, status="paid")
             .annotate(month=TruncMonth("paid_at"))
@@ -122,11 +114,9 @@ class DirectorDashboardView(APIView):
             if entry["month"]
         ]
 
-        # Group distribution
         group_stats = center.groups.values("status").annotate(count=Count("id"))
         group_distribution = {g["status"]: g["count"] for g in group_stats}
 
-        # Top 5 groups
         top_groups = (
             Group.objects.filter(center=center)
             .annotate(
@@ -140,7 +130,6 @@ class DirectorDashboardView(APIView):
             .values("id", "name", "student_count", "status", "revenue")
         )
 
-        # Recent 10 payments
         recent_payments = (
             Payment.objects.filter(student__center=center, status="paid")
             .select_related("student__user", "group")
@@ -174,9 +163,6 @@ class DirectorDashboardView(APIView):
                 "recent_payments": recent_payments_data,
             }
         )
-
-
-# ─── Students ─────────────────────────────────────────────────────────────────
 
 
 @extend_schema(tags=["DirectorStudent"])
@@ -265,9 +251,6 @@ class DirectorStudentDetailView(RetrieveUpdateDestroyAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-# ─── Teachers ─────────────────────────────────────────────────────────────────
-
-
 @extend_schema(tags=["DirectorTeacher"])
 class DirectorTeacherListCreateView(ListCreateAPIView):
     permission_classes = [IsAuthenticated, IsDirector]
@@ -282,7 +265,7 @@ class DirectorTeacherListCreateView(ListCreateAPIView):
 
     def get_queryset(self):
         centers = get_director_centers(self.request.user)
-        # Teacher modelidagi FK maydon nomi: 'center' (agar M2M bo'lsa 'centers__in' ishlatiladi)
+
         return Teacher.objects.filter(
             center__in=centers, user__is_deleted=False
         ).select_related("user", "center")
@@ -358,9 +341,6 @@ class DirectorTeacherDetailView(RetrieveUpdateDestroyAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-# ─── Rooms ────────────────────────────────────────────────────────────────────
-
-
 @extend_schema(tags=["DirectorRoom"])
 class DirectorRoomListCreateView(ListCreateAPIView):
     permission_classes = [IsAuthenticated, IsDirector]
@@ -369,7 +349,7 @@ class DirectorRoomListCreateView(ListCreateAPIView):
     search_fields = ["name"]
 
     def get_queryset(self):
-        # Faqat o'z markaziga tegishli xonalarni ko'rsatish
+
         centers = get_director_centers(self.request.user)
         return Room.objects.filter(center__in=centers).order_by("name")
 
@@ -409,9 +389,6 @@ class DirectorRoomDetailView(RetrieveUpdateDestroyAPIView):
         return super().delete(request, *args, **kwargs)
 
 
-# ─── Courses ──────────────────────────────────────────────────────────────────
-
-
 @extend_schema(tags=["DirectorCourse"])
 class DirectorCourseListCreateView(ListCreateAPIView):
     permission_classes = [IsAuthenticated, IsDirector]
@@ -431,7 +408,7 @@ class DirectorCourseListCreateView(ListCreateAPIView):
         return Course.objects.filter(center__in=centers)
 
     def perform_create(self, serializer):
-        # center serializer validate'dan olib tashlandi — bu yerda saqlanadi
+
         center = get_single_center_or_404(self.request.user)
         serializer.save(center=center)
 
@@ -465,9 +442,6 @@ class DirectorCourseDetailView(RetrieveUpdateDestroyAPIView):
     @extend_schema(tags=["5. Director – Courses"])
     def delete(self, request, *args, **kwargs):
         return super().delete(request, *args, **kwargs)
-
-
-# ─── Groups ───────────────────────────────────────────────────────────────────
 
 
 @extend_schema(tags=["DirectorGroups"])
@@ -587,9 +561,6 @@ class DirectorGroupEnrollView(APIView):
         return Response(DirectorGroupDetailSerializer(group).data)
 
 
-# ─── Lessons ──────────────────────────────────────────────────────────────────
-
-
 @extend_schema(tags=["DirectorLessons"])
 class DirectorLessonListCreateView(ListCreateAPIView):
     permission_classes = [IsAuthenticated, IsDirector]
@@ -670,7 +641,6 @@ class DirectorLessonDetailView(RetrieveUpdateDestroyAPIView):
     @extend_schema(tags=["7. Director – Lessons"])
     def delete(self, request, *args, **kwargs):
         return super().delete(request, *args, **kwargs)
-
 
 
 @extend_schema(tags=["DirectorAttendance"])
