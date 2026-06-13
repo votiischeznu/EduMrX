@@ -21,7 +21,7 @@ from apps.serializers import (
 @extend_schema(tags=["Profile"])
 class MyProfileRetrieveUpdateAPIView(RetrieveUpdateAPIView):
     permission_classes = [IsAuthenticated]
-    http_method_names = ["get", "patch"]
+    http_method_names = ["get"]
 
     @cached_property
     def _user_with_profiles(self):
@@ -32,26 +32,25 @@ class MyProfileRetrieveUpdateAPIView(RetrieveUpdateAPIView):
         ).get(pk=self.request.user.pk)
 
     def get_serializer_class(self):
-        role = self._user_with_profiles.role
+        role = self.request.user.role
 
         role_serializer_map = {
             User.Role.STUDENT: StudentProfileSerializer,
             User.Role.TEACHER: TeacherProfileSerializer,
             User.Role.PARENT: ParentProfileSerializer,
         }
-
         return role_serializer_map.get(role, AdminProfileSerializer)
 
     def get_object(self):
         user = self._user_with_profiles
 
+        if user.is_staff or user.role == "ADMIN":
+            return user
+
         role_profile_map = {
-            User.Role.STUDENT: ("student_profile", "Talaba profili bazadan topilmadi."),
-            User.Role.TEACHER: (
-                "teacher_profile",
-                "O'qituvchi profili bazadan topilmadi.",
-            ),
-            User.Role.PARENT: ("parent_profile", "Ota-ona profili bazadan topilmadi."),
+            User.Role.STUDENT: ("student_profile", "Talaba profili topilmadi."),
+            User.Role.TEACHER: ("teacher_profile", "O'qituvchi profili topilmadi."),
+            User.Role.PARENT: ("parent_profile", "Ota-ona profili topilmadi."),
         }
 
         if user.role in role_profile_map:
@@ -62,6 +61,15 @@ class MyProfileRetrieveUpdateAPIView(RetrieveUpdateAPIView):
             return profile
 
         return user
+
+    def get_serializer(self, *args, **kwargs):
+        serializer_class = self.get_serializer_class()
+        kwargs["context"] = self.get_serializer_context()
+
+        if self.request.method == "PATCH":
+            kwargs["partial"] = True
+
+        return serializer_class(*args, **kwargs)
 
 
 @extend_schema(tags=["Group"])

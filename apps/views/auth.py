@@ -28,12 +28,17 @@ class PasswordChangeAPIView(GenericAPIView):
     serializer_class = PasswordChangeSerializer
 
     def post(self, request):
-        serializer = self.serializer_class(data=request.data, context={"request": request})
+        serializer = self.serializer_class(
+            data=request.data, context={"request": request}
+        )
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
+        if user.must_change_password:
+            user.must_change_password = False
+            user.save()
         update_session_auth_hash(request, user)
 
-        return Response({"message": "Parol muvaffaqiyatli o‘zgartirildi"})
+        return Response({"message": "Parol muvaffaqiyatli o'zgartirildi"})
 
 
 @extend_schema(tags=["Auth"])
@@ -51,7 +56,9 @@ class RegisterCreateAPIView(CreateAPIView):
         email = data.get("email", "")
         method = data.get("method", "telegram_bot")
 
-        result = OTPService.start_registration(phone=phone, email=email, method=method, registration_data=data)
+        result = OTPService.start_registration(
+            phone=phone, email=email, method=method, registration_data=data
+        )
         return Response(result)
 
 
@@ -84,7 +91,9 @@ class LoginAPIView(GenericAPIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        serializer = self.get_serializer(data=request.data, context={"request": request})
+        serializer = self.get_serializer(
+            data=request.data, context={"request": request}
+        )
         serializer.is_valid(raise_exception=True)
 
         user = serializer.validated_data["user"]
@@ -101,6 +110,7 @@ class LoginAPIView(GenericAPIView):
                     "email": user.email or "",
                     "first_name": user.first_name,
                     "last_name": user.last_name,
+                    "must_change_password": user.must_change_password,
                 },
             }
         )
@@ -116,19 +126,36 @@ class AccountRecoveryViewSet(GenericViewSet):
         user = get_object_or_404(User, phone=serializer.validated_data["phone"])
         return serializer.validated_data, user
 
-    @action(detail=False, methods=["post"], url_path="start", serializer_class=RecoveryStartSerializer)
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="start",
+        serializer_class=RecoveryStartSerializer,
+    )
     def start_recovery(self, request):
         data, user = self._validate_and_get_user(request)
-        result = AccountRecoveryService.start(user=user, new_phone=data["new_phone"], method=data["method"])
+        result = AccountRecoveryService.start(
+            user=user, new_phone=data["new_phone"], method=data["method"]
+        )
         return Response(result)
 
-    @action(detail=False, methods=["post"], url_path="verify", serializer_class=RecoveryVerifySerializer)
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="verify",
+        serializer_class=RecoveryVerifySerializer,
+    )
     def verify_recovery(self, request):
         data, user = self._validate_and_get_user(request)
         result = AccountRecoveryService.verify(user=user, raw_otp=data["otp"])
         return Response(result)
 
-    @action(detail=False, methods=["post"], url_path="complete", serializer_class=RecoveryCompleteSerializer)
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="complete",
+        serializer_class=RecoveryCompleteSerializer,
+    )
     def complete_recovery(self, request):
         data, user = self._validate_and_get_user(request)
         AccountRecoveryService.complete(user=user, new_password=data["new_password"])
