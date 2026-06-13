@@ -89,7 +89,7 @@ class DirectorStudentCreateSerializer(Serializer):
     last_name = CharField(max_length=100)
     email = EmailField(required=False, allow_null=True)
     avatar = URLField(required=False, allow_null=True)
-    password = CharField(write_only=True, required=True, default="EduMrX2025!")
+    password = CharField(write_only=True, required=True)
     center = UUIDField()
     date_of_birth = DateField(required=False, allow_null=True)
     notes = CharField(required=False, allow_blank=True)
@@ -195,7 +195,7 @@ class DirectorTeacherCreateSerializer(Serializer):
     last_name = CharField(max_length=100)
     email = EmailField(required=False, allow_null=True)
     avatar = URLField(required=False, allow_null=True)
-    password = CharField(write_only=True, required=True, default="EduMrX2025!")
+    password = CharField(write_only=True, required=True)
 
     specialization = CharField(max_length=255, required=False, allow_blank=True)
     experience = IntegerField(min_value=0, required=False, default=0)

@@ -94,12 +94,19 @@ class LoginModelSerializer(Serializer):
     password = CharField(write_only=True)
 
     def validate(self, attrs):
-        phone = re.sub(r"[\s\-\(\)]", "", attrs.get("phone", "")).lstrip("+")
+        raw_phone = attrs.get("phone", "")
         password = attrs.get("password")
 
+        normalized = re.sub(r"[\s\-\(\)]", "", raw_phone).lstrip("+")
+
         authenticated_user = authenticate(
-            request=self.context.get("request"), username=phone, password=password
+            request=self.context.get("request"), username=normalized, password=password
+        ) or authenticate(
+            request=self.context.get("request"),
+            username="+" + normalized,
+            password=password,
         )
+
         if not authenticated_user:
             raise ValidationError("Telefon raqam yoki parol xato.")
 
