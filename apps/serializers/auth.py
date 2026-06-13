@@ -9,14 +9,16 @@ from rest_framework.fields import CharField, ChoiceField, EmailField
 from rest_framework.serializers import ModelSerializer, Serializer
 from django.core.exceptions import ValidationError as DjangoValidationError
 from apps.models import User
+from apps.serializers.utils import normalize_phone
 
-PHONE_REGEX = r"^\+998\d{9}$"
+PHONE_REGEX = r"^\998\d{9}$"
 
 
 def validate_uzbek_phone(value: str):
-    if not re.match(PHONE_REGEX, value):
-        raise ValidationError("Telefon format noto‘g‘ri. Masalan: +998901234567")
-    return value
+    normalized = normalize_phone(value)
+    if not re.match(r"^998\d{9}$", normalized):
+        raise ValidationError("Telefon format noto'g'ri. Masalan: +998901234567")
+    return normalized
 
 
 class RegisterModelSerializer(ModelSerializer):
@@ -92,7 +94,7 @@ class LoginModelSerializer(Serializer):
     password = CharField(write_only=True)
 
     def validate(self, attrs):
-        phone = attrs.get("phone")
+        phone = re.sub(r"[\s\-\(\)]", "", attrs.get("phone", "")).lstrip("+")
         password = attrs.get("password")
 
         authenticated_user = authenticate(

@@ -5,7 +5,6 @@ from rest_framework.serializers import (
     CharField,
     ChoiceField,
     DateField,
-    DateTimeField,
     DecimalField,
     EmailField,
     IntegerField,
@@ -23,7 +22,7 @@ from apps.models.profiles import Teacher, Student
 from apps.models.groups import Group, GroupStudent, Room
 from apps.models.courses import Course
 from apps.models.courses import Lesson, Attendance
-
+from apps.serializers.utils import normalize_phone
 
 
 class UserSummarySerializer(ModelSerializer):
@@ -85,12 +84,12 @@ class DirectorStudentDetailSerializer(ModelSerializer):
 
 
 class DirectorStudentCreateSerializer(Serializer):
-    phone = CharField(max_length=50)
+    phone = CharField(max_length=50, required=True)
     first_name = CharField(max_length=100)
     last_name = CharField(max_length=100)
     email = EmailField(required=False, allow_null=True)
     avatar = URLField(required=False, allow_null=True)
-    password = CharField(write_only=True, required=False, default="EduMrX2025!")
+    password = CharField(write_only=True, required=True, default="EduMrX2025!")
     center = UUIDField()
     date_of_birth = DateField(required=False, allow_null=True)
     notes = CharField(required=False, allow_blank=True)
@@ -106,7 +105,8 @@ class DirectorStudentCreateSerializer(Serializer):
         return value
 
     def validate_phone(self, value):
-        qs = User.objects.filter(phone=value)
+        normalized = normalize_phone(value)
+        qs = User.objects.filter(phone=normalized)
         if self.instance:
             qs = qs.exclude(id=self.instance.user_id)
         if qs.exists():
@@ -190,12 +190,12 @@ class DirectorTeacherDetailSerializer(ModelSerializer):
 
 
 class DirectorTeacherCreateSerializer(Serializer):
-    phone = CharField(max_length=50)
+    phone = CharField(max_length=50, required=True)
     first_name = CharField(max_length=100)
     last_name = CharField(max_length=100)
     email = EmailField(required=False, allow_null=True)
     avatar = URLField(required=False, allow_null=True)
-    password = CharField(write_only=True, required=False, default="EduMrX2025!")
+    password = CharField(write_only=True, required=True, default="EduMrX2025!")
 
     specialization = CharField(max_length=255, required=False, allow_blank=True)
     experience = IntegerField(min_value=0, required=False, default=0)

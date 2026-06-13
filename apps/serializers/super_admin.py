@@ -6,6 +6,7 @@ from rest_framework.fields import JSONField, CharField, IntegerField, BooleanFie
 from rest_framework.serializers import Serializer, ModelSerializer
 
 from apps.models import Center
+from apps.serializers.utils import normalize_phone
 
 User = get_user_model()
 
@@ -19,7 +20,7 @@ class SuperAdminMenuStatsSerializer(Serializer):
 
 
 class DirectorCreateUpdateSerializer(ModelSerializer):
-    password = CharField(write_only=True, required=False)
+    password = CharField(write_only=True, required=True)
 
     class Meta:
         model = User
@@ -40,16 +41,17 @@ class DirectorCreateUpdateSerializer(ModelSerializer):
         }
 
     def validate_phone(self, value):
+        normalized = normalize_phone(value)
         user_id = self.instance.id if self.instance else None
         if (
-            User.objects.filter(phone=value, is_deleted=False)
+            User.objects.filter(phone=normalized, is_deleted=False)
             .exclude(id=user_id)
             .exists()
         ):
             raise ValidationError(
                 "Bu telefon raqam allaqachon boshqa direktor tomonidan band qilingan."
             )
-        return value
+        return normalized
 
     def create(self, validated_data):
         password = validated_data.pop("password", None)

@@ -6,6 +6,7 @@ from rest_framework.serializers import ModelSerializer, Serializer
 
 from apps.models import Attendance, Parent, GroupStudent
 from apps.models import Student, Teacher
+from apps.serializers.utils import normalize_phone
 
 User = get_user_model()
 
@@ -72,9 +73,9 @@ class TeacherListSerializer(ModelSerializer):
 class TeacherCreateUpdateSerializer(ModelSerializer):
     first_name = CharField(write_only=True)
     last_name = CharField(write_only=True)
-    phone = CharField(write_only=True)
+    phone = CharField(write_only=True, required=True)
     email = EmailField(write_only=True, required=False, allow_null=True)
-    password = CharField(write_only=True, required=False, allow_blank=True)
+    password = CharField(write_only=True, required=True, allow_blank=True)
 
     class Meta:
         model = Teacher
@@ -90,7 +91,7 @@ class TeacherCreateUpdateSerializer(ModelSerializer):
             "experience",
             "salary",
             "bio",
-            "date_of_birth",  # ✅
+            "date_of_birth",
         ]
         extra_kwargs = {
             "first_name": {"required": True},
@@ -102,6 +103,9 @@ class TeacherCreateUpdateSerializer(ModelSerializer):
 
     def validate(self, attrs):
         return attrs
+
+    def validate_phone(self, value):
+        return normalize_phone(value)
 
     def create(self, validated_data):
         password = validated_data.pop("password", None)
@@ -210,9 +214,9 @@ class StudentDetailSerializer(ModelSerializer):
 class StudentCreateUpdateSerializer(ModelSerializer):
     first_name = CharField(write_only=True)
     last_name = CharField(write_only=True)
-    phone = CharField(write_only=True)
+    phone = CharField(write_only=True, required=True)
     email = EmailField(write_only=True, required=False, allow_null=True)
-    password = CharField(write_only=True, required=False)
+    password = CharField(write_only=True, required=True)
 
     parent_name = CharField(write_only=True, required=False, allow_blank=True)
     parent_phone = CharField(write_only=True, required=False, allow_blank=True)
@@ -255,6 +259,9 @@ class StudentCreateUpdateSerializer(ModelSerializer):
                 )
         return value
 
+    def validate_phone(self, value):
+        return normalize_phone(value)
+
     def create(self, validated_data):
         password = validated_data.pop("password", None)
         first_name = validated_data.pop("first_name")
@@ -265,7 +272,6 @@ class StudentCreateUpdateSerializer(ModelSerializer):
         parent_name = validated_data.pop("parent_name", "").strip()
         parent_phone = validated_data.pop("parent_phone", "").strip()
 
-        # 🔹 Student user create
         user = User.objects.create_user(
             phone=phone,
             email=email,

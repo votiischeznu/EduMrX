@@ -20,6 +20,11 @@ ALLOWED_HOSTS = [
     "localhost",
     "edumrx.uz",
     "admin.edumrx.uz",
+    "director.edumrx.uz",
+    "super-admin.edumrx.uz",
+    "student.edumrx.uz",
+    "parent.edumrx.uz",
+    "teacher.edumrx.uz",
 ]
 
 INSTALLED_APPS = [
@@ -181,6 +186,11 @@ CORS_ALLOWED_ORIGINS = [
     "https://edu-x-henna.vercel.app",
     "https://edumrx.uz",
     "https://admin.edumrx.uz",
+    "https://director.edumrx.uz",
+    "https://super-admin.edumrx.uz",
+    "https://student.edumrx.uz",
+    "https://teacher.edumrx.uz",
+    "https://parent.edumrx.uz",
 ]
 CORS_ALLOW_CREDENTIALS = True
 
@@ -188,6 +198,11 @@ CSRF_TRUSTED_ORIGINS = [
     "https://edumrx-1.onrender.com",
     "https://edumrx.uz",
     "https://admin.edumrx.uz",
+    "https://director.edumrx.uz",
+    "https://super-admin.edumrx.uz",
+    "https://teacher.edumrx.uz",
+    "https://student.edumrx.uz",
+    "https://parent.edumrx.uz",
     "http://localhost:3000",
 ]
 
