@@ -9,9 +9,6 @@ from rest_framework.fields import (
 from rest_framework.serializers import Serializer
 
 
-# ================================
-# 1. KPI QISMI UCHUN SERIALIZERLAR
-# ================================
 class BaseCenterStatsSerializer(Serializer):
     active = IntegerField(help_text="Faol markazlar soni")
     total = IntegerField(help_text="Jami markazlar soni")
@@ -47,9 +44,6 @@ class KPISerializer(Serializer):
     tickets = BaseTicketStatsSerializer()
 
 
-# ===================================
-# 2. CHARTS (GRAFIKLAR) SERIALIZERLARI
-# ===================================
 class Revenue12MSerializer(Serializer):
     month = CharField(help_text="Oy nomi (Masalan: 'Yan')")
     amount = IntegerField(help_text="Oylik tushum miqdori")

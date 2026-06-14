@@ -70,7 +70,6 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
     is_staff = BooleanField(_("Xodim"), default=False)
     must_change_password = BooleanField(default=False)
 
-    must_change_password = BooleanField(default=False)
 
     objects = UserManager()
 

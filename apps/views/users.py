@@ -6,7 +6,7 @@ from apps.models import User
 from apps.serializers.users import UserSerializer
 
 
-@extend_schema(tags=["User"])
+@extend_schema(tags=["Users"])
 class UserViewSet(ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
