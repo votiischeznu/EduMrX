@@ -75,6 +75,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     created_at = DateTimeField(auto_now_add=True)
     updated_at = DateTimeField(auto_now=True)
 
+
     objects = UserManager()
 
     USERNAME_FIELD = "phone"
