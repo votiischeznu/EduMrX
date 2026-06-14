@@ -30,7 +30,6 @@ from apps.serializers import (
     StudentListSerializer,
 )
 from django.db.models.functions import TruncMonth
-
 from apps.serializers.stats import SuperAdminDashboardSerializer
 
 UZ_MONTHS = {
@@ -362,7 +361,6 @@ class SuperAdminStudentListCreateView(ListCreateAPIView):
     ]
     ordering_fields = ["enrolled_at", "status", "user__first_name"]
     ordering = ["-enrolled_at"]
-
 
     def get_serializer_class(self):
         if self.request.method == "POST":

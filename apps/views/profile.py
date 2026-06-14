@@ -18,11 +18,10 @@ from apps.serializers import (
 )
 
 
-@extend_schema(tags=["Profile"], methods=["PATCH"], exclude=True)
 @extend_schema(tags=["Profile"])
 class MyProfileRetrieveUpdateAPIView(RetrieveUpdateAPIView):
     permission_classes = [IsAuthenticated]
-    http_method_names = ["get"]
+    http_method_names = ["get", "patch"]
 
     @cached_property
     def _user_with_profiles(self):
@@ -34,7 +33,6 @@ class MyProfileRetrieveUpdateAPIView(RetrieveUpdateAPIView):
 
     def get_serializer_class(self):
         role = self.request.user.role
-
         role_serializer_map = {
             User.Role.STUDENT: StudentProfileSerializer,
             User.Role.TEACHER: TeacherProfileSerializer,
@@ -45,7 +43,7 @@ class MyProfileRetrieveUpdateAPIView(RetrieveUpdateAPIView):
     def get_object(self):
         user = self._user_with_profiles
 
-        if user.is_staff or user.role == "ADMIN":
+        if user.is_staff or user.role == User.Role.ADMIN:
             return user
 
         role_profile_map = {
@@ -54,8 +52,9 @@ class MyProfileRetrieveUpdateAPIView(RetrieveUpdateAPIView):
             User.Role.PARENT: ("parent_profile", "Ota-ona profili topilmadi."),
         }
 
-        if user.role in role_profile_map:
-            attr, msg = role_profile_map[user.role]
+        attr, msg = role_profile_map.get(user.role, (None, None))
+
+        if attr:
             profile = getattr(user, attr, None)
             if profile is None:
                 raise Http404(msg)
@@ -63,17 +62,8 @@ class MyProfileRetrieveUpdateAPIView(RetrieveUpdateAPIView):
 
         return user
 
-    def get_serializer(self, *args, **kwargs):
-        serializer_class = self.get_serializer_class()
-        kwargs["context"] = self.get_serializer_context()
 
-        if self.request.method == "PATCH":
-            kwargs["partial"] = True
-
-        return serializer_class(*args, **kwargs)
-
-
-@extend_schema(tags=["Group"])
+@extend_schema(tags=["Groups"])
 class GroupModelViewSet(ModelViewSet):
     queryset = Group.objects.select_related("room", "teacher__user")
     permission_classes = [AllowAny]
@@ -89,7 +79,7 @@ class GroupStudentModelViewSet(ModelViewSet):
     http_method_names = ["get", "post", "patch"]
 
 
-@extend_schema(tags=["Room"])
+@extend_schema(tags=["Rooms"])
 class RoomModelViewSet(ModelViewSet):
     queryset = Room.objects.all()
     permission_classes = [AllowAny]

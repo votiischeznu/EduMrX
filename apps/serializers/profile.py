@@ -4,6 +4,19 @@ from rest_framework.fields import CharField
 from rest_framework.serializers import Serializer, ModelSerializer
 from apps.models import User, Student, Teacher, Parent
 
+from rest_framework import serializers
+
+
+class UserUpdateMixin:
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop("user", None)
+        if user_data:
+            user = instance.user
+            for attr, value in user_data.items():
+                setattr(user, attr, value)
+            user.save()
+        return super().update(instance, validated_data)
+
 
 class BaseUserProfileModelSerializer(ModelSerializer):
     class Meta:
@@ -31,7 +44,7 @@ class ChildShortSerializer(ModelSerializer):
         fields = ["id", "full_name", "phone", "center_name", "status"]
 
 
-class ParentProfileSerializer(ModelSerializer):
+class ParentProfileSerializer(UserUpdateMixin, ModelSerializer):
     user_data = BaseUserProfileModelSerializer(source="user")
     children = ChildShortSerializer(many=True, read_only=True)
 
@@ -40,17 +53,8 @@ class ParentProfileSerializer(ModelSerializer):
         fields = ["id", "user_data", "occupation", "children"]
         read_only_fields = ["id", "children"]
 
-    def update(self, instance, validated_data):
-        user_data = validated_data.pop("user", None)
-        if user_data:
-            user = instance.user
-            for attr, value in user_data.items():
-                setattr(user, attr, value)
-            user.save()
-        return super().update(instance, validated_data)
 
-
-class StudentProfileSerializer(ModelSerializer):
+class StudentProfileSerializer(UserUpdateMixin, ModelSerializer):
     user_data = BaseUserProfileModelSerializer(source="user")
     center_name = CharField(source="center.name", read_only=True)
     parent_name = CharField(source="parent.user.full_name", read_only=True)
@@ -63,38 +67,20 @@ class StudentProfileSerializer(ModelSerializer):
             "center_name",
             "parent_name",
             "date_of_birth",
-            "address",
+            "notes",
             "status",
             "enrolled_at",
         ]
         read_only_fields = ["id", "center_name", "parent_name", "status", "enrolled_at"]
 
-    def update(self, instance, validated_data):
-        user_data = validated_data.pop("user", None)
-        if user_data:
-            user = instance.user
-            for attr, value in user_data.items():
-                setattr(user, attr, value)
-            user.save()
-        return super().update(instance, validated_data)
 
-
-class TeacherProfileSerializer(ModelSerializer):
+class TeacherProfileSerializer(UserUpdateMixin, ModelSerializer):
     user_data = BaseUserProfileModelSerializer(source="user")
 
     class Meta:
         model = Teacher
         fields = ["id", "user_data", "specialization", "experience", "salary", "bio"]
         read_only_fields = ["id", "salary"]
-
-    def update(self, instance, validated_data):
-        user_data = validated_data.pop("user", None)
-        if user_data:
-            user = instance.user
-            for attr, value in user_data.items():
-                setattr(user, attr, value)
-            user.save()
-        return super().update(instance, validated_data)
 
 
 class AdminProfileSerializer(ModelSerializer):
@@ -111,8 +97,6 @@ class AdminProfileSerializer(ModelSerializer):
             "avatar",
         ]
         read_only_fields = ["id", "phone", "role"]
-
-
 
 
 class PasswordChangeSerializer(Serializer):

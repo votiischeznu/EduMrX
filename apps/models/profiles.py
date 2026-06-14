@@ -43,7 +43,7 @@ class Teacher(TimeStampedModel):
         ordering = ["-created_at"]
 
     def __str__(self) -> str:
-        return self.user.full_name
+        return self.full_name
 
     def clean(self):
         if self.user.role != User.Role.TEACHER:

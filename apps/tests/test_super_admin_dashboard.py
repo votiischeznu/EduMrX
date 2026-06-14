@@ -90,7 +90,7 @@ class TestSuperAdminCenter:
 class TestSuperAdminStudent:
     def test_student_list_centers(self, api_client, super_admin_user, test_center):
         api_client.force_authenticate(user=super_admin_user)
-        response = api_client.get("/api/v1/super-admin/center/student/stats")
+        response = api_client.get("/api/v1/super-admin/center/student/stats/")
         assert response.status_code == status.HTTP_200_OK
 
     def test_student_list_create(self, api_client, super_admin_user, test_center):

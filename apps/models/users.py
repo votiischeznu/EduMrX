@@ -1,3 +1,5 @@
+import uuid
+
 from django.contrib.auth.models import (
     AbstractBaseUser,
     BaseUserManager,
@@ -10,10 +12,10 @@ from django.db.models import (
     TextChoices,
     Index,
     URLField,
+    UUIDField,
+    DateTimeField,
 )
 from django.utils.translation import gettext_lazy as _
-
-from apps.models.base_models import TimeStampedModel
 
 
 class UserManager(BaseUserManager):
@@ -44,7 +46,7 @@ class UserManager(BaseUserManager):
         return self._create_user(phone, password, **extra_fields)
 
 
-class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
+class User(AbstractBaseUser, PermissionsMixin):
     class Role(TextChoices):
         SUPER_ADMIN = "super_admin", _("Super Admin")
         DIRECTOR = "director", _("Direktor")
@@ -53,6 +55,7 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
         STUDENT = "student", _("Talaba")
         PARENT = "parent", _("Ota-ona")
 
+    id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     phone = CharField(_("Telefon"), max_length=50, unique=True)
     email = EmailField(_("Email"), blank=True, null=True, unique=True)
     backup_phone = CharField(
@@ -69,8 +72,8 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
     is_active = BooleanField(_("Faol"), default=True)
     is_staff = BooleanField(_("Xodim"), default=False)
     must_change_password = BooleanField(default=False)
-
-    must_change_password = BooleanField(default=False)
+    created_at = DateTimeField(auto_now_add=True)
+    updated_at = DateTimeField(auto_now=True)
 
     objects = UserManager()
 
