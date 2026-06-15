@@ -16,8 +16,7 @@ from django.db.models import (
     F,
 )
 
-from apps.models import BaseModel
-from apps.models.users import TimeStampedModel
+from apps.models import BaseModel, TimeStampedModel
 
 
 class Room(TimeStampedModel):

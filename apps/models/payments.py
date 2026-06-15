@@ -14,8 +14,7 @@ from django.db.models import (
     Q,
 )
 
-from apps.models import BaseModel
-from apps.models.users import TimeStampedModel
+from apps.models import BaseModel, TimeStampedModel
 
 
 class Payment(TimeStampedModel):

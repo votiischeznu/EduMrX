@@ -11,8 +11,8 @@ from django.db.models import (
     DateTimeField,
 )
 
-from apps.models import BaseModel
-from apps.models.users import TimeStampedModel
+from apps.models import BaseModel, TimeStampedModel
+
 
 
 class Course(TimeStampedModel):

@@ -181,29 +181,35 @@ SIMPLE_JWT = {
 APPEND_SLASH = False
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "https://edu-x-henna.vercel.app",
     "https://edumrx.uz",
-    "https://admin.edumrx.uz",
+    "https://www.edumrx.uz",
+    "https://login.edumrx.uz",
     "https://director.edumrx.uz",
-    "https://super-admin.edumrx.uz",
-    "https://student.edumrx.uz",
+    "https://manager.edumrx.uz",
     "https://teacher.edumrx.uz",
+    "https://student.edumrx.uz",
     "https://parent.edumrx.uz",
+    "https://admin.edumrx.uz",
+    "https://edumrx-app.vercel.app",
+    "http://localhost:3000",
+    "http://localhost:3001",
 ]
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
     "https://edumrx-1.onrender.com",
     "https://edumrx.uz",
-    "https://admin.edumrx.uz",
+    "https://www.edumrx.uz",
+    "https://login.edumrx.uz",
     "https://director.edumrx.uz",
-    "https://super-admin.edumrx.uz",
+    "https://manager.edumrx.uz",
     "https://teacher.edumrx.uz",
     "https://student.edumrx.uz",
     "https://parent.edumrx.uz",
+    "https://admin.edumrx.uz",
+    "https://edumrx-app.vercel.app",
     "http://localhost:3000",
+    "http://localhost:3001",
 ]
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"

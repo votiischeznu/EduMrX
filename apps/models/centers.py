@@ -17,7 +17,7 @@ from django.db.models import (
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from apps.models.users import TimeStampedModel
+from apps.models import TimeStampedModel
 from apps.models.users import User
 
 
