@@ -19,12 +19,7 @@ ALLOWED_HOSTS = [
     "0.0.0.0",
     "localhost",
     "edumrx.uz",
-    "admin.edumrx.uz",
-    "director.edumrx.uz",
-    "super-admin.edumrx.uz",
-    "student.edumrx.uz",
-    "parent.edumrx.uz",
-    "teacher.edumrx.uz",
+    ".edumrx.uz",
 ]
 
 INSTALLED_APPS = [
@@ -180,36 +175,24 @@ SIMPLE_JWT = {
 
 APPEND_SLASH = False
 
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://([a-z0-9-]+\.)?edumrx\.uz$",
+    r"^http://([a-z0-9-]+\.)?localhost:3000$",
+]
+
 CORS_ALLOWED_ORIGINS = [
-    "https://edumrx.uz",
-    "https://www.edumrx.uz",
-    "https://login.edumrx.uz",
-    "https://director.edumrx.uz",
-    "https://manager.edumrx.uz",
-    "https://teacher.edumrx.uz",
-    "https://student.edumrx.uz",
-    "https://parent.edumrx.uz",
-    "https://admin.edumrx.uz",
-    "https://edumrx-app.vercel.app",
     "http://localhost:3000",
-    "http://localhost:3001",
+    "http://127.0.0.1:3000",
+    "https://edu-x-henna.vercel.app",
 ]
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
     "https://edumrx-1.onrender.com",
     "https://edumrx.uz",
-    "https://www.edumrx.uz",
-    "https://login.edumrx.uz",
-    "https://director.edumrx.uz",
-    "https://manager.edumrx.uz",
-    "https://teacher.edumrx.uz",
-    "https://student.edumrx.uz",
-    "https://parent.edumrx.uz",
-    "https://admin.edumrx.uz",
-    "https://edumrx-app.vercel.app",
+    "https://*.edumrx.uz",
     "http://localhost:3000",
-    "http://localhost:3001",
+    "http://*.localhost:3000",
 ]
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"

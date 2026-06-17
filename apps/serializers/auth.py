@@ -1,7 +1,6 @@
 import re
 from datetime import timedelta
 
-from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
@@ -99,21 +98,17 @@ class LoginModelSerializer(Serializer):
 
         normalized = re.sub(r"[\s\-\(\)]", "", raw_phone).lstrip("+")
 
-        authenticated_user = authenticate(
-            request=self.context.get("request"), username=normalized, password=password
-        ) or authenticate(
-            request=self.context.get("request"),
-            username="+" + normalized,
-            password=password,
+        user = (
+            User.objects.filter(phone=normalized).first()
+            or User.objects.filter(phone="+" + normalized).first()
         )
-
-        if not authenticated_user:
+        if not user or user.check_password(password):
             raise ValidationError("Telefon raqam yoki parol xato.")
 
-        if not authenticated_user.is_active:
+        if not user.is_active:
             raise ValidationError("Foydalanuvchi faol emas. Profilingiz bloklangan!")
 
-        attrs["user"] = authenticated_user
+        attrs["user"] = user
         return attrs
 
 
