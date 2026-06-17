@@ -103,7 +103,7 @@ class LoginModelSerializer(Serializer):
             User.objects.filter(phone=normalized).first()
             or User.objects.filter(phone="+" + normalized).first()
         )
-        if not user or user.check_password(password):
+        if not user or not user.check_password(password):
             raise ValidationError("Telefon raqam yoki parol xato.")
 
         if not user.is_active:
