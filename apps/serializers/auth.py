@@ -42,7 +42,8 @@ class RegisterModelSerializer(ModelSerializer):
         extra_kwargs = {"id": {"read_only": True}, "password": {"write_only": True}}
 
     def validate_phone(self, value):
-        user = User.objects.filter(phone=value).first()
+        normalized = normalize_phone(value)
+        user = User.objects.filter(phone=normalized).first()
         if user:
             six_months_ago = timezone.now() - timedelta(days=180)
             if not user.is_active and user.updated_at < six_months_ago:
@@ -121,7 +122,8 @@ class RecoveryStartSerializer(Serializer):
     )
 
     def validate_phone(self, value):
-        user = User.objects.filter(phone=value).first()
+        normalized = normalize_phone(value)
+        user = User.objects.filter(phone=normalized).first()
         if not user:
             raise ValidationError("Ushbu telefon raqamli foydalanuvchi topilmadi")
 
@@ -132,7 +134,8 @@ class RecoveryStartSerializer(Serializer):
         return value
 
     def validate_new_phone(self, value):
-        user = User.objects.filter(phone=value).first()
+        normalized = normalize_phone(value)
+        user = User.objects.filter(phone=normalized).first()
         if user:
             six_months_ago = timezone.now() - timedelta(days=180)
             if not user.is_active and user.updated_at < six_months_ago:
@@ -151,7 +154,8 @@ class RecoveryVerifySerializer(Serializer):
     otp = CharField(max_length=6)
 
     def validate_phone(self, value):
-        user = User.objects.filter(phone=value).first()
+        normalized = normalize_phone(value)
+        user = User.objects.filter(phone=normalized).first()
         if not user or not user.is_active:
             raise ValidationError("Ushbu telefon raqamli faol foydalanuvchi topilmadi")
         return value
@@ -162,7 +166,8 @@ class RecoveryCompleteSerializer(Serializer):
     new_password = CharField(write_only=True)
 
     def validate_phone(self, value):
-        user = User.objects.filter(phone=value).first()
+        normalized = normalize_phone(value)
+        user = User.objects.filter(phone=normalized).first()
         if not user or not user.is_active:
             raise ValidationError("Ushbu telefon raqamli faol foydalanuvchi topilmadi")
         return value
