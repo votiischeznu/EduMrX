@@ -17,11 +17,17 @@ from rest_framework.serializers import (
     UUIDField,
 )
 
-from apps.models.users import User
-from apps.models.profiles import Teacher, Student
-from apps.models.groups import Group, GroupStudent, Room
-from apps.models.courses import Course
-from apps.models.courses import Lesson, Attendance
+from apps.models import (
+    User,
+    Teacher,
+    Student,
+    Group,
+    GroupStudent,
+    Room,
+    Course,
+    Lesson,
+    Attendance,
+)
 from apps.serializers.utils import normalize_phone
 
 
@@ -37,8 +43,6 @@ class UserSummarySerializer(ModelSerializer):
             "avatar",
             "email",
         ]
-
-
 
 
 class DirectorStudentListSerializer(ModelSerializer):
@@ -254,7 +258,6 @@ class DirectorTeacherCreateSerializer(Serializer):
         return instance
 
 
-
 class DirectorRoomSerializer(ModelSerializer):
     class Meta:
         model = Room
@@ -274,7 +277,6 @@ class DirectorCourseSerializer(ModelSerializer):
             "created_at",
         ]
         read_only_fields = ["id", "created_at"]
-
 
 
 class DirectorGroupStudentSerializer(ModelSerializer):
@@ -422,7 +424,6 @@ class DirectorGroupEnrollSerializer(Serializer):
         return group
 
 
-
 class DirectorLessonListSerializer(ModelSerializer):
     group_name = CharField(source="group.name", read_only=True)
 
@@ -473,7 +474,6 @@ class DirectorLessonCreateSerializer(Serializer):
             setattr(instance, field, value)
         instance.save()
         return instance
-
 
 
 class DirectorAttendanceSerializer(ModelSerializer):

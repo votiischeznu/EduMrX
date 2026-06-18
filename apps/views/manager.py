@@ -19,7 +19,6 @@ from apps.models.groups import Group, Room
 from apps.models.courses import Course, Lesson, Attendance
 from apps.models.payments import Payment, Debt
 
-# Mavjud director serializerlari
 from apps.serializers import (
     DirectorRoomSerializer,
     DirectorCourseSerializer,
@@ -30,10 +29,6 @@ from apps.serializers import (
     DirectorLessonCreateSerializer,
     DirectorAttendanceSerializer,
     DirectorAttendanceBulkSerializer,
-)
-
-# Manager serializerlari
-from apps.serializers.manager import (
     ManagerStudentListSerializer,
     ManagerStudentDetailSerializer,
     ManagerStudentCreateSerializer,
@@ -103,7 +98,6 @@ class ManagerDashboardView(APIView):
         )
 
 
-# ─── STUDENTS ───
 @extend_schema(tags=["Manager – Students"])
 class ManagerStudentListCreateView(ListCreateAPIView):
     permission_classes = [IsAuthenticated, IsManager]

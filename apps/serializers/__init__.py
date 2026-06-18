@@ -57,4 +57,18 @@ from apps.serializers.director import (
     DirectorLessonListSerializer,
     DirectorAttendanceBulkSerializer,
     DirectorAttendanceSerializer,
+    DirectorStudentCreateSerializer,
+    DirectorStudentDetailSerializer,
+    DirectorStudentListSerializer,
+)
+
+from apps.serializers.manager import (
+    ManagerStudentListSerializer,
+    ManagerStudentDetailSerializer,
+    ManagerStudentCreateSerializer,
+    ManagerTeacherListSerializer,
+    ManagerTeacherDetailSerializer,
+    ManagerTeacherCreateSerializer,
+    ManagerGroupCreateSerializer,
+    ManagerPaymentSerializer,
 )

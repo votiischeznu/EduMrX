@@ -4,14 +4,20 @@ from django.db.models import Count, DecimalField, Q, Sum
 from django.db.models.functions import TruncMonth
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.exceptions import NotFound
 
-from apps.models.centers import Center
-from apps.models.profiles import Student, Teacher
-from apps.models.payments import Payment, Debt
-from apps.models.groups import Group, Room
-from apps.models.courses import Course, Lesson, Attendance
-
+from apps.models import (
+    Center,
+    Student,
+    Teacher,
+    Payment,
+    Debt,
+    Group,
+    Room,
+    Course,
+    Lesson,
+    Attendance,
+)
 from apps.serializers import (
     DirectorTeacherCreateSerializer,
     DirectorTeacherDetailSerializer,
@@ -26,8 +32,6 @@ from apps.serializers import (
     DirectorLessonListSerializer,
     DirectorAttendanceBulkSerializer,
     DirectorAttendanceSerializer,
-)
-from apps.serializers.director import (
     DirectorStudentCreateSerializer,
     DirectorStudentDetailSerializer,
     DirectorStudentListSerializer,
@@ -167,6 +171,9 @@ class DirectorDashboardView(APIView):
 
 @extend_schema(tags=["DirectorStudent"])
 class DirectorStudentListCreateView(ListCreateAPIView):
+    queryset = Student.objects.filter(user__is_deleted=False).select_related(
+        "user", "center", "parent__user"
+    )
     permission_classes = [IsAuthenticated, IsDirector]
     filter_backends = [
         DjangoFilterBackend,
@@ -180,9 +187,7 @@ class DirectorStudentListCreateView(ListCreateAPIView):
 
     def get_queryset(self):
         centers = get_director_centers(self.request.user)
-        return Student.objects.filter(
-            center__in=centers, user__is_deleted=False
-        ).select_related("user", "center", "parent__user")
+        return self.queryset.filter(center__in=centers)
 
     def get_serializer_class(self):
         if self.request.method == "POST":
@@ -210,14 +215,13 @@ class DirectorStudentListCreateView(ListCreateAPIView):
 
 @extend_schema(tags=["DirectorStudent"])
 class DirectorStudentDetailView(RetrieveUpdateDestroyAPIView):
+    queryset = Student.objects.select_related("user", "center", "parent__user")
     permission_classes = [IsAuthenticated, IsDirector]
     http_method_names = ["get", "patch", "delete"]
 
     def get_queryset(self):
         centers = get_director_centers(self.request.user)
-        return Student.objects.filter(
-            center__in=centers, user__is_deleted=False
-        ).select_related("user", "center", "parent__user")
+        return self.queryset.filter(center__in=centers, user__is_deleted=False)
 
     def get_serializer_class(self):
         if self.request.method == "PATCH":
@@ -253,6 +257,7 @@ class DirectorStudentDetailView(RetrieveUpdateDestroyAPIView):
 
 @extend_schema(tags=["DirectorTeacher"])
 class DirectorTeacherListCreateView(ListCreateAPIView):
+    queryset = Teacher.objects.select_related("user", "center")
     permission_classes = [IsAuthenticated, IsDirector]
     filter_backends = [
         DjangoFilterBackend,
@@ -265,10 +270,7 @@ class DirectorTeacherListCreateView(ListCreateAPIView):
 
     def get_queryset(self):
         centers = get_director_centers(self.request.user)
-
-        return Teacher.objects.filter(
-            center__in=centers, user__is_deleted=False
-        ).select_related("user", "center")
+        return self.queryset.filter(center__in=centers, user__is_deleted=False)
 
     def get_serializer_class(self):
         return (
@@ -298,14 +300,14 @@ class DirectorTeacherListCreateView(ListCreateAPIView):
 
 @extend_schema(tags=["DirectorTeacher"])
 class DirectorTeacherDetailView(RetrieveUpdateDestroyAPIView):
+    queryset = Teacher.objects.select_related("user", "center")
+
     permission_classes = [IsAuthenticated, IsDirector]
     http_method_names = ["get", "patch", "delete"]
 
     def get_queryset(self):
         centers = get_director_centers(self.request.user)
-        return Teacher.objects.filter(
-            center__in=centers, user__is_deleted=False
-        ).select_related("user", "center")
+        return self.queryset.filter(center__in=centers, user__is_deleted=False)
 
     def get_serializer_class(self):
         return (
@@ -343,15 +345,15 @@ class DirectorTeacherDetailView(RetrieveUpdateDestroyAPIView):
 
 @extend_schema(tags=["DirectorRoom"])
 class DirectorRoomListCreateView(ListCreateAPIView):
+    queryset = Room.objects.all()
     permission_classes = [IsAuthenticated, IsDirector]
     serializer_class = DirectorRoomSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ["name"]
 
     def get_queryset(self):
-
         centers = get_director_centers(self.request.user)
-        return Room.objects.filter(center__in=centers).order_by("name")
+        return self.queryset.filter(center__in=centers).order_by("name")
 
     def perform_create(self, serializer):
         center = get_single_center_or_404(self.request.user)
@@ -368,13 +370,15 @@ class DirectorRoomListCreateView(ListCreateAPIView):
 
 @extend_schema(tags=["DirectorRoom"])
 class DirectorRoomDetailView(RetrieveUpdateDestroyAPIView):
+    queryset = Room.objects.all()
+
     permission_classes = [IsAuthenticated, IsDirector]
     serializer_class = DirectorRoomSerializer
     http_method_names = ["get", "patch", "delete"]
 
     def get_queryset(self):
         centers = get_director_centers(self.request.user)
-        return Room.objects.filter(center__in=centers)
+        return self.queryset.filter(center__in=centers)
 
     @extend_schema(tags=["4. Director – Rooms"])
     def get(self, request, *args, **kwargs):
@@ -391,6 +395,7 @@ class DirectorRoomDetailView(RetrieveUpdateDestroyAPIView):
 
 @extend_schema(tags=["DirectorCourse"])
 class DirectorCourseListCreateView(ListCreateAPIView):
+    queryset = Course.objects.all()
     permission_classes = [IsAuthenticated, IsDirector]
     serializer_class = DirectorCourseSerializer
     filter_backends = [
@@ -405,7 +410,7 @@ class DirectorCourseListCreateView(ListCreateAPIView):
 
     def get_queryset(self):
         centers = get_director_centers(self.request.user)
-        return Course.objects.filter(center__in=centers)
+        return self.queryset.filter(center__in=centers)
 
     def perform_create(self, serializer):
 
@@ -423,13 +428,14 @@ class DirectorCourseListCreateView(ListCreateAPIView):
 
 @extend_schema(tags=["DirectorCourse"])
 class DirectorCourseDetailView(RetrieveUpdateDestroyAPIView):
+    queryset = Course.objects.all()
     permission_classes = [IsAuthenticated, IsDirector]
     serializer_class = DirectorCourseSerializer
     http_method_names = ["get", "patch", "delete"]
 
     def get_queryset(self):
         centers = get_director_centers(self.request.user)
-        return Course.objects.filter(center__in=centers)
+        return self.queryset.filter(center__in=centers)
 
     @extend_schema(tags=["5. Director – Courses"])
     def get(self, request, *args, **kwargs):
@@ -446,6 +452,7 @@ class DirectorCourseDetailView(RetrieveUpdateDestroyAPIView):
 
 @extend_schema(tags=["DirectorGroups"])
 class DirectorGroupListCreateView(ListCreateAPIView):
+    queryset = Group.objects.select_related("course", "teacher__user", "room")
     permission_classes = [IsAuthenticated, IsDirector]
     filter_backends = [
         DjangoFilterBackend,
@@ -459,9 +466,7 @@ class DirectorGroupListCreateView(ListCreateAPIView):
 
     def get_queryset(self):
         centers = get_director_centers(self.request.user)
-        return Group.objects.filter(center__in=centers).select_related(
-            "course", "teacher__user", "room"
-        )
+        return self.queryset.filter(center__in=centers)
 
     def get_serializer_class(self):
         return (
@@ -493,16 +498,16 @@ class DirectorGroupListCreateView(ListCreateAPIView):
 
 @extend_schema(tags=["DirectorGroups"])
 class DirectorGroupDetailView(RetrieveUpdateDestroyAPIView):
+    queryset = Group.objects.select_related(
+        "course", "teacher__user", "room"
+    ).prefetch_related("enrollments__student__user")
+
     permission_classes = [IsAuthenticated, IsDirector]
     http_method_names = ["get", "patch", "delete"]
 
     def get_queryset(self):
         centers = get_director_centers(self.request.user)
-        return (
-            Group.objects.filter(center__in=centers)
-            .select_related("course", "teacher__user", "room")
-            .prefetch_related("enrollments__student__user")
-        )
+        return self.queryset.filter(center__in=centers)
 
     def get_serializer_class(self):
         return (
@@ -563,6 +568,7 @@ class DirectorGroupEnrollView(APIView):
 
 @extend_schema(tags=["DirectorLessons"])
 class DirectorLessonListCreateView(ListCreateAPIView):
+    queryset = Lesson.objects.select_related("group")
     permission_classes = [IsAuthenticated, IsDirector]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ["group"]
@@ -571,7 +577,7 @@ class DirectorLessonListCreateView(ListCreateAPIView):
 
     def get_queryset(self):
         centers = get_director_centers(self.request.user)
-        return Lesson.objects.filter(group__center__in=centers).select_related("group")
+        return self.queryset.filter(group__center__in=centers)
 
     def get_serializer_class(self):
         return (
@@ -603,12 +609,13 @@ class DirectorLessonListCreateView(ListCreateAPIView):
 
 @extend_schema(tags=["DirectorLessons"])
 class DirectorLessonDetailView(RetrieveUpdateDestroyAPIView):
+    queryset = Lesson.objects.select_related("group")
     permission_classes = [IsAuthenticated, IsDirector]
     http_method_names = ["get", "patch", "delete"]
 
     def get_queryset(self):
         centers = get_director_centers(self.request.user)
-        return Lesson.objects.filter(group__center__in=centers).select_related("group")
+        return self.queryset.filter(group__center__in=centers)
 
     def get_serializer_class(self):
         return (
