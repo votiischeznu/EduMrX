@@ -45,7 +45,26 @@ from apps.views import (
     DirectorTeacherDetailView,
     DirectorStudentDetailView,
     DirectorStudentListCreateView,
-    DirectorDashboardView
+    DirectorDashboardView,
+
+)
+from apps.views.manager import (
+    ManagerPaymentListView,
+    ManagerDashboardView,
+    ManagerStudentListCreateView,
+    ManagerStudentDetailView,
+    ManagerTeacherListCreateView,
+    ManagerTeacherDetailView,
+    ManagerRoomListCreateView,
+    ManagerRoomDetailView,
+    ManagerCourseListCreateView,
+    ManagerCourseDetailView,
+    ManagerGroupListCreateView,
+    ManagerGroupDetailView,
+    ManagerGroupEnrollView,
+    ManagerLessonListCreateView,
+    ManagerLessonDetailView,
+    ManagerAttendanceView,
 )
 
 main_router = SimpleRouter(trailing_slash=True)
@@ -116,4 +135,29 @@ urlpatterns = [
     path("director/lessons/", DirectorLessonListCreateView.as_view()),
     path("director/lessons/<uuid:pk>/", DirectorLessonDetailView.as_view()),
     path("director/lessons/<uuid:pk>/attendance/", DirectorAttendanceView.as_view()),
+    # ── Manager ──────────────────────────────────────────
+    path("manager/dashboard/", ManagerDashboardView.as_view()),
+    # Students
+    path("manager/students/", ManagerStudentListCreateView.as_view()),
+    path("manager/students/<uuid:pk>/", ManagerStudentDetailView.as_view()),
+    # Teachers
+    path("manager/teachers/", ManagerTeacherListCreateView.as_view()),
+    path("manager/teachers/<uuid:pk>/", ManagerTeacherDetailView.as_view()),
+    # Rooms
+    path("manager/rooms/", ManagerRoomListCreateView.as_view()),
+    path("manager/rooms/<uuid:pk>/", ManagerRoomDetailView.as_view()),
+    # Courses
+    path("manager/courses/", ManagerCourseListCreateView.as_view()),
+    path("manager/courses/<uuid:pk>/", ManagerCourseDetailView.as_view()),
+    # Groups
+    path("manager/groups/", ManagerGroupListCreateView.as_view()),
+    path("manager/groups/<uuid:pk>/", ManagerGroupDetailView.as_view()),
+    path("manager/groups/<uuid:pk>/enroll/", ManagerGroupEnrollView.as_view()),
+    # Lessons
+    path("manager/lessons/", ManagerLessonListCreateView.as_view()),
+    path("manager/lessons/<uuid:pk>/", ManagerLessonDetailView.as_view()),
+    # Attendance
+    path("manager/lessons/<uuid:pk>/attendance/", ManagerAttendanceView.as_view()),
+    # Payments
+    path("manager/payments/", ManagerPaymentListView.as_view()),
 ]

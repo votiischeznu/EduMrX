@@ -23,7 +23,7 @@ class IsDirector(BasePermission):
         )
 
 
-class IsCenterAdmin(BasePermission):
+class IsManager(BasePermission):
     message = "Faqat o'quv markazi Admini uchun ruxsat berilgan."
 
     def has_permission(self, request, view):
