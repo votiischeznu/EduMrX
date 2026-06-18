@@ -38,6 +38,7 @@ class DirectorCreateUpdateSerializer(ModelSerializer):
             "last_name": {"required": True},
             "phone": {"required": True},
             "email": {"required": False, "allow_null": True},
+            "is_active": {"read_only": True},
         }
 
     def validate_phone(self, value):
