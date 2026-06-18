@@ -30,7 +30,6 @@ from apps.views import (
     SuperAdminFinanceTransactionsView,
     SuperAdminStudentDetailView,
     SuperAdminStudentListCreateView,
-    UserViewSet,
     SuperAdminCenterStudentListView,
     DirectorAttendanceView,
     DirectorLessonDetailView,
@@ -54,7 +53,6 @@ main_router.register("rooms", RoomModelViewSet, basename="rooms")
 main_router.register("groups", GroupModelViewSet, basename="groups")
 main_router.register("group_students", GroupStudentModelViewSet, basename="group_students")
 main_router.register("attendances", ManagementAttendanceViewSet, basename="management-attendance")
-main_router.register(r"users", UserViewSet, basename="user")
 auth_router = SimpleRouter(trailing_slash=False)
 auth_router.register("recovery", AccountRecoveryViewSet, basename="auth-recovery")
 

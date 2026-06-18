@@ -32,7 +32,6 @@ from apps.views.super_admin import (
     SuperAdminStudentDetailView,
     SuperAdminStudentListCreateView,
 )
-from apps.views.users import UserViewSet
 from apps.views.profile import (
     GroupModelViewSet,
     GroupStudentModelViewSet,
