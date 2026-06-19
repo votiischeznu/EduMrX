@@ -32,9 +32,7 @@ class Payment(TimeStampedModel):
         ONLINE = "online", "Online"
 
     student = ForeignKey("apps.Student", on_delete=PROTECT, related_name="payments")
-    group = ForeignKey(
-        "apps.Group", on_delete=PROTECT, related_name="payments", null=True, blank=True
-    )
+    group = ForeignKey("apps.Group", on_delete=PROTECT, related_name="payments", null=True, blank=True)
 
     amount = DecimalField(max_digits=12, decimal_places=2)
     discount = DecimalField(max_digits=12, decimal_places=2, default=0)
@@ -60,9 +58,7 @@ class Payment(TimeStampedModel):
                 condition=Q(final_amount__gte=0),
                 name="payment_final_amount_not_negative",
             ),
-            CheckConstraint(
-                condition=Q(discount__gte=0), name="payment_discount_not_negative"
-            ),
+            CheckConstraint(condition=Q(discount__gte=0), name="payment_discount_not_negative"),
         ]
 
     def __str__(self):

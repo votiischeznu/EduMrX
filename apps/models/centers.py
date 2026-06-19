@@ -39,18 +39,9 @@ class Center(TimeStampedModel):
     address = TextField(_("Manzil"), blank=True)
     phone = CharField(_("Telefon"), max_length=50, blank=True)
     email = EmailField(_("Email"), blank=True, null=True)
-    plan = CharField(
-        _("Tarif rejasi"),
-        max_length=20,
-        choices=Plan.choices,
-        default=Plan.TRIAL,
-    )
-    latitude = DecimalField(
-        _("Kenglik (Latitude)"), max_digits=9, decimal_places=6, null=True, blank=True
-    )
-    longitude = DecimalField(
-        _("Uzunlik (Longitude)"), max_digits=9, decimal_places=6, null=True, blank=True
-    )
+    plan = CharField(_("Tarif rejasi"), max_length=20, choices=Plan.choices, default=Plan.TRIAL)
+    latitude = DecimalField(_("Kenglik (Latitude)"), max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = DecimalField(_("Uzunlik (Longitude)"), max_digits=9, decimal_places=6, null=True, blank=True)
     director = ForeignKey(
         "apps.User",
         SET_NULL,
@@ -60,9 +51,7 @@ class Center(TimeStampedModel):
         limit_choices_to={"role": User.Role.DIRECTOR},
         verbose_name=_("Direktor"),
     )
-    status = CharField(
-        _("Holat"), max_length=20, choices=Status.choices, default=Status.ACTIVE
-    )
+    status = CharField(_("Holat"), max_length=20, choices=Status.choices, default=Status.ACTIVE)
     subscription_expires = DateField(_("Tarif tugash sanasi"), null=True, blank=True)
 
     total_groups = PositiveIntegerField(default=0, editable=False)
@@ -96,17 +85,8 @@ class Center(TimeStampedModel):
 
 
 class CenterStaff(TimeStampedModel):
-    user = OneToOneField(
-        "apps.User",
-        CASCADE,
-        related_name="staff_profile",
-        limit_choices_to={"role": User.Role.ADMIN},
-    )
-    center = ForeignKey(
-        "apps.Center",
-        CASCADE,
-        related_name="staff_members",
-    )
+    user = OneToOneField("apps.User", CASCADE, related_name="staff_profile", limit_choices_to={"role": User.Role.ADMIN})
+    center = ForeignKey("apps.Center", CASCADE, related_name="staff_members")
     notes = TextField(_("Izoh"), blank=True)
 
     class Meta:
@@ -119,6 +99,4 @@ class CenterStaff(TimeStampedModel):
 
     def clean(self):
         if self.user.role != User.Role.ADMIN:
-            raise ValidationError(
-                _("Faqat ADMIN rolidagi foydalanuvchi xodim bo'la oladi")
-            )
+            raise ValidationError(_("Faqat ADMIN rolidagi foydalanuvchi xodim bo'la oladi"))

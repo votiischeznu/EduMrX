@@ -18,24 +18,17 @@ from django.utils.translation import gettext_lazy as _
 
 from apps.models import TimeStampedModel
 from apps.models.users import User
-
+import math
 
 class Teacher(TimeStampedModel):
     user = OneToOneField(
-        "apps.User",
-        CASCADE,
-        related_name="teacher_profile",
-        limit_choices_to={"role": User.Role.TEACHER},
+        "apps.User", CASCADE, related_name="teacher_profile", limit_choices_to={"role": User.Role.TEACHER}
     )
-    centers = ForeignKey(
-        "apps.Center", CASCADE, related_name="teachers", null=True, blank=True
-    )
+    centers = ForeignKey("apps.Center", CASCADE, related_name="teachers", null=True, blank=True)
 
     specialization = CharField(_("Mutaxassislik"), max_length=255, blank=True)
     experience = PositiveSmallIntegerField(_("Tajriba (yil)"), default=0)
-    salary = DecimalField(
-        _("Maosh"), max_digits=12, decimal_places=2, null=True, blank=True
-    )
+    salary = DecimalField(_("Maosh"), max_digits=12, decimal_places=2, null=True, blank=True)
     bio = TextField(_("Bio"), blank=True)
     date_of_birth = DateField(_("Tug'ilgan sana"), null=True, blank=True)
 
@@ -47,9 +40,7 @@ class Teacher(TimeStampedModel):
 
     def clean(self):
         if self.user.role != User.Role.TEACHER:
-            raise ValidationError(
-                _("Faqat TEACHER rolidagi foydalanuvchi o'qituvchi bo'la oladi")
-            )
+            raise ValidationError(_("Faqat TEACHER rolidagi foydalanuvchi o'qituvchi bo'la oladi"))
 
     @property
     def full_name(self) -> str:
@@ -61,12 +52,7 @@ class Teacher(TimeStampedModel):
 
 
 class Parent(TimeStampedModel):
-    user = OneToOneField(
-        User,
-        CASCADE,
-        related_name="parent_profile",
-        limit_choices_to={"role": User.Role.PARENT},
-    )
+    user = OneToOneField(User, CASCADE, related_name="parent_profile", limit_choices_to={"role": User.Role.PARENT})
     address = TextField(_("Manzil"), blank=True)
     notes = TextField(_("Izoh"), blank=True)
     occupation = CharField(_("Kasbi"), max_length=255, blank=True)
@@ -79,9 +65,7 @@ class Parent(TimeStampedModel):
 
     def clean(self):
         if self.user.role != User.Role.PARENT:
-            raise ValidationError(
-                _("Faqat PARENT rolidagi foydalanuvchi ota-ona bo'la oladi")
-            )
+            raise ValidationError(_("Faqat PARENT rolidagi foydalanuvchi ota-ona bo'la oladi"))
 
     @property
     def full_name(self) -> str:
@@ -116,40 +100,19 @@ class Student(TimeStampedModel):
         GRADUATED = "graduated", _("Bitirgan")
         SUSPENDED = "suspended", _("To'xtatilgan")
 
-    @property
-    def is_chargeable(self) -> bool:
-        return self.status in [self.Status.ACTIVE, self.Status.NEW]
-
-    @property
-    def is_first_lesson_free(self) -> bool:
-        return self.status == self.Status.NEW
-
     user = OneToOneField(
-        "apps.User",
-        CASCADE,
-        related_name="student_profile",
-        limit_choices_to={"role": User.Role.STUDENT},
+        "apps.User", CASCADE, related_name="student_profile", limit_choices_to={"role": User.Role.STUDENT}
     )
-    center = ForeignKey(
-        "apps.Center",
-        CASCADE,
-        related_name="students",
-        verbose_name=_("O'quv markazi"),
-    )
+    center = ForeignKey("apps.Center", CASCADE, related_name="students", verbose_name=_("O'quv markazi"))
     parent = ForeignKey(
-        "apps.Parent",
-        SET_NULL,
-        null=True,
-        blank=True,
-        related_name="children",
-        verbose_name=_("Ota-ona"),
+        "apps.Parent", SET_NULL, null=True, blank=True, related_name="children", verbose_name=_("Ota-ona")
     )
     date_of_birth = DateField(_("Tug'ilgan sana"), null=True, blank=True)
     notes = TextField(_("Izoh"), blank=True)
-    status = CharField(
-        _("Holat"), max_length=20, choices=Status.choices, default=Status.ACTIVE
-    )
+    status = CharField(_("Holat"), max_length=20, choices=Status.choices, default=Status.ACTIVE)
     enrolled_at = DateField(_("Ro'yxatga olingan sana"), auto_now_add=True)
+
+    objects = StudentQuerySet.as_manager()
 
     class Meta:
         ordering = ["-created_at"]
@@ -163,7 +126,13 @@ class Student(TimeStampedModel):
     def __str__(self) -> str:
         return self.user.full_name
 
-    objects = StudentQuerySet.as_manager()
+    @property
+    def is_chargeable(self) -> bool:
+        return self.status in [self.Status.ACTIVE, self.Status.NEW]
+
+    @property
+    def is_first_lesson_free(self) -> bool:
+        return self.status == self.Status.NEW
 
     def save(self, *args, **kwargs):
         from apps.models.centers import Center
@@ -172,9 +141,7 @@ class Student(TimeStampedModel):
         super().save(*args, **kwargs)
 
         if is_new and self.center_id:
-            Center.objects.filter(id=self.center_id).update(
-                total_students=F("total_students") + 1
-            )
+            Center.objects.filter(id=self.center_id).update(total_students=F("total_students") + 1)
 
     def delete(self, *args, **kwargs):
         from apps.models.centers import Center
@@ -183,15 +150,11 @@ class Student(TimeStampedModel):
         super().delete(*args, **kwargs)
 
         if center_id:
-            Center.objects.filter(id=center_id).update(
-                total_students=F("total_students") - 1
-            )
+            Center.objects.filter(id=center_id).update(total_students=F("total_students") - 1)
 
     def clean(self):
         if self.user.role != User.Role.STUDENT:
-            raise ValidationError(
-                _("Faqat STUDENT rolidagi foydalanuvchi talaba bo'la oladi")
-            )
+            raise ValidationError(_("Faqat STUDENT rolidagi foydalanuvchi talaba bo'la oladi"))
 
     @property
     def full_name(self) -> str:
