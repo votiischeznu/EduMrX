@@ -4,7 +4,6 @@ from rest_framework.fields import CharField
 from rest_framework.serializers import Serializer, ModelSerializer
 from apps.models import User, Student, Teacher, Parent
 
-from rest_framework import serializers
 
 
 class UserUpdateMixin:

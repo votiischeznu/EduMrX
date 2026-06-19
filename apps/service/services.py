@@ -1,6 +1,6 @@
 from django.db import transaction
 from django.utils import timezone
-from apps.models import Notification, NotificationRecipient, BaseModel, GroupStudent
+from apps.models import Notification, NotificationRecipient, GroupStudent
 
 
 class NotificationService:

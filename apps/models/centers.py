@@ -58,10 +58,7 @@ class Center(TimeStampedModel):
     total_students = PositiveIntegerField(default=0, editable=False)
 
     class Meta:
-        db_table = "centers"
         ordering = ["name"]
-        verbose_name = _("O'quv markazi")
-        verbose_name_plural = _("O'quv markazlari")
         indexes = [
             Index(fields=["status"]),
             Index(fields=["slug"]),
@@ -88,11 +85,6 @@ class CenterStaff(TimeStampedModel):
     user = OneToOneField("apps.User", CASCADE, related_name="staff_profile", limit_choices_to={"role": User.Role.ADMIN})
     center = ForeignKey("apps.Center", CASCADE, related_name="staff_members")
     notes = TextField(_("Izoh"), blank=True)
-
-    class Meta:
-        db_table = "center_staff"
-        verbose_name = _("Markaz xodimi")
-        verbose_name_plural = _("Markaz xodimlari")
 
     def __str__(self) -> str:
         return f"{self.user.full_name} — {self.center.name}"

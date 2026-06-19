@@ -18,7 +18,6 @@ from django.utils.translation import gettext_lazy as _
 
 from apps.models import TimeStampedModel
 from apps.models.users import User
-import math
 
 class Teacher(TimeStampedModel):
     user = OneToOneField(
@@ -159,6 +158,7 @@ class Student(TimeStampedModel):
     @property
     def full_name(self) -> str:
         return self.user.full_name
+
 
     @property
     def phone(self) -> str:

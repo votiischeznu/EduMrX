@@ -3,7 +3,7 @@ from django.utils import timezone
 from datetime import timedelta
 from rest_framework import status
 from rest_framework.test import APIClient
-from apps.models import Center, Student, User
+from apps.models import Center, User
 
 
 @pytest.fixture

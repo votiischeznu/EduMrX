@@ -48,6 +48,5 @@ python_files = ["tests.py", "test_*.py", "*_tests.py"]
 
 [tool.ruff]
 line-length = 120
+exclude = ['__init__.py']
 
-[tool.ruff.lint]
-ignore = ["F401"]

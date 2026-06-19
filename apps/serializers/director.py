@@ -17,17 +17,7 @@ from rest_framework.serializers import (
     UUIDField,
 )
 
-from apps.models import (
-    User,
-    Teacher,
-    Student,
-    Group,
-    GroupStudent,
-    Room,
-    Course,
-    Lesson,
-    Attendance,
-)
+from apps.models import User, Teacher, Student, Group, GroupStudent, Room, Course, Lesson, Attendance
 from apps.serializers.utils import normalize_phone
 
 
@@ -51,15 +41,7 @@ class DirectorStudentListSerializer(ModelSerializer):
 
     class Meta:
         model = Student
-        fields = [
-            "id",
-            "user",
-            "center",
-            "center_name",
-            "status",
-            "enrolled_at",
-            "created_at",
-        ]
+        fields = ["id", "user", "center", "center_name", "status", "enrolled_at", "created_at"]
 
 
 class DirectorStudentDetailSerializer(ModelSerializer):
@@ -75,7 +57,6 @@ class DirectorStudentDetailSerializer(ModelSerializer):
             "center",
             "center_name",
             "parent",
-            "parent_name",
             "date_of_birth",
             "notes",
             "status",
@@ -203,9 +184,7 @@ class DirectorTeacherCreateSerializer(Serializer):
 
     specialization = CharField(max_length=255, required=False, allow_blank=True)
     experience = IntegerField(min_value=0, required=False, default=0)
-    salary = DecimalField(
-        max_digits=12, decimal_places=2, required=False, allow_null=True
-    )
+    salary = DecimalField(max_digits=12, decimal_places=2, required=False, allow_null=True)
     bio = CharField(required=False, allow_blank=True)
     date_of_birth = DateField(required=False, allow_null=True)
 
@@ -289,11 +268,7 @@ class DirectorGroupStudentSerializer(ModelSerializer):
         read_only_fields = ["id", "joined_at"]
 
     def get_student_name(self, obj):
-        return (
-            obj.student.user.get_full_name()
-            if obj.student and obj.student.user
-            else None
-        )
+        return obj.student.user.get_full_name() if obj.student and obj.student.user else None
 
     def get_phone(self, obj):
         return obj.student.user.phone if obj.student and obj.student.user else None
@@ -374,9 +349,7 @@ class DirectorGroupCreateSerializer(Serializer):
     def validate(self, attrs):
         if attrs.get("lesson_start_time") and attrs.get("lesson_end_time"):
             if attrs["lesson_start_time"] >= attrs["lesson_end_time"]:
-                raise ValidationError(
-                    "Dars boshlanish vaqti tugash vaqtidan oldin bo'lishi kerak."
-                )
+                raise ValidationError("Dars boshlanish vaqti tugash vaqtidan oldin bo'lishi kerak.")
         return attrs
 
     @transaction.atomic
@@ -402,9 +375,7 @@ class DirectorGroupEnrollSerializer(Serializer):
         center = self.context.get("center")
         if not center:
             raise ValidationError("Markaz konteksti topilmadi.")
-        if not Student.objects.filter(
-            id=value, center=center, user__is_deleted=False
-        ).exists():
+        if not Student.objects.filter(id=value, center=center, user__is_deleted=False).exists():
             raise PermissionDenied("Bu student sizning markazingizga tegishli emas.")
         return value
 
@@ -461,9 +432,7 @@ class DirectorLessonCreateSerializer(Serializer):
     def validate(self, attrs):
         if attrs.get("start_time") and attrs.get("end_time"):
             if attrs["start_time"] >= attrs["end_time"]:
-                raise ValidationError(
-                    "Boshlanish vaqti tugash vaqtidan oldin bo'lishi kerak."
-                )
+                raise ValidationError("Boshlanish vaqti tugash vaqtidan oldin bo'lishi kerak.")
         return attrs
 
     def create(self, validated_data):
@@ -493,9 +462,7 @@ class DirectorAttendanceSerializer(ModelSerializer):
 class DirectorAttendanceBulkSerializer(Serializer):
     class RecordSerializer(Serializer):
         student = UUIDField()
-        status = ChoiceField(
-            choices=Attendance.Status.choices, default=Attendance.Status.PRESENT
-        )
+        status = ChoiceField(choices=Attendance.Status.choices, default=Attendance.Status.PRESENT)
         note = CharField(required=False, allow_blank=True, default="")
 
     records = RecordSerializer(many=True)

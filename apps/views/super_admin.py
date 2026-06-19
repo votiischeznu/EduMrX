@@ -6,11 +6,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.filters import SearchFilter, OrderingFilter
-from rest_framework.generics import (
-    ListAPIView,
-    ListCreateAPIView,
-    RetrieveUpdateDestroyAPIView,
-)
+from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -66,11 +62,7 @@ def _generate_empty_12m_dict(start_date: date) -> dict:
     current_date = start_date
     for _ in range(12):
         key = f"{current_date.year}-{current_date.month:02d}"
-        months_dict[key] = {
-            "month": UZ_MONTHS[current_date.month],
-            "raw_amount": 0,
-            "raw_count": 0,
-        }
+        months_dict[key] = {"month": UZ_MONTHS[current_date.month], "raw_amount": 0, "raw_count": 0}
         if current_date.month == 12:
             current_date = date(current_date.year + 1, 1, 1)
         else:
@@ -82,7 +74,6 @@ def _generate_empty_12m_dict(start_date: date) -> dict:
 class SuperAdminDashboardView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(tags=["Super Admin"], responses={200: SuperAdminDashboardSerializer})
     def get(self, request):
         today = timezone.now().date()
         first_of_month = today.replace(day=1)
@@ -91,18 +82,16 @@ class SuperAdminDashboardView(APIView):
         last_month_first_day = last_month_last_day.replace(day=1)
 
         centers_agg = Center.objects.aggregate(
-            total=Count("id"),
-            active=Count("id", filter=Q(status=Center.Status.ACTIVE)),
+            total=Count("id"), active=Count("id", filter=Q(status=Center.Status.ACTIVE))
         )
 
         students_agg = Student.objects.aggregate(
-            total=Count("id"),
-            new_this_month=Count("id", filter=Q(created_at__date__gte=first_of_month)),
+            total=Count("id"), new_this_month=Count("id", filter=Q(created_at__date__gte=first_of_month))
         )
 
         revenue_this = (
             Payment.objects.filter(
-                status="paid",
+                status=Payment.Status.PAID,
                 created_at__date__gte=first_of_month,
             ).aggregate(total=Sum("amount"))["total"]
             or 0
@@ -110,7 +99,7 @@ class SuperAdminDashboardView(APIView):
 
         revenue_last = (
             Payment.objects.filter(
-                status="paid",
+                status=Payment.Status.PAID,
                 created_at__date__gte=last_month_first_day,
                 created_at__date__lte=last_month_last_day,
             ).aggregate(total=Sum("amount"))["total"]
@@ -131,9 +120,7 @@ class SuperAdminDashboardView(APIView):
         try:
             from apps.models import Notification
 
-            open_tickets = Notification.objects.filter(
-                notification_type="ticket", is_read=False
-            ).count()
+            open_tickets = Notification.objects.filter(notification_type="ticket", is_read=False).count()
         except Exception:
             open_tickets = 0
 
@@ -141,7 +128,7 @@ class SuperAdminDashboardView(APIView):
         chart_master_dict = _generate_empty_12m_dict(start_12m)
 
         revenue_12m_qs = (
-            Payment.objects.filter(status="paid", created_at__date__gte=start_12m)
+            Payment.objects.filter(status=Payment.Status.PAID, created_at__date__gte=start_12m)
             .annotate(month=TruncMonth("created_at"))
             .values("month")
             .annotate(amount=Sum("amount"))
@@ -166,9 +153,7 @@ class SuperAdminDashboardView(APIView):
             if key in chart_master_dict:
                 chart_master_dict[key]["raw_count"] = s["count"] or 0
 
-        base_student_count = Student.objects.filter(
-            created_at__date__lt=start_12m
-        ).count()
+        base_student_count = Student.objects.filter(created_at__date__lt=start_12m).count()
 
         revenue_12m = []
         student_growth = []
@@ -217,9 +202,7 @@ class SuperAdminDashboardView(APIView):
             for c in top_qs
         ]
 
-        recent_qs = Center.objects.order_by("-created_at").values(
-            "id", "name", "created_at", "status"
-        )[:5]
+        recent_qs = Center.objects.order_by("-created_at").values("id", "name", "created_at", "status")[:5]
         recent_activities = [
             {
                 "id": f"act_{c['id']}",
@@ -252,8 +235,7 @@ class SuperAdminDashboardView(APIView):
                             "trial": subs_agg["trial"] or 0,
                             "pro": subs_agg["pro"] or 0,
                             "enterprise": subs_agg["enterprise"] or 0,
-                            "total": centers_agg["active"]
-                            or 0,  # yoki kutilganidek active jami
+                            "total": centers_agg["active"] or 0,
                         },
                         "tickets": {
                             "open": open_tickets,
@@ -309,9 +291,7 @@ class SuperAdminDirectorDetailView(RetrieveUpdateDestroyAPIView):
 class SuperAdminCenterStudentListView(ListAPIView):
     queryset = Center.objects.annotate(
         total_students_count=Count("students", distinct=True),
-        active_students_count=Count(
-            "students", filter=Q(students__status="active"), distinct=True
-        ),
+        active_students_count=Count("students", filter=Q(students__status="active"), distinct=True),
     ).order_by("id")
 
     permission_classes = [IsSuperAdmin]
@@ -345,9 +325,7 @@ class SuperAdminCenterDetailView(RetrieveUpdateDestroyAPIView):
 
 @extend_schema(tags=["SuperAdminStudent"])
 class SuperAdminStudentListCreateView(ListCreateAPIView):
-    queryset = Student.objects.select_related("user", "center", "parent__user").filter(
-        user__is_deleted=False
-    )
+    queryset = Student.objects.select_related("user", "center", "parent__user").filter(user__is_deleted=False)
 
     permission_classes = [IsSuperAdmin]
     pagination_class = CustomPagination
@@ -371,16 +349,12 @@ class SuperAdminStudentListCreateView(ListCreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         student = serializer.save()
-        return Response(
-            StudentDetailSerializer(student).data, status=status.HTTP_201_CREATED
-        )
+        return Response(StudentDetailSerializer(student).data, status=status.HTTP_201_CREATED)
 
 
 @extend_schema(tags=["SuperAdminStudent"])
 class SuperAdminStudentDetailView(RetrieveUpdateDestroyAPIView):
-    queryset = Student.objects.select_related("user", "center", "parent__user").filter(
-        user__is_deleted=False
-    )
+    queryset = Student.objects.select_related("user", "center", "parent__user").filter(user__is_deleted=False)
     permission_classes = [IsSuperAdmin]
     http_method_names = ["get", "patch", "delete"]
 
