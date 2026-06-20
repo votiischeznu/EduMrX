@@ -5,63 +5,39 @@ class IsSuperAdmin(BasePermission):
     message = "Faqat tizim Super Admini uchun ruxsat berilgan."
 
     def has_permission(self, request, view):
-        return bool(
-            request.user
-            and request.user.is_authenticated
-            and (request.user.is_superuser or request.user.role == "super-admin")
-        )
+        return bool(request.user and request.user.is_authenticated and request.user.is_superuser)
 
 
 class IsDirector(BasePermission):
     message = "Faqat Direktor uchun ruxsat berilgan."
 
     def has_permission(self, request, view):
-        return bool(
-            request.user
-            and request.user.is_authenticated
-            and request.user.role == "director"
-        )
+        return bool(request.user and request.user.is_authenticated and request.user.is_director)
 
 
 class IsManager(BasePermission):
     message = "Faqat o'quv markazi Admini uchun ruxsat berilgan."
 
     def has_permission(self, request, view):
-        return bool(
-            request.user
-            and request.user.is_authenticated
-            and request.user.role == "admin"
-        )
+        return bool(request.user and request.user.is_authenticated and request.user.is_admin)
 
 
 class IsTeacher(BasePermission):
     message = "Faqat O'qituvchi uchun ruxsat berilgan."
 
     def has_permission(self, request, view):
-        return bool(
-            request.user
-            and request.user.is_authenticated
-            and request.user.role == "teacher"
-        )
+        return bool(request.user and request.user.is_authenticated and request.user.is_teacher)
 
 
 class IsParent(BasePermission):
     message = "Faqat Ota-ona uchun ruxsat berilgan."
 
     def has_permission(self, request, view):
-        return bool(
-            request.user
-            and request.user.is_authenticated
-            and request.user.role == "parent"
-        )
+        return bool(request.user and request.user.is_authenticated and request.user.is_parent)
 
 
 class IsStudent(BasePermission):
     message = "Faqat O'quvchi uchun ruxsat berilgan."
 
     def has_permission(self, request, view):
-        return bool(
-            request.user
-            and request.user.is_authenticated
-            and request.user.role == "student"
-        )
+        return bool(request.user and request.user.is_authenticated and request.user.is_student)

@@ -165,9 +165,7 @@ class ManagerTeacherCreateSerializer(Serializer):
     password = CharField(write_only=True, required=False)
     specialization = CharField(max_length=255, required=False, allow_blank=True)
     experience = IntegerField(min_value=0, required=False, default=0)
-    salary = DecimalField(
-        max_digits=12, decimal_places=2, required=False, allow_null=True
-    )
+    salary = DecimalField(max_digits=12, decimal_places=2, required=False, allow_null=True)
     bio = CharField(required=False, allow_blank=True)
     date_of_birth = DateField(required=False, allow_null=True)
 
@@ -234,31 +232,14 @@ class ManagerGroupCreateSerializer(Serializer):
 
     def validate(self, attrs):
         center = self.context.get("center")
-        if (
-            attrs.get("course")
-            and not Course.objects.filter(id=attrs["course"], center=center).exists()
-        ):
-            raise ValidationError(
-                {"course": "Kurs topilmadi yoki ushbu markazga tegishli emas."}
-            )
-        if (
-            attrs.get("teacher")
-            and not Teacher.objects.filter(id=attrs["teacher"], center=center).exists()
-        ):
-            raise ValidationError(
-                {"teacher": "O'qituvchi topilmadi yoki ushbu markazga tegishli emas."}
-            )
-        if (
-            attrs.get("room")
-            and not Room.objects.filter(id=attrs["room"], center=center).exists()
-        ):
-            raise ValidationError(
-                {"room": "Xona topilmadi yoki ushbu markazga tegishli emas."}
-            )
+        if attrs.get("course") and not Course.objects.filter(id=attrs["course"], center=center).exists():
+            raise ValidationError({"course": "Kurs topilmadi yoki ushbu markazga tegishli emas."})
+        if attrs.get("teacher") and not Teacher.objects.filter(id=attrs["teacher"], center=center).exists():
+            raise ValidationError({"teacher": "O'qituvchi topilmadi yoki ushbu markazga tegishli emas."})
+        if attrs.get("room") and not Room.objects.filter(id=attrs["room"], center=center).exists():
+            raise ValidationError({"room": "Xona topilmadi yoki ushbu markazga tegishli emas."})
         if attrs.get("lesson_start_time") >= attrs.get("lesson_end_time"):
-            raise ValidationError(
-                "Dars boshlanish vaqti tugash vaqtidan oldin bo'lishi kerak."
-            )
+            raise ValidationError("Dars boshlanish vaqti tugash vaqtidan oldin bo'lishi kerak.")
         return attrs
 
     def create(self, validated_data):
@@ -278,4 +259,4 @@ class ManagerPaymentSerializer(ModelSerializer):
 
     class Meta:
         model = Payment
-        fields = ["id", "student", "amount", "type", "paid_at", "created_at"]
+        fields = ["id", "student", "amount", "paid_at", "created_at"]

@@ -46,8 +46,8 @@ from apps.views import (
     DirectorStudentDetailView,
     DirectorStudentListCreateView,
     DirectorDashboardView,
-
 )
+from apps.views.center import BranchListCreateView, BranchDetailView
 from apps.views.manager import (
     ManagerPaymentListView,
     ManagerDashboardView,
@@ -102,17 +102,13 @@ urlpatterns = [
     path("super-admin/directors/<uuid:pk>/", SuperAdminDirectorDetailView.as_view()),
     path("super-admin/students/", SuperAdminStudentListCreateView.as_view()),
     path("super-admin/students/<uuid:pk>/", SuperAdminStudentDetailView.as_view()),
-    path(
-        "super-admin/center/student/stats/", SuperAdminCenterStudentListView.as_view()
-    ),
+    path("super-admin/center/student/stats/", SuperAdminCenterStudentListView.as_view()),
     path("super-admin/centers/", SuperAdminCenterListCreateView.as_view()),
     path("super-admin/centers/<uuid:pk>/", SuperAdminCenterDetailView.as_view()),
     path("super-admin/finance/summary/", SuperAdminFinanceSummaryView.as_view()),
     path("super-admin/finance/chart/", SuperAdminFinanceChartView.as_view()),
     path("super-admin/finance/centers/", SuperAdminFinanceCentersView.as_view()),
-    path(
-        "super-admin/finance/transactions/", SuperAdminFinanceTransactionsView.as_view()
-    ),
+    path("super-admin/finance/transactions/", SuperAdminFinanceTransactionsView.as_view()),
     # ── Director ──────────────────────────────────────────
     path("director/dashboard/", DirectorDashboardView.as_view()),
     # Students
@@ -160,4 +156,6 @@ urlpatterns = [
     path("manager/lessons/<uuid:pk>/attendance/", ManagerAttendanceView.as_view()),
     # Payments
     path("manager/payments/", ManagerPaymentListView.as_view()),
+    path("center/branches/", BranchListCreateView.as_view()),
+    path("center/branches/<uuid:pk>/", BranchDetailView.as_view()),
 ]
