@@ -19,12 +19,15 @@ from django.utils.translation import gettext_lazy as _
 from apps.models import TimeStampedModel
 from apps.models.users import User
 
+
 class Teacher(TimeStampedModel):
     user = OneToOneField(
         "apps.User", CASCADE, related_name="teacher_profile", limit_choices_to={"role": User.Role.TEACHER}
     )
     centers = ForeignKey("apps.Center", CASCADE, related_name="teachers", null=True, blank=True)
-
+    branch = ForeignKey(
+        "apps.Branch", SET_NULL, null=True, blank=True, related_name="teachers", verbose_name=_("Filial")
+    )
     specialization = CharField(_("Mutaxassislik"), max_length=255, blank=True)
     experience = PositiveSmallIntegerField(_("Tajriba (yil)"), default=0)
     salary = DecimalField(_("Maosh"), max_digits=12, decimal_places=2, null=True, blank=True)
@@ -103,6 +106,9 @@ class Student(TimeStampedModel):
         "apps.User", CASCADE, related_name="student_profile", limit_choices_to={"role": User.Role.STUDENT}
     )
     center = ForeignKey("apps.Center", CASCADE, related_name="students", verbose_name=_("O'quv markazi"))
+    branch = ForeignKey(
+        "apps.Branch", SET_NULL, null=True, blank=True, related_name="students", verbose_name=_("Filial")
+    )
     parent = ForeignKey(
         "apps.Parent", SET_NULL, null=True, blank=True, related_name="children", verbose_name=_("Ota-ona")
     )
@@ -158,7 +164,6 @@ class Student(TimeStampedModel):
     @property
     def full_name(self) -> str:
         return self.user.full_name
-
 
     @property
     def phone(self) -> str:

@@ -24,15 +24,7 @@ from apps.serializers.utils import normalize_phone
 class UserSummarySerializer(ModelSerializer):
     class Meta:
         model = User
-        fields = [
-            "id",
-            "phone",
-            "first_name",
-            "last_name",
-            "full_name",
-            "avatar",
-            "email",
-        ]
+        fields = ["id", "phone", "first_name", "last_name", "full_name", "avatar", "email"]
 
 
 class DirectorStudentListSerializer(ModelSerializer):
@@ -162,16 +154,7 @@ class DirectorTeacherDetailSerializer(ModelSerializer):
 
     class Meta:
         model = Teacher
-        fields = [
-            "id",
-            "user",
-            "specialization",
-            "experience",
-            "salary",
-            "bio",
-            "date_of_birth",
-            "created_at",
-        ]
+        fields = ["id", "user", "specialization", "experience", "salary", "bio", "date_of_birth", "created_at"]
 
 
 class DirectorTeacherCreateSerializer(Serializer):
@@ -246,15 +229,7 @@ class DirectorRoomSerializer(ModelSerializer):
 class DirectorCourseSerializer(ModelSerializer):
     class Meta:
         model = Course
-        fields = [
-            "id",
-            "name",
-            "description",
-            "duration_months",
-            "price",
-            "status",
-            "created_at",
-        ]
+        fields = ["id", "name", "description", "duration_months", "price", "status", "created_at"]
         read_only_fields = ["id", "created_at"]
 
 
@@ -400,16 +375,7 @@ class DirectorLessonListSerializer(ModelSerializer):
 
     class Meta:
         model = Lesson
-        fields = [
-            "id",
-            "group",
-            "group_name",
-            "date",
-            "start_time",
-            "end_time",
-            "topic",
-            "notes",
-        ]
+        fields = ["id", "group", "group_name", "date", "start_time", "end_time", "topic", "notes"]
         read_only_fields = ["id"]
 
 

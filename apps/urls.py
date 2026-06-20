@@ -48,6 +48,7 @@ from apps.views import (
     DirectorDashboardView,
 
 )
+from apps.views.center import BranchListCreateView, BranchDetailView
 from apps.views.manager import (
     ManagerPaymentListView,
     ManagerDashboardView,
@@ -160,4 +161,7 @@ urlpatterns = [
     path("manager/lessons/<uuid:pk>/attendance/", ManagerAttendanceView.as_view()),
     # Payments
     path("manager/payments/", ManagerPaymentListView.as_view()),
+
+    path("center/branches/", BranchListCreateView.as_view(), name="director-branches"),
+    path("center/branches/<uuid:pk>/", BranchDetailView.as_view(), name="director-branch-detail"),
 ]

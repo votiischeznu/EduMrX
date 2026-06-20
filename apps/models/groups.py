@@ -20,6 +20,8 @@ from apps.models import BaseModel, TimeStampedModel
 
 
 class Room(TimeStampedModel):
+    center = ForeignKey("apps.Center", CASCADE, related_name="rooms")
+    branch = ForeignKey("apps.Branch", SET_NULL, null=True, blank=True, related_name="rooms")
     name = CharField(max_length=100)
     capacity = PositiveSmallIntegerField()
 
@@ -54,6 +56,7 @@ class Group(TimeStampedModel):
     status = CharField(max_length=20, choices=Status.choices, default=Status.ACTIVE)
 
     center = ForeignKey("apps.Center", CASCADE, related_name="groups", null=True, blank=True)
+    branch = ForeignKey("apps.Branch", SET_NULL, null=True, blank=True, related_name="groups")
 
     start_date = DateField()
     end_date = DateField(null=True, blank=True)
@@ -123,7 +126,7 @@ class GroupStudent(BaseModel):
     is_active = BooleanField(default=True)
 
     class Meta:
-        unique_together = (("group", "student"), )
+        unique_together = (("group", "student"),)
 
     def __str__(self):
         return f"{self.student} → {self.group}"
