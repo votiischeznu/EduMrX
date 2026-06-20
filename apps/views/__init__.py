@@ -55,4 +55,6 @@ from apps.views.director import (
     DirectorStudentDetailView,
     DirectorStudentListCreateView,
     DirectorDashboardView,
+    DirectorAdminListCreateView,
+    DirectorAdminDetailView,
 )

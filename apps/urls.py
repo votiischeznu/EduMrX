@@ -46,6 +46,8 @@ from apps.views import (
     DirectorStudentDetailView,
     DirectorStudentListCreateView,
     DirectorDashboardView,
+    DirectorAdminListCreateView,
+    DirectorAdminDetailView,
 )
 from apps.views.center import BranchListCreateView, BranchDetailView
 from apps.views.manager import (
@@ -111,6 +113,9 @@ urlpatterns = [
     path("super-admin/finance/transactions/", SuperAdminFinanceTransactionsView.as_view()),
     # ── Director ──────────────────────────────────────────
     path("director/dashboard/", DirectorDashboardView.as_view()),
+
+path("director/admins/", DirectorAdminListCreateView.as_view()),
+path("director/admins/<uuid:pk>/", DirectorAdminDetailView.as_view()),
     # Students
     path("director/students/", DirectorStudentListCreateView.as_view()),
     path("director/students/<uuid:pk>/", DirectorStudentDetailView.as_view()),

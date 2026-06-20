@@ -5,7 +5,7 @@ from datetime import date
 from rest_framework.exceptions import NotFound
 
 from apps.models import Payment, Debt, Group, Student
-from models import Center
+from apps.models.centers import Center
 
 
 def get_director_centers(user):

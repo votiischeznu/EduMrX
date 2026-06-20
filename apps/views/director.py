@@ -2,7 +2,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
 
-from apps.models import Center, Student, Teacher, Group, Room, Course, Lesson, Attendance
+from apps.models import Center, Student, Teacher, Group, Room, Course, Lesson, Attendance, CenterStaff
 from apps.serializers import (
     DirectorTeacherCreateSerializer,
     DirectorTeacherListSerializer,
@@ -17,6 +17,9 @@ from apps.serializers import (
     DirectorAttendanceSerializer,
     DirectorStudentCreateSerializer,
     DirectorStudentListSerializer,
+    DirectorAdminCreateSerializer,
+    DirectorAdminDetailSerializer,
+    DirectorAdminListSerializer,
 )
 
 from django_filters.rest_framework import DjangoFilterBackend
@@ -27,7 +30,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
 from apps.permissions import IsDirector
-from service import get_dashboard_data, get_director_centers, get_single_center_or_404
+from apps.service.director_dashboard import get_dashboard_data, get_director_centers, get_single_center_or_404
 
 
 class DirectorDashboardView(APIView):
@@ -373,3 +376,58 @@ class DirectorAttendanceView(APIView):
         serializer.is_valid(raise_exception=True)
         results = serializer.save()
         return Response(DirectorAttendanceSerializer(results, many=True).data)
+
+
+@extend_schema(tags=["DirectorAdmin"])
+class DirectorAdminListCreateView(ListCreateAPIView):
+    queryset = CenterStaff.objects.select_related("user", "center")
+    permission_classes = [IsAuthenticated, IsDirector]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ["center"]
+    search_fields = ["user__first_name", "user__last_name", "user__phone"]
+    ordering_fields = ["created_at"]
+    ordering = ["-created_at"]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        centers = get_director_centers(self.request.user)
+        return qs.filter(center__in=centers, user__is_deleted=False)
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return DirectorAdminCreateSerializer
+        return DirectorAdminListSerializer
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["centers"] = get_director_centers(self.request.user)
+        return context
+
+
+@extend_schema(tags=["DirectorAdmin"])
+class DirectorAdminDetailView(RetrieveUpdateDestroyAPIView):
+    queryset = CenterStaff.objects.select_related("user", "center")
+    permission_classes = [IsAuthenticated, IsDirector]
+    http_method_names = ["get", "patch", "delete"]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        centers = get_director_centers(self.request.user)
+        return qs.filter(center__in=centers, user__is_deleted=False)
+
+    def get_serializer_class(self):
+        if self.request.method == "PATCH":
+            return DirectorAdminCreateSerializer
+        return DirectorAdminDetailSerializer
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["centers"] = get_director_centers(self.request.user)
+        return context
+
+    def delete(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.user.is_deleted = True
+        instance.user.is_active = False
+        instance.user.save(update_fields=["is_deleted", "is_active"])
+        return Response(status=status.HTTP_204_NO_CONTENT)

@@ -87,7 +87,7 @@ class ManagerDashboardView(APIView):
 
 @extend_schema(tags=["ManagerStudents"])
 class ManagerStudentListCreateView(ListCreateAPIView):
-    queryset = Student.objects.select_related(("user", "center", "parent__user"))
+    queryset = Student.objects.select_related("user", "center", "parent__user")
     permission_classes = [IsAuthenticated, IsManager]
     filter_backends = [
         DjangoFilterBackend,

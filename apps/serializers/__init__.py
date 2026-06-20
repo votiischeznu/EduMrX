@@ -60,6 +60,9 @@ from apps.serializers.director import (
     DirectorStudentCreateSerializer,
     DirectorStudentDetailSerializer,
     DirectorStudentListSerializer,
+    DirectorAdminCreateSerializer,
+    DirectorAdminDetailSerializer,
+    DirectorAdminListSerializer,
 )
 
 from apps.serializers.manager import (

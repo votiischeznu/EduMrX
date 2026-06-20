@@ -17,7 +17,7 @@ from rest_framework.serializers import (
     UUIDField,
 )
 
-from apps.models import User, Teacher, Student, Group, GroupStudent, Room, Course, Lesson, Attendance
+from apps.models import User, Teacher, Student, Group, GroupStudent, CenterStaff, Room, Course, Lesson, Attendance
 from apps.serializers.utils import normalize_phone
 
 
@@ -195,15 +195,16 @@ class DirectorTeacherCreateSerializer(Serializer):
             avatar=validated_data.get("avatar"),
             role=User.Role.TEACHER,
         )
-        return Teacher.objects.create(
+        teacher = Teacher.objects.create(
             user=user,
-            center=center,
             specialization=validated_data.get("specialization", ""),
             experience=validated_data.get("experience", 0),
             salary=validated_data.get("salary"),
             bio=validated_data.get("bio", ""),
             date_of_birth=validated_data.get("date_of_birth"),
         )
+        teacher.centers.add(center)
+        return teacher
 
     @transaction.atomic
     def update(self, instance, validated_data):
@@ -452,3 +453,85 @@ class DirectorAttendanceBulkSerializer(Serializer):
             )
             results.append(obj)
         return results
+
+
+class DirectorAdminListSerializer(ModelSerializer):
+    user = UserSummarySerializer(read_only=True)
+    center_name = CharField(source="center.name", read_only=True)
+
+    class Meta:
+        model = CenterStaff
+        fields = ["id", "user", "center", "center_name", "notes", "created_at"]
+
+
+class DirectorAdminDetailSerializer(ModelSerializer):
+    user = UserSummarySerializer(read_only=True)
+    center_name = CharField(source="center.name", read_only=True)
+
+    class Meta:
+        model = CenterStaff
+        fields = ["id", "user", "center", "center_name", "notes", "created_at"]
+
+
+class DirectorAdminCreateSerializer(Serializer):
+    phone = CharField(max_length=50, required=True)
+    first_name = CharField(max_length=100)
+    last_name = CharField(max_length=100)
+    email = EmailField(required=False, allow_null=True)
+    avatar = URLField(required=False, allow_null=True)
+    password = CharField(write_only=True, required=False)
+    center = UUIDField()
+    notes = CharField(required=False, allow_blank=True)
+
+    def validate_center(self, value):
+        centers = self.context.get("centers")
+        if centers is None:
+            raise PermissionDenied("Markaz konteksti topilmadi.")
+        if not centers.filter(id=value).exists():
+            raise PermissionDenied("Bu markaz sizga tegishli emas.")
+        return value
+
+    def validate_phone(self, value):
+        normalized = normalize_phone(value)
+        qs = User.objects.filter(phone=normalized)
+        if self.instance:
+            qs = qs.exclude(id=self.instance.user_id)
+        if qs.exists():
+            raise ValidationError("Bu telefon raqam allaqachon mavjud.")
+        return value
+
+    @transaction.atomic
+    def create(self, validated_data):
+        center_id = validated_data.pop("center")
+        password = validated_data.pop("password", None)
+        notes = validated_data.pop("notes", "")
+
+        user = User.objects.create_user(
+            phone=validated_data["phone"],
+            password=password,
+            first_name=validated_data["first_name"],
+            last_name=validated_data["last_name"],
+            email=validated_data.get("email"),
+            avatar=validated_data.get("avatar"),
+            role=User.Role.ADMIN,
+        )
+        return CenterStaff.objects.create(
+            user=user,
+            center_id=center_id,
+            notes=notes,
+        )
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        user = instance.user
+        for field in ["phone", "first_name", "last_name", "email", "avatar"]:
+            if field in validated_data:
+                setattr(user, field, validated_data[field])
+        user.save()
+
+        if "notes" in validated_data:
+            instance.notes = validated_data["notes"]
+        if "center" in validated_data:
+            instance.center_id = validated_data["center"]
+        instance.save()
+        return instance
