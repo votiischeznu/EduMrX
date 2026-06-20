@@ -109,6 +109,10 @@ class LoginModelSerializer(Serializer):
         if not user.is_active:
             raise ValidationError("Foydalanuvchi faol emas. Profilingiz bloklangan!")
 
+        expected_role = self.context.get("expected_role")
+        if expected_role and user.role != expected_role:
+            raise ValidationError("Siz bu paneliga kira olmaysiz.")
+
         attrs["user"] = user
         return attrs
 
