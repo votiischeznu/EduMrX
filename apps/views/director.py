@@ -25,7 +25,7 @@ from apps.serializers import (
 )
 
 from django_filters.rest_framework import DjangoFilterBackend
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from drf_spectacular.utils import extend_schema
 from rest_framework import filters
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import IsAuthenticated
@@ -147,10 +147,7 @@ class DirectorDashboardView(APIView):
         )
 
 
-@extend_schema_view(
-    get=extend_schema(tags=["2. Director — Students"]),
-    post=extend_schema(tags=["2. Director — Students"]),
-)
+@extend_schema(tags=["DirectorStudents"])
 class DirectorStudentListCreateView(ListCreateAPIView):
     queryset = Student.objects.filter(user__is_deleted=False).select_related("user", "center", "parent__user")
     permission_classes = [IsAuthenticated, IsDirector]
@@ -174,11 +171,7 @@ class DirectorStudentListCreateView(ListCreateAPIView):
         return context
 
 
-@extend_schema_view(
-    get=extend_schema(tags=["2. Director — Students"]),
-    patch=extend_schema(tags=["2. Director — Students"]),
-    delete=extend_schema(tags=["2. Director — Students"]),
-)
+@extend_schema(tags=["2. DirectorStudents"])
 class DirectorStudentDetailView(RetrieveUpdateDestroyAPIView):
     queryset = Student.objects.select_related("user", "center", "parent__user")
     permission_classes = [IsAuthenticated, IsDirector]
@@ -205,12 +198,9 @@ class DirectorStudentDetailView(RetrieveUpdateDestroyAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-@extend_schema_view(
-    get=extend_schema(tags=["3. Director — Teachers"]),
-    post=extend_schema(tags=["3. Director — Teachers"]),
-)
+@extend_schema(tags=["DirectorTeacher"])
 class DirectorTeacherListCreateView(ListCreateAPIView):
-    queryset = Teacher.objects.select_related("user", "centers")
+    queryset = Teacher.objects.prefetch_related("user", "centers")
     permission_classes = [IsAuthenticated, IsDirector]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     search_fields = ["user__first_name", "user__last_name", "user__phone"]
@@ -231,13 +221,9 @@ class DirectorTeacherListCreateView(ListCreateAPIView):
         return context
 
 
-@extend_schema_view(
-    get=extend_schema(tags=["3. Director — Teachers"]),
-    patch=extend_schema(tags=["3. Director — Teachers"]),
-    delete=extend_schema(tags=["3. Director — Teachers"]),
-)
+@extend_schema(tags=["DirectorTeacher"])
 class DirectorTeacherDetailView(RetrieveUpdateDestroyAPIView):
-    queryset = Teacher.objects.select_related("user", "centers")
+    queryset = Teacher.objects.prefetch_related("user", "centers")
     permission_classes = [IsAuthenticated, IsDirector]
     http_method_names = ["get", "patch", "delete"]
 
@@ -262,10 +248,7 @@ class DirectorTeacherDetailView(RetrieveUpdateDestroyAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-@extend_schema_view(
-    get=extend_schema(tags=["4. Director — Rooms"]),
-    post=extend_schema(tags=["4. Director — Rooms"]),
-)
+@extend_schema(tags=["DirectorRoom"])
 class DirectorRoomListCreateView(ListCreateAPIView):
     queryset = Room.objects.all()
     permission_classes = [IsAuthenticated, IsDirector]
@@ -283,11 +266,7 @@ class DirectorRoomListCreateView(ListCreateAPIView):
         serializer.save(center=center)
 
 
-@extend_schema_view(
-    get=extend_schema(tags=["4. Director — Rooms"]),
-    patch=extend_schema(tags=["4. Director — Rooms"]),
-    delete=extend_schema(tags=["4. Director — Rooms"]),
-)
+@extend_schema(tags=["DirectorRoom"])
 class DirectorRoomDetailView(RetrieveUpdateDestroyAPIView):
     queryset = Room.objects.all()
     permission_classes = [IsAuthenticated, IsDirector]
@@ -300,10 +279,7 @@ class DirectorRoomDetailView(RetrieveUpdateDestroyAPIView):
         return qs.filter(center__in=centers)
 
 
-@extend_schema_view(
-    get=extend_schema(tags=["5. Director — Courses"]),
-    post=extend_schema(tags=["5. Director — Courses"]),
-)
+@extend_schema(tags=["DirectorCourse"])
 class DirectorCourseListCreateView(ListCreateAPIView):
     queryset = Course.objects.all()
     permission_classes = [IsAuthenticated, IsDirector]
@@ -324,11 +300,7 @@ class DirectorCourseListCreateView(ListCreateAPIView):
         serializer.save(center=center)
 
 
-@extend_schema_view(
-    get=extend_schema(tags=["5. Director — Courses"]),
-    patch=extend_schema(tags=["5. Director — Courses"]),
-    delete=extend_schema(tags=["5. Director — Courses"]),
-)
+@extend_schema(tags=["DirectorCourse"])
 class DirectorCourseDetailView(RetrieveUpdateDestroyAPIView):
     queryset = Course.objects.all()
     permission_classes = [IsAuthenticated, IsDirector]
@@ -341,15 +313,7 @@ class DirectorCourseDetailView(RetrieveUpdateDestroyAPIView):
         return qs.filter(center__in=centers)
 
 
-# ──────────────────────────────────────────────────────────────────────────
-# GROUP
-# ──────────────────────────────────────────────────────────────────────────
-
-
-@extend_schema_view(
-    get=extend_schema(tags=["6. Director — Groups"]),
-    post=extend_schema(tags=["6. Director — Groups"]),
-)
+@extend_schema(tags=["DirectorGroup"])
 class DirectorGroupListCreateView(ListCreateAPIView):
     queryset = Group.objects.select_related("course", "teacher__user", "room")
     permission_classes = [IsAuthenticated, IsDirector]
@@ -373,11 +337,7 @@ class DirectorGroupListCreateView(ListCreateAPIView):
         return context
 
 
-@extend_schema_view(
-    get=extend_schema(tags=["6. Director — Groups"]),
-    patch=extend_schema(tags=["6. Director — Groups"]),
-    delete=extend_schema(tags=["6. Director — Groups"]),
-)
+@extend_schema(tags=["DirectorGroup"])
 class DirectorGroupDetailView(RetrieveUpdateDestroyAPIView):
     queryset = Group.objects.select_related("course", "teacher__user", "room").prefetch_related(
         "enrollments__student__user"
@@ -399,7 +359,7 @@ class DirectorGroupDetailView(RetrieveUpdateDestroyAPIView):
         return context
 
 
-@extend_schema(tags=["6. Director — Groups"])
+@extend_schema(tags=["DirectorGroups"])
 class DirectorGroupEnrollView(APIView):
     permission_classes = [IsAuthenticated, IsDirector]
     serializer_class = DirectorGroupEnrollSerializer
@@ -426,15 +386,7 @@ class DirectorGroupEnrollView(APIView):
         return Response(DirectorGroupListSerializer(group).data)
 
 
-# ──────────────────────────────────────────────────────────────────────────
-# LESSON
-# ──────────────────────────────────────────────────────────────────────────
-
-
-@extend_schema_view(
-    get=extend_schema(tags=["7. Director — Lessons"]),
-    post=extend_schema(tags=["7. Director — Lessons"]),
-)
+@extend_schema(tags=["DirectorLesson"])
 class DirectorLessonListCreateView(ListCreateAPIView):
     queryset = Lesson.objects.select_related("group")
     permission_classes = [IsAuthenticated, IsDirector]
@@ -457,11 +409,7 @@ class DirectorLessonListCreateView(ListCreateAPIView):
         return context
 
 
-@extend_schema_view(
-    get=extend_schema(tags=["7. Director — Lessons"]),
-    patch=extend_schema(tags=["7. Director — Lessons"]),
-    delete=extend_schema(tags=["7. Director — Lessons"]),
-)
+@extend_schema(tags=["DirectorLesson"])
 class DirectorLessonDetailView(RetrieveUpdateDestroyAPIView):
     queryset = Lesson.objects.select_related("group")
     permission_classes = [IsAuthenticated, IsDirector]
@@ -481,12 +429,7 @@ class DirectorLessonDetailView(RetrieveUpdateDestroyAPIView):
         return context
 
 
-# ──────────────────────────────────────────────────────────────────────────
-# ATTENDANCE
-# ──────────────────────────────────────────────────────────────────────────
-
-
-@extend_schema(tags=["8. Director — Attendance"])
+@extend_schema(tags=["DirectorAttendance"])
 class DirectorAttendanceView(APIView):
     permission_classes = [IsAuthenticated, IsDirector]
 

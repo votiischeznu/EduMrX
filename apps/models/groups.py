@@ -20,7 +20,7 @@ from apps.models import BaseModel, TimeStampedModel
 
 
 class Room(TimeStampedModel):
-    center = ForeignKey("apps.Center", CASCADE, related_name="rooms")
+    center = ForeignKey("apps.Center", CASCADE, related_name="rooms", null=True, blank=True)
     branch = ForeignKey("apps.Branch", SET_NULL, null=True, blank=True, related_name="rooms")
     name = CharField(max_length=100)
     capacity = PositiveSmallIntegerField()
@@ -76,7 +76,6 @@ class Group(TimeStampedModel):
 
         is_new = self._state.adding
         super().save(*args, **kwargs)
-
         if is_new and self.center_id:
             Center.objects.filter(id=self.center_id).update(total_groups=F("total_groups") + 1)
 
@@ -120,8 +119,8 @@ class Group(TimeStampedModel):
 
 
 class GroupStudent(BaseModel):
-    group = ForeignKey("apps.Group", CASCADE, related_name="enrollments")
-    student = ForeignKey("apps.Student", CASCADE, related_name="enrollments")
+    group = ForeignKey("apps.Group", PROTECT, related_name="enrollments")
+    student = ForeignKey("apps.Student", PROTECT, related_name="enrollments")
     joined_at = DateField(auto_now_add=True)
     is_active = BooleanField(default=True)
 

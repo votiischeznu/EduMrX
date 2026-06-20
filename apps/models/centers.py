@@ -1,5 +1,3 @@
-import uuid
-
 from django.core.exceptions import ValidationError
 from django.db.models import (
     ImageField,
@@ -15,7 +13,6 @@ from django.db.models import (
     Index,
     DecimalField,
     PositiveIntegerField,
-    UUIDField,
 )
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -79,12 +76,12 @@ class Center(TimeStampedModel):
     def __str__(self) -> str:
         return self.name
 
-
     @property
     def effective_branch_limit(self):
         if self.branch_limit is not None:
             return self.branch_limit
         return self.PLAN_DEFAULT_BRANCH_LIMITS.get(self.plan)
+
     @property
     def is_subscription_active(self) -> bool:
         if self.subscription_expires is None:
@@ -117,8 +114,6 @@ class Branch(TimeStampedModel):
         ACTIVE = "active", _("Faol")
         FROZEN = "frozen", _("Muzlatilgan")
         ARCHIVED = "archived", _("Arxivlangan")
-
-    id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     center = ForeignKey("apps.Center", CASCADE, related_name="branches", verbose_name=_("O'quv markazi"))
 

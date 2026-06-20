@@ -31,8 +31,8 @@ class Payment(TimeStampedModel):
         TRANSFER = "transfer", "Bank Transfer"
         ONLINE = "online", "Online"
 
-    student = ForeignKey("apps.Student", on_delete=PROTECT, related_name="payments")
-    group = ForeignKey("apps.Group", on_delete=PROTECT, related_name="payments", null=True, blank=True)
+    student = ForeignKey("apps.Student", PROTECT, related_name="payments")
+    group = ForeignKey("apps.Group", PROTECT, related_name="payments", null=True, blank=True)
 
     amount = DecimalField(max_digits=12, decimal_places=2)
     discount = DecimalField(max_digits=12, decimal_places=2, default=0)
@@ -87,8 +87,8 @@ class Debt(BaseModel):
         PARTIALLY_PAID = "partially_paid", "Qisman to'langan"
         PAID = "paid", "To'liq to'langan"
 
-    student = ForeignKey("apps.Student", on_delete=PROTECT, related_name="debts")
-    group = ForeignKey("apps.Group", on_delete=PROTECT, related_name="debts")
+    student = ForeignKey("apps.Student", PROTECT, related_name="debts")
+    group = ForeignKey("apps.Group", PROTECT, related_name="debts")
     amount = DecimalField(max_digits=12, decimal_places=2)
     due_date = DateField()
 

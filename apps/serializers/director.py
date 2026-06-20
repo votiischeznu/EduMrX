@@ -197,7 +197,7 @@ class DirectorTeacherCreateSerializer(Serializer):
         )
         return Teacher.objects.create(
             user=user,
-            center=center,  # ForeignKey: 'centers' → 'center' deb model bilan moslashtiring
+            center=center,
             specialization=validated_data.get("specialization", ""),
             experience=validated_data.get("experience", 0),
             salary=validated_data.get("salary"),

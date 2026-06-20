@@ -44,6 +44,16 @@ class Teacher(TimeStampedModel):
         if self.user.role != User.Role.TEACHER:
             raise ValidationError(_("Faqat TEACHER rolidagi foydalanuvchi o'qituvchi bo'la oladi"))
 
+    def delete(self, *args, **kwargs):
+        if self.teaching_groups.exists():
+            raise ValidationError(
+                _(
+                    "Bu o'qituvchini o'chirish mumkin emas: unga bog'langan guruhlar mavjud. "
+                    "Avval guruhlarni boshqa o'qituvchiga o'tkazing yoki arxivlang."
+                )
+            )
+        super().delete(*args, **kwargs)
+
     @property
     def full_name(self) -> str:
         return self.user.full_name
@@ -69,6 +79,16 @@ class Parent(TimeStampedModel):
         if self.user.role != User.Role.PARENT:
             raise ValidationError(_("Faqat PARENT rolidagi foydalanuvchi ota-ona bo'la oladi"))
 
+    def delete(self, *args, **kwargs):
+        if self.children.exists():
+            raise ValidationError(
+                _(
+                    "Bu ota-onani o'chirish mumkin emas: unga bog'langan farzandlar mavjud. "
+                    "Avval farzandlarni boshqa ota-onaga bog'lang yoki bog'lanishni uzing."
+                )
+            )
+        super().delete(*args, **kwargs)
+
     @property
     def full_name(self) -> str:
         return self.user.full_name
@@ -82,13 +102,16 @@ class StudentQuerySet(QuerySet):
     def for_user(self, user):
         if user.is_anonymous:
             return self.none()
-        if user.role == User.Role.SUPER_ADMIN:
+        if user.is_super_admin:
             return self.all()
-        if user.role == User.Role.DIRECTOR:
+        if user.is_director:
             return self.filter(center__director=user)
-        if user.role == User.Role.ADMIN:
-            return self.filter(center=user.center)
-        if user.role == User.Role.TEACHER:
+        if user.is_admin:
+            staff_profile = getattr(user, "staff_profile", None)
+            if staff_profile is None:
+                return self.none()
+            return self.filter(center=staff_profile.center)
+        if user.is_teacher:
             return self.filter(enrollments__group__teacher__user=user).distinct()
         return self.none()
 

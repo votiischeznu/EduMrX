@@ -9,10 +9,10 @@ from django.db.models import (
     DateField,
     TimeField,
     DateTimeField,
+    PROTECT,
 )
 
 from apps.models import BaseModel, TimeStampedModel
-
 
 
 class Course(TimeStampedModel):
@@ -63,7 +63,7 @@ class Attendance(BaseModel):
         ABSENT = "absent", "Absent"
 
     lesson = ForeignKey("apps.Lesson", CASCADE, related_name="attendances")
-    student = ForeignKey("apps.Student", CASCADE, related_name="attendances")
+    student = ForeignKey("apps.Student", PROTECT, related_name="attendances")
     status = CharField(max_length=20, choices=Status.choices, default=Status.PRESENT)
     note = CharField(max_length=300, blank=True)
 
