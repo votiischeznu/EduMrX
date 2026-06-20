@@ -1,13 +1,8 @@
-from datetime import date
-
-from django.db.models import DecimalField, Q
-from django.db.models.aggregates import Sum, Count
-from django.db.models.functions import TruncMonth
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
 
-from apps.models import Center, Student, Teacher, Group, Room, Course, Lesson, Attendance, Payment, Debt
+from apps.models import Center, Student, Teacher, Group, Room, Course, Lesson, Attendance
 from apps.serializers import (
     DirectorTeacherCreateSerializer,
     DirectorTeacherListSerializer,
@@ -32,119 +27,18 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
 from apps.permissions import IsDirector
+from service import get_dashboard_data, get_director_centers, get_single_center_or_404
 
 
-def get_director_centers(user):
-    return Center.objects.filter(director=user)
-
-
-def get_single_center_or_404(user):
-    center = get_director_centers(user).first()
-    if not center:
-        raise NotFound("Sizga biriktirilgan markaz topilmadi.")
-    return center
-
-
-@extend_schema(tags=["1. Director"])
 class DirectorDashboardView(APIView):
     permission_classes = [IsAuthenticated, IsDirector]
 
     def get(self, request):
-        user = request.user
-        center = Center.objects.filter(director=user).first()
+        center = Center.objects.filter(director=request.user).first()
         if not center:
             return Response({"detail": "Sizga biriktirilgan markaz topilmadi."}, status=404)
-
-        today = date.today()
-        current_year = today.year
-        current_month = today.month
-
-        total_students = center.students.filter(user__is_deleted=False).count()
-        active_students = center.students.filter(
-            status=Student.Status.ACTIVE,
-            user__is_deleted=False,
-        ).count()
-        total_teachers = center.teachers.filter(user__is_deleted=False).count()
-        total_groups = center.groups.count()
-        active_groups = center.groups.filter(status=Group.Status.ACTIVE).count()
-
-        monthly_revenue = Payment.objects.filter(
-            student__center=center,
-            status=Payment.Status.PAID,
-            period_year=current_year,
-            period_month=current_month,
-        ).aggregate(total=Sum("final_amount", default=0))["total"]
-
-        total_debt = Debt.objects.filter(
-            student__center=center,
-            status__in=[Debt.Status.UNPAID, Debt.Status.PARTIALLY_PAID],
-        ).aggregate(total=Sum("amount", default=0))["total"]
-
-        revenue_chart = (
-            Payment.objects.filter(student__center=center, status=Payment.Status.PAID)
-            .annotate(month=TruncMonth("paid_at"))
-            .values("month")
-            .annotate(revenue=Sum("final_amount", output_field=DecimalField()))
-            .order_by("month")
-        )
-        chart_data = [
-            {
-                "month": entry["month"].strftime("%Y-%m"),
-                "revenue": float(entry["revenue"]),
-            }
-            for entry in revenue_chart
-            if entry["month"]
-        ]
-
-        group_stats = center.groups.values("status").annotate(count=Count("id"))
-        group_distribution = {g["status"]: g["count"] for g in group_stats}
-
-        top_groups = (
-            Group.objects.filter(center=center)
-            .annotate(
-                revenue=Sum(
-                    "payments__final_amount",
-                    filter=Q(payments__status=Payment.Status.PAID),
-                    default=0,
-                )
-            )
-            .order_by("-revenue")[:5]
-            .values("id", "name", "student_count", "status", "revenue")
-        )
-
-        recent_payments = (
-            Payment.objects.filter(student__center=center, status=Payment.Status.PAID)
-            .select_related("student__user", "group")
-            .order_by("-paid_at")[:10]
-        )
-        recent_payments_data = [
-            {
-                "student": p.student.full_name,
-                "group": p.group.name if p.group else None,
-                "amount": float(p.final_amount),
-                "method": p.method,
-                "paid_at": p.paid_at,
-            }
-            for p in recent_payments
-        ]
-
-        return Response(
-            {
-                "kpi": {
-                    "total_students": total_students,
-                    "active_students": active_students,
-                    "total_teachers": total_teachers,
-                    "total_groups": total_groups,
-                    "active_groups": active_groups,
-                    "monthly_revenue": float(monthly_revenue),
-                    "total_debt": float(total_debt),
-                },
-                "revenue_chart": chart_data,
-                "group_distribution": group_distribution,
-                "top_groups": list(top_groups),
-                "recent_payments": recent_payments_data,
-            }
-        )
+        data = get_dashboard_data(center)
+        return Response(data)
 
 
 @extend_schema(tags=["DirectorStudents"])
@@ -163,7 +57,10 @@ class DirectorStudentListCreateView(ListCreateAPIView):
         return qs.filter(center__in=centers)
 
     def get_serializer_class(self):
-        return DirectorStudentCreateSerializer if self.request.method == "POST" else DirectorStudentListSerializer
+        if self.request.method == "POST":
+            return DirectorStudentCreateSerializer
+        else:
+            return DirectorStudentListSerializer
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -183,7 +80,10 @@ class DirectorStudentDetailView(RetrieveUpdateDestroyAPIView):
         return qs.filter(center__in=centers, user__is_deleted=False)
 
     def get_serializer_class(self):
-        return DirectorStudentCreateSerializer if self.request.method == "PATCH" else DirectorStudentListSerializer
+        if self.request.method == "PATCH":
+            return DirectorStudentCreateSerializer
+        else:
+            return DirectorStudentListSerializer
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -213,7 +113,10 @@ class DirectorTeacherListCreateView(ListCreateAPIView):
         return qs.filter(centers__in=centers, user__is_deleted=False)
 
     def get_serializer_class(self):
-        return DirectorTeacherCreateSerializer if self.request.method == "POST" else DirectorTeacherListSerializer
+        if self.request.method == "POST":
+            return DirectorTeacherCreateSerializer
+        else:
+            return DirectorTeacherListSerializer
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -233,7 +136,10 @@ class DirectorTeacherDetailView(RetrieveUpdateDestroyAPIView):
         return qs.filter(centers__in=centers, user__is_deleted=False)
 
     def get_serializer_class(self):
-        return DirectorTeacherCreateSerializer if self.request.method == "PATCH" else DirectorTeacherListSerializer
+        if self.request.method == "PATCH":
+            return DirectorTeacherCreateSerializer
+        else:
+            return DirectorTeacherListSerializer
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -329,7 +235,10 @@ class DirectorGroupListCreateView(ListCreateAPIView):
         return qs.filter(center__in=centers)
 
     def get_serializer_class(self):
-        return DirectorGroupCreateSerializer if self.request.method == "POST" else DirectorGroupListSerializer
+        if self.request.method == "POST":
+            return DirectorGroupCreateSerializer
+        else:
+            return DirectorGroupListSerializer
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -351,7 +260,10 @@ class DirectorGroupDetailView(RetrieveUpdateDestroyAPIView):
         return qs.filter(center__in=centers)
 
     def get_serializer_class(self):
-        return DirectorGroupCreateSerializer if self.request.method == "PATCH" else DirectorGroupListSerializer
+        if self.request.method == "PATCH":
+            return DirectorGroupCreateSerializer
+        else:
+            return DirectorGroupListSerializer
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -401,7 +313,10 @@ class DirectorLessonListCreateView(ListCreateAPIView):
         return qs.filter(group__center__in=centers)
 
     def get_serializer_class(self):
-        return DirectorLessonCreateSerializer if self.request.method == "POST" else DirectorLessonListSerializer
+        if self.request.method == "POST":
+            return DirectorLessonCreateSerializer
+        else:
+            return DirectorLessonListSerializer
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -421,7 +336,10 @@ class DirectorLessonDetailView(RetrieveUpdateDestroyAPIView):
         return qs.filter(group__center__in=centers)
 
     def get_serializer_class(self):
-        return DirectorLessonCreateSerializer if self.request.method == "PATCH" else DirectorLessonListSerializer
+        if self.request.method == "PATCH":
+            return DirectorLessonCreateSerializer
+        else:
+            return DirectorLessonListSerializer
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
