@@ -57,4 +57,9 @@ from apps.views.director import (
     DirectorDashboardView,
     DirectorAdminListCreateView,
     DirectorAdminDetailView,
+    DirectorAnalyticsSummaryView,
+    DirectorAnalyticsChartView,
+    DirectorAnalyticsTransactionsView,
+    DirectorAnalyticsBranchesView,
+    DirectorAnalyticsBranchTabsView
 )

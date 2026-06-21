@@ -147,8 +147,9 @@ class Branch(TimeStampedModel):
     def coordinates(self):
         return [float(self.latitude), float(self.longitude)]
 
+    # models.py
     @property
-    def students_count(self) -> int:
+    def active_students_count(self) -> int:
         return self.students.filter(user__is_deleted=False).count()
 
     @property

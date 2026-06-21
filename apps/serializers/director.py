@@ -8,7 +8,6 @@ from rest_framework.serializers import (
     DecimalField,
     EmailField,
     IntegerField,
-    ListField,
     ModelSerializer,
     Serializer,
     SerializerMethodField,
@@ -244,7 +243,7 @@ class DirectorGroupStudentSerializer(ModelSerializer):
         read_only_fields = ["id", "joined_at"]
 
     def get_student_name(self, obj):
-        return obj.student.user.get_full_name() if obj.student and obj.student.user else None
+        return obj.student.user.full_name if obj.student and obj.student.user else None
 
     def get_phone(self, obj):
         return obj.student.user.phone if obj.student and obj.student.user else None
@@ -264,63 +263,29 @@ class DirectorGroupListSerializer(ModelSerializer):
             "course_name",
             "teacher",
             "teacher_name",
+            "student_count",
             "room",
             "room_name",
             "status",
-            "student_count",
+            "center",
+            "branch",
             "start_date",
             "end_date",
             "lesson_days",
             "lesson_start_time",
             "lesson_end_time",
+            "created_at",
+            "updated_at",
         ]
 
     def get_teacher_name(self, obj):
-        if obj.teacher and obj.teacher.user:
-            return obj.teacher.user.get_full_name()
-        return None
+        return obj.teacher.user.full_name if obj.teacher and obj.teacher.user else None
 
 
-class DirectorGroupDetailSerializer(DirectorGroupListSerializer):
-    enrollments = DirectorGroupStudentSerializer(many=True, read_only=True)
-
-    class Meta(DirectorGroupListSerializer.Meta):
-        fields = DirectorGroupListSerializer.Meta.fields + ["enrollments"]
-
-
-class DirectorGroupCreateSerializer(Serializer):
-    name = CharField(max_length=200)
-    course = UUIDField()
-    teacher = UUIDField()
-    room = UUIDField(required=False, allow_null=True)
-    status = ChoiceField(choices=Group.Status.choices, default=Group.Status.ACTIVE)
-    start_date = DateField()
-    end_date = DateField(required=False, allow_null=True)
-    lesson_days = ListField(child=IntegerField(min_value=0, max_value=6))
-    lesson_start_time = TimeField()
-    lesson_end_time = TimeField()
-
-    def validate_course(self, value):
-        center = self.context.get("center")
-        if not center:
-            raise ValidationError("Markaz konteksti topilmadi.")
-        if not Course.objects.filter(id=value, center=center).exists():
-            raise PermissionDenied("Bu kurs sizning markazingizga tegishli emas.")
-        return value
-
-    def validate_teacher(self, value):
-        center = self.context.get("center")
-        if not center:
-            raise ValidationError("Markaz konteksti topilmadi.")
-        # Teacher modelidagi maydon nomini o'zingiznikiga moslashtiring (center yoki centers)
-        if not Teacher.objects.filter(id=value, center=center).exists():
-            raise PermissionDenied("Bu o'qituvchi sizning markazingizga tegishli emas.")
-        return value
-
-    def validate_lesson_days(self, value):
-        if len(value) != len(set(value)):
-            raise ValidationError("Takroriy kunlar kiritilgan.")
-        return value
+class DirectorGroupCreateSerializer(ModelSerializer):
+    class Meta:
+        model = Group
+        exclude = ["center"]
 
     def validate(self, attrs):
         if attrs.get("lesson_start_time") and attrs.get("lesson_end_time"):
@@ -328,46 +293,28 @@ class DirectorGroupCreateSerializer(Serializer):
                 raise ValidationError("Dars boshlanish vaqti tugash vaqtidan oldin bo'lishi kerak.")
         return attrs
 
-    @transaction.atomic
     def create(self, validated_data):
-        center = self.context.get("center")
-        if not center:
-            raise ValidationError("Faol markaz topilmadi.")
-        return Group.objects.create(center=center, **validated_data)
-
-    @transaction.atomic
-    def update(self, instance, validated_data):
-        for field, value in validated_data.items():
-            setattr(instance, field, value)
-        instance.save()
-        return instance
+        validated_data["center"] = self.context["center"]
+        return super().create(validated_data)
 
 
 class DirectorGroupEnrollSerializer(Serializer):
     student_id = UUIDField()
     action = ChoiceField(choices=["add", "remove"])
 
-    def validate_student_id(self, value):
+    def validate(self, attrs):
         center = self.context.get("center")
-        if not center:
-            raise ValidationError("Markaz konteksti topilmadi.")
-        if not Student.objects.filter(id=value, center=center, user__is_deleted=False).exists():
-            raise PermissionDenied("Bu student sizning markazingizga tegishli emas.")
-        return value
+        if not Student.objects.filter(id=attrs["student_id"], center=center).exists():
+            raise ValidationError("Bu o'quvchi markazga tegishli emas.")
+        return attrs
 
     def save(self):
         group = self.context["group"]
         student_id = self.validated_data["student_id"]
-        action = self.validated_data["action"]
-
-        if action == "add":
-            if group.is_full:
-                raise ValidationError("Guruh to'lgan, joy yo'q.")
+        if self.validated_data["action"] == "add":
             GroupStudent.objects.get_or_create(group=group, student_id=student_id)
         else:
             GroupStudent.objects.filter(group=group, student_id=student_id).delete()
-
-        group.refresh_from_db()
         return group
 
 
@@ -403,9 +350,13 @@ class DirectorLessonCreateSerializer(Serializer):
         return attrs
 
     def create(self, validated_data):
-        return Lesson.objects.create(**validated_data)
+        group_id = validated_data.pop("group")
+        return Lesson.objects.create(group_id=group_id, **validated_data)
 
     def update(self, instance, validated_data):
+        group_id = validated_data.pop("group", None)
+        if group_id is not None:
+            instance.group_id = group_id
         for field, value in validated_data.items():
             setattr(instance, field, value)
         instance.save()
@@ -422,7 +373,7 @@ class DirectorAttendanceSerializer(ModelSerializer):
 
     def get_student_name(self, obj):
         if obj.student and obj.student.user:
-            return obj.student.user.get_full_name()
+            return obj.student.user.full_name
         return None
 
 
@@ -438,6 +389,18 @@ class DirectorAttendanceBulkSerializer(Serializer):
         if not value:
             raise ValidationError("Kamida bitta yozuv bo'lishi kerak.")
         return value
+
+    def validate(self, attrs):
+        lesson = self.context["lesson"]
+        student_ids = {rec["student"] for rec in attrs["records"]}
+
+        valid_ids = set(
+            Student.objects.filter(id__in=student_ids, center=lesson.group.center).values_list("id", flat=True)
+        )
+        invalid_ids = student_ids - valid_ids
+        if invalid_ids:
+            raise ValidationError("Ba'zi o'quvchilar bu markazga tegishli emas.")
+        return attrs
 
     @transaction.atomic
     def save(self):

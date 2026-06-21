@@ -50,7 +50,6 @@ from apps.serializers.director import (
     DirectorRoomSerializer,
     DirectorCourseSerializer,
     DirectorGroupCreateSerializer,
-    DirectorGroupDetailSerializer,
     DirectorGroupEnrollSerializer,
     DirectorGroupListSerializer,
     DirectorLessonCreateSerializer,
@@ -63,6 +62,7 @@ from apps.serializers.director import (
     DirectorAdminCreateSerializer,
     DirectorAdminDetailSerializer,
     DirectorAdminListSerializer,
+DirectorGroupCreateSerializer
 )
 
 from apps.serializers.manager import (

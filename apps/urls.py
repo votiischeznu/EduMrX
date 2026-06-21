@@ -48,6 +48,11 @@ from apps.views import (
     DirectorDashboardView,
     DirectorAdminListCreateView,
     DirectorAdminDetailView,
+    DirectorAnalyticsSummaryView,
+    DirectorAnalyticsChartView,
+    DirectorAnalyticsTransactionsView,
+    DirectorAnalyticsBranchesView,
+    DirectorAnalyticsBranchTabsView,
 )
 from apps.views.center import BranchListCreateView, BranchDetailView
 from apps.views.manager import (
@@ -113,9 +118,8 @@ urlpatterns = [
     path("super-admin/finance/transactions/", SuperAdminFinanceTransactionsView.as_view()),
     # ── Director ──────────────────────────────────────────
     path("director/dashboard/", DirectorDashboardView.as_view()),
-
-path("director/admins/", DirectorAdminListCreateView.as_view()),
-path("director/admins/<uuid:pk>/", DirectorAdminDetailView.as_view()),
+    path("director/admins/", DirectorAdminListCreateView.as_view()),
+    path("director/admins/<uuid:pk>/", DirectorAdminDetailView.as_view()),
     # Students
     path("director/students/", DirectorStudentListCreateView.as_view()),
     path("director/students/<uuid:pk>/", DirectorStudentDetailView.as_view()),
@@ -136,6 +140,11 @@ path("director/admins/<uuid:pk>/", DirectorAdminDetailView.as_view()),
     path("director/lessons/", DirectorLessonListCreateView.as_view()),
     path("director/lessons/<uuid:pk>/", DirectorLessonDetailView.as_view()),
     path("director/lessons/<uuid:pk>/attendance/", DirectorAttendanceView.as_view()),
+    path("director/analytics/summary/", DirectorAnalyticsSummaryView.as_view()),
+    path("director/analytics/chart/", DirectorAnalyticsChartView.as_view()),
+    path("director/analytics/transactions/", DirectorAnalyticsTransactionsView.as_view()),
+    path("director/analytics/centers/", DirectorAnalyticsBranchesView.as_view()),
+    path("director/analytics/branches/", DirectorAnalyticsBranchTabsView.as_view()),
     # ── Manager ──────────────────────────────────────────
     path("manager/dashboard/", ManagerDashboardView.as_view()),
     # Students

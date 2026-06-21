@@ -112,9 +112,7 @@ class ParentAdmin(ModelAdmin):
 
     def get_full_name(self, obj):
         if obj.user:
-            return (
-                f"{obj.user.first_name} {obj.user.last_name}".strip() or obj.user.phone
-            )
+            return f"{obj.user.first_name} {obj.user.last_name}".strip() or obj.user.phone
         return "-"
 
     get_full_name.short_description = _("Ota-ona ismi")
@@ -130,9 +128,7 @@ class StudentAdmin(ModelAdmin):
 
     def get_full_name(self, obj):
         if obj.user:
-            return (
-                f"{obj.user.first_name} {obj.user.last_name}".strip() or obj.user.phone
-            )
+            return f"{obj.user.first_name} {obj.user.last_name}".strip() or obj.user.phone
         return "-"
 
     get_full_name.short_description = _("Talaba ismi")
@@ -140,10 +136,10 @@ class StudentAdmin(ModelAdmin):
 
 @admin.register(Teacher)
 class TeacherAdmin(ModelAdmin):
-    list_display = ["id", "get_full_name", "specialization", "salary", "experience"]
+    list_display = ["id", "specialization", "salary", "experience"]
     list_filter = ["specialization", "experience"]
     search_fields = ["user__first_name", "user__last_name", "user__phone"]
-    autocomplete_fields = ["user"]
+    # autocomplete_fields = ["user"]
 
     def get_full_name(self, obj):
         if obj.user:

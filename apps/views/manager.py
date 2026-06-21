@@ -15,12 +15,12 @@ from apps.serializers import (
     DirectorRoomSerializer,
     DirectorCourseSerializer,
     DirectorGroupListSerializer,
-    DirectorGroupDetailSerializer,
     DirectorGroupEnrollSerializer,
     DirectorLessonListSerializer,
     DirectorLessonCreateSerializer,
     DirectorAttendanceSerializer,
     DirectorAttendanceBulkSerializer,
+    DirectorGroupCreateSerializer,
     ManagerStudentListSerializer,
     ManagerStudentDetailSerializer,
     ManagerStudentCreateSerializer,
@@ -283,7 +283,7 @@ class ManagerGroupListCreateView(ListCreateAPIView):
         serializer = ManagerGroupCreateSerializer(data=request.data, context={"center": center})
         serializer.is_valid(raise_exception=True)
         group = serializer.save()
-        return Response(DirectorGroupDetailSerializer(group).data, status=status.HTTP_201_CREATED)
+        return Response(DirectorGroupCreateSerializer(group).data, status=status.HTTP_201_CREATED)
 
 
 @extend_schema(tags=["ManagerGroups"])
@@ -300,7 +300,7 @@ class ManagerGroupDetailView(RetrieveUpdateDestroyAPIView):
         if self.request.method in ["PUT", "PATCH"]:
             return ManagerGroupCreateSerializer
         else:
-            return DirectorGroupDetailSerializer
+            return DirectorGroupCreateSerializer
 
 
 @extend_schema(tags=["ManagerGroups"])

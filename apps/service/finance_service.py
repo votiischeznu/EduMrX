@@ -155,6 +155,57 @@ class FinanceChartService:
 
         return data
 
+    @staticmethod
+    def get_top_centers_yearly_chart(year: int) -> dict:
+        """
+        12 oylik, top-5 markaz bo'yicha daromad trendi.
+        TZ bo'lim 3: /api/v1/super-admin/analytics/chart/?year=2026
+        """
+        top_center_ids = list(
+            Payment.objects.filter(
+                status=Payment.Status.PAID,
+                paid_at__year=year,
+            )
+            .values("student__center_id", "student__center__name")
+            .annotate(total=Sum("final_amount"))
+            .order_by("-total")[:5]
+        )
+
+        chart = []
+        for month in range(1, 13):
+            row = {"name": FinanceChartService.MONTHS_UZ[month - 1]}
+            for idx, center_row in enumerate(top_center_ids, start=1):
+                center_id = center_row["student__center_id"]
+                income = (
+                    Payment.objects.filter(
+                        status=Payment.Status.PAID,
+                        paid_at__year=year,
+                        paid_at__month=month,
+                        student__center_id=center_id,
+                    ).aggregate(t=Sum("final_amount"))["t"]
+                    or 0
+                )
+                row[f"c{idx}"] = float(income) / 1_000_000  # millionlarda, TZ namunasiga mos
+            chart.append(row)
+
+        keys_definition = {
+            f"c{idx}": center_row["student__center__name"]
+            for idx, center_row in enumerate(top_center_ids, start=1)
+        }
+
+        total_sum = (
+            Payment.objects.filter(status=Payment.Status.PAID, paid_at__year=year).aggregate(
+                t=Sum("final_amount")
+            )["t"]
+            or 0
+        )
+
+        return {
+            "total_sum_formatted": f"{round(float(total_sum) / 1_000_000)}M UZS",
+            "chart": chart,
+            "keys_definition": keys_definition,
+        }
+
 
 class FinanceCentersService:
     @staticmethod
@@ -245,6 +296,35 @@ class FinanceTransactionsService:
                 else None,
                 "amount": p.final_amount,
                 "payment_method": p.method,
+            }
+            for p in payments
+        ]
+        return data, total
+
+    @staticmethod
+    def get_transactions_list_with_student(page, per_page):
+        """
+        TZ bo'lim 6: /api/v1/super-admin/analytics/transactions/
+        Legacy formatdan farqi: student_name maydoni qo'shilgan.
+        """
+        qs = (
+            Payment.objects.filter(status=Payment.Status.PAID)
+            .select_related("student__user", "student__center")
+            .order_by("-paid_at")
+        )
+
+        total = qs.count()
+        offset = (page - 1) * per_page
+        payments = qs[offset : offset + per_page]
+
+        data = [
+            {
+                "id": str(p.id),
+                "student_name": p.student.full_name if p.student else None,
+                "center_name": p.student.center.name if p.student and p.student.center else None,
+                "amount": p.final_amount,
+                "payment_method": p.method,
+                "created_at": p.paid_at,
             }
             for p in payments
         ]
