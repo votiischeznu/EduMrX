@@ -421,19 +421,21 @@ class DirectorAttendanceBulkSerializer(Serializer):
 class DirectorAdminListSerializer(ModelSerializer):
     user = UserSummarySerializer(read_only=True)
     center_name = CharField(source="center.name", read_only=True)
+    branch_name = CharField(source="branch.name", read_only=True)
 
     class Meta:
         model = CenterStaff
-        fields = ["id", "user", "center", "center_name", "notes", "created_at"]
+        fields = ["id", "user", "center", "center_name", "branch", "branch_name", "notes", "created_at"]
 
 
 class DirectorAdminDetailSerializer(ModelSerializer):
     user = UserSummarySerializer(read_only=True)
     center_name = CharField(source="center.name", read_only=True)
+    branch_name = CharField(source="branch.name", read_only=True)
 
     class Meta:
         model = CenterStaff
-        fields = ["id", "user", "center", "center_name", "notes", "created_at"]
+        fields = ["id", "user", "center", "center_name", "branch", "branch_name", "notes", "created_at"]
 
 
 class DirectorAdminCreateSerializer(Serializer):
@@ -444,6 +446,7 @@ class DirectorAdminCreateSerializer(Serializer):
     avatar = URLField(required=False, allow_null=True)
     password = CharField(write_only=True, required=False)
     center = UUIDField()
+    branch = UUIDField(required=False, allow_null=True)
     notes = CharField(required=False, allow_blank=True)
 
     def validate_center(self, value):
@@ -452,6 +455,16 @@ class DirectorAdminCreateSerializer(Serializer):
             raise PermissionDenied("Markaz konteksti topilmadi.")
         if not centers.filter(id=value).exists():
             raise PermissionDenied("Bu markaz sizga tegishli emas.")
+        return value
+
+    def validate_branch(self, value):
+        if value is None:
+            return value
+        centers = self.context.get("centers")
+        from apps.models import Branch
+
+        if not Branch.objects.filter(id=value, center__in=centers).exists():
+            raise PermissionDenied("Bu filial sizga tegishli emas.")
         return value
 
     def validate_phone(self, value):
@@ -466,6 +479,7 @@ class DirectorAdminCreateSerializer(Serializer):
     @transaction.atomic
     def create(self, validated_data):
         center_id = validated_data.pop("center")
+        branch_id = validated_data.pop("branch", None)
         password = validated_data.pop("password", None)
         notes = validated_data.pop("notes", "")
 
@@ -481,6 +495,7 @@ class DirectorAdminCreateSerializer(Serializer):
         return CenterStaff.objects.create(
             user=user,
             center_id=center_id,
+            branch_id=branch_id,
             notes=notes,
         )
 
@@ -496,5 +511,7 @@ class DirectorAdminCreateSerializer(Serializer):
             instance.notes = validated_data["notes"]
         if "center" in validated_data:
             instance.center_id = validated_data["center"]
+        if "branch" in validated_data:
+            instance.branch_id = validated_data["branch"]
         instance.save()
         return instance

@@ -43,7 +43,7 @@ class BranchListSerializer(ModelSerializer):
 
     def get_stats(self, obj):
         return {
-            "students_count": obj.students_count,
+            "students_count": obj.active_students_count,  # ← shu
             "teachers_count": obj.teachers_count,
             "rooms_count": obj.rooms_count,
         }

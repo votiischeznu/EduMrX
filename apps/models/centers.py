@@ -99,6 +99,7 @@ class Center(TimeStampedModel):
 class CenterStaff(TimeStampedModel):
     user = OneToOneField("apps.User", CASCADE, related_name="staff_profile", limit_choices_to={"role": User.Role.ADMIN})
     center = ForeignKey("apps.Center", CASCADE, related_name="staff_members")
+    branch = ForeignKey("apps.Branch", null=True, blank=True, on_delete=SET_NULL)
     notes = TextField(_("Izoh"), blank=True)
 
     def __str__(self) -> str:
@@ -147,7 +148,6 @@ class Branch(TimeStampedModel):
     def coordinates(self):
         return [float(self.latitude), float(self.longitude)]
 
-    # models.py
     @property
     def active_students_count(self) -> int:
         return self.students.filter(user__is_deleted=False).count()
