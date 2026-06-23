@@ -48,8 +48,8 @@ class Notification(BaseModel):
 
 
 class NotificationRecipient(BaseModel):
-    notification = ForeignKey(Notification, on_delete=CASCADE, related_name="recipients")
-    recipient = ForeignKey("apps.User", on_delete=CASCADE, related_name="notification_recipients")
+    notification = ForeignKey("apps.Notification", CASCADE, related_name="recipients")
+    recipient = ForeignKey("apps.User", CASCADE, related_name="notification_recipients")
 
     is_read = BooleanField(default=False)
     read_at = DateTimeField(null=True, blank=True)

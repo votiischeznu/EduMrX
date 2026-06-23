@@ -34,7 +34,7 @@ class Center(TimeStampedModel):
         INACTIVE = "inactive", _("Nofaol")
 
     name = CharField(_("Nomi"), max_length=255)
-    slug = CharField(_("Slug"), max_length=255, unique=True)
+    slug = CharField(_("Slug"), max_length=255, unique=True) # TODO backend ozida name orqali olish
     logo = ImageField(_("Logo"), upload_to="centers/logos/%Y/", blank=True, null=True)
     address = TextField(_("Manzil"), blank=True)
     phone = CharField(_("Telefon"), max_length=50, blank=True)
@@ -99,14 +99,14 @@ class Center(TimeStampedModel):
 class CenterStaff(TimeStampedModel):
     user = OneToOneField("apps.User", CASCADE, related_name="staff_profile", limit_choices_to={"role": User.Role.ADMIN})
     center = ForeignKey("apps.Center", CASCADE, related_name="staff_members")
-    branch = ForeignKey("apps.Branch", null=True, blank=True, on_delete=SET_NULL)
+    branch = ForeignKey("apps.Branch", SET_NULL, null=True, blank=True)
     notes = TextField(_("Izoh"), blank=True)
 
     def __str__(self) -> str:
         return f"{self.user.full_name} — {self.center.name}"
 
     def clean(self):
-        if self.user.role != User.Role.ADMIN:
+        if self.user.role != User.Role.ADMIN: # TODO togrilash kk
             raise ValidationError(_("Faqat ADMIN rolidagi foydalanuvchi xodim bo'la oladi"))
 
 
