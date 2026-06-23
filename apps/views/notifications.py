@@ -42,8 +42,6 @@ class NotificationViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         return Response({"unread": count})
 
 
-
-
 @extend_schema(tags=["Contact"])
 class ContactMessageCreateView(CreateAPIView):
     serializer_class = ContactMessageCreateSerializer
@@ -51,7 +49,13 @@ class ContactMessageCreateView(CreateAPIView):
 
     def perform_create(self, serializer):
         contact_message = serializer.save()
-        send_contact_message_to_telegram(contact_message)
+        try:
+            send_contact_message_to_telegram(contact_message)
+        except Exception as e:
+            import logging
+
+            logger = logging.getLogger(__name__)
+            logger.error(f"Telegram bot notification failed: {str(e)}")
 
 
 @extend_schema(tags=["SuperAdminContact"])
