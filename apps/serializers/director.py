@@ -523,6 +523,15 @@ class DirectorAdminCreateSerializer(Serializer):
             raise ValidationError("Bu telefon raqam allaqachon mavjud.")
         return value
 
+    def validate_branch_is_centers(self, attrs):
+        center_id = attrs.get("center")
+        branch_id = attrs.get("branch")
+
+        if center_id and branch_id:
+            if not Branch.objects.filter(id=branch_id, center_id=center_id).exists():
+                raise ValidationError({"branch": "Tanlangan filial ushbu o'quv markaziga tegishli emas!"})
+        return attrs
+
     @transaction.atomic
     def create(self, validated_data):
         center_id = validated_data.pop("center")
@@ -549,7 +558,11 @@ class DirectorAdminCreateSerializer(Serializer):
     @transaction.atomic
     def update(self, instance, validated_data):
         user = instance.user
-        for field in ["phone", "first_name", "last_name", "email", "avatar"]:
+
+        if "phone" in validated_data:
+            user.phone = normalize_phone(validated_data["phone"])
+
+        for field in ["first_name", "last_name", "email", "avatar"]:
             if field in validated_data:
                 setattr(user, field, validated_data[field])
         user.save()
@@ -560,5 +573,6 @@ class DirectorAdminCreateSerializer(Serializer):
             instance.center_id = validated_data["center"]
         if "branch" in validated_data:
             instance.branch_id = validated_data["branch"]
+
         instance.save()
         return instance
