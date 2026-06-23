@@ -1,6 +1,7 @@
 # apps/urls.py
 from django.urls import include, path
 from rest_framework.routers import SimpleRouter
+
 from apps.views.notifications import (
     ContactMessageCreateView,
     SuperAdminContactMessageListView,
@@ -57,6 +58,7 @@ from apps.views import (
     SuperAdminFinanceSummaryView,
     SuperAdminFinanceTransactionsView,
     SuperAdminStudentDetailView,
+    TelegramOAuthView,
 )
 from apps.views.center import BranchDetailView, BranchListCreateView
 from apps.views.manager import (
@@ -93,6 +95,7 @@ urlpatterns = [
     path("auth/register/", RegisterCreateAPIView.as_view()),
     path("auth/register/verify/", RegisterVerifyAPIView.as_view()),
     path("auth/", include(auth_router.urls)),
+    path("api/v1/auth/telegram/", TelegramOAuthView.as_view()),
     # ── Main Router ───────────────────────────────────────
     path("", include(main_router.urls)),
     # ── Profile ───────────────────────────────────────────
@@ -121,11 +124,7 @@ urlpatterns = [
     path("super-admin/finance/transactions/", SuperAdminFinanceTransactionsView.as_view()),
     path("contact/", ContactMessageCreateView.as_view()),
     path("superadmin/contact/", SuperAdminContactMessageListView.as_view()),
-    path(
-        "superadmin/contact/<int:pk>/mark-read/",
-        SuperAdminContactMessageMarkReadView.as_view(),
-        name="superadmin-contact-mark-read",
-    ),
+    path("superadmin/contact/<int:pk>/mark-read/", SuperAdminContactMessageMarkReadView.as_view()),
     # ── Director ──────────────────────────────────────────
     path("director/dashboard/", DirectorDashboardView.as_view()),
     path("director/admins/", DirectorAdminListCreateView.as_view()),

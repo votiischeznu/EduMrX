@@ -21,6 +21,13 @@ from apps.serializers.auth import RegisterVerifyOTPSerializer
 from apps.serializers.profile import PasswordChangeSerializer
 from apps.service.redis_otp import AccountRecoveryService, OTPService
 
+import hashlib
+import hmac
+import time
+from django.conf import settings
+from rest_framework import status
+from apps.serializers.auth import TelegramOAuthSerializer
+
 
 @extend_schema(tags=["Auth"])
 class PasswordChangeAPIView(GenericAPIView):
@@ -160,3 +167,16 @@ class AccountRecoveryViewSet(GenericViewSet):
         data, user = self._validate_and_get_user(request)
         AccountRecoveryService.complete(user=user, new_password=data["new_password"])
         return Response({"message": "Parol va telefon muvaffaqiyatli yangilandi"})
+
+# apps/views/auth.py (qo'shimcha)
+
+
+
+class TelegramOAuthView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = TelegramOAuthSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        tokens = serializer.save()
+        return Response(tokens, status=status.HTTP_200_OK)

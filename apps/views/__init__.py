@@ -3,6 +3,7 @@ from apps.views.auth import (
     LoginAPIView,
     RegisterCreateAPIView,
     RegisterVerifyAPIView,
+    TelegramOAuthView
 )
 from apps.views.dashboard import (
     AdminDashboardView,

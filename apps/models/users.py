@@ -15,6 +15,7 @@ from django.db.models import (
     URLField,
     UUIDField,
 )
+from django.db.models.fields import BigIntegerField
 from django.utils.translation import gettext_lazy as _
 
 
@@ -36,7 +37,7 @@ class UserManager(BaseUserManager):
     def create_superuser(self, phone: str, password: str | None = None, **extra_fields):
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
-        extra_fields.setdefault("role", User.Role.SUPER_ADMIN) # TODO universal
+        extra_fields.setdefault("role", User.Role.SUPER_ADMIN)  # TODO universal
 
         if extra_fields.get("is_staff") is not True:
             raise ValueError(_("Superuser uchun is_staff=True bo'lishi shart"))
@@ -56,6 +57,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         PARENT = "parent", _("Ota-ona")
 
     id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    telegram_id = BigIntegerField(null=True, blank=True, unique=True, db_index=True, verbose_name="Telegram ID")
     phone = CharField(_("Telefon"), max_length=50, unique=True)
     email = EmailField(_("Email"), blank=True, null=True, unique=True)
     backup_phone = CharField(_("Qo'shimcha telefon"), max_length=30, blank=True, null=True, unique=True)

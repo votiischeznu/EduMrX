@@ -1,6 +1,7 @@
 from apps.serializers.auth import (
     LoginModelSerializer,
     RegisterModelSerializer,
+    TelegramOAuthSerializer
 )
 from apps.serializers.auth import (
     RecoveryStartSerializer,
