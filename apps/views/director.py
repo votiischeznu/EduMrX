@@ -1,45 +1,41 @@
 from datetime import date
 
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import status
-from rest_framework.filters import SearchFilter, OrderingFilter
-from rest_framework.response import Response
-from rest_framework.exceptions import NotFound
-
-
 from drf_spectacular.utils import extend_schema
+from rest_framework import status
+from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.models import Attendance, Branch, Center, CenterStaff, Course, Group, Lesson, Room, Student, Teacher
 from apps.permissions import IsDirector
-
-from apps.models import Center, Student, Teacher, Group, Room, Course, Lesson, Attendance, CenterStaff, Branch
 from apps.serializers import (
-    DirectorTeacherCreateSerializer,
-    DirectorTeacherListSerializer,
-    DirectorRoomSerializer,
+    DirectorAdminCreateSerializer,
+    DirectorAdminDetailSerializer,
+    DirectorAdminListSerializer,
+    DirectorAttendanceBulkSerializer,
+    DirectorAttendanceSerializer,
     DirectorCourseSerializer,
     DirectorGroupCreateSerializer,
     DirectorGroupEnrollSerializer,
     DirectorGroupListSerializer,
     DirectorLessonCreateSerializer,
     DirectorLessonListSerializer,
-    DirectorAttendanceBulkSerializer,
-    DirectorAttendanceSerializer,
+    DirectorRoomSerializer,
     DirectorStudentCreateSerializer,
     DirectorStudentListSerializer,
-    DirectorAdminCreateSerializer,
-    DirectorAdminDetailSerializer,
-    DirectorAdminListSerializer,
+    DirectorTeacherCreateSerializer,
+    DirectorTeacherListSerializer,
 )
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
-
 from apps.service.director_dashboard import get_dashboard_data, get_director_centers, get_single_center_or_404
 from apps.service.director_finance_service import (
-    DirectorFinanceService,
-    DirectorFinanceChartService,
-    DirectorFinanceTransactionsService,
     DirectorFinanceBranchesService,
+    DirectorFinanceChartService,
+    DirectorFinanceService,
+    DirectorFinanceTransactionsService,
 )
 
 
@@ -182,6 +178,11 @@ class DirectorRoomListCreateView(ListCreateAPIView):
 
     def perform_create(self, serializer):
         center = get_single_center_or_404(self.request.user)
+        branch = serializer.validated_data.get("branch")
+
+        if branch and branch.center_id != center.id:
+            raise ValidationError({"branch": "Bu branch ushbu centerga tegishli emas."})
+
         serializer.save(center=center)
 
 
