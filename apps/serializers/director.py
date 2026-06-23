@@ -67,6 +67,7 @@ class DirectorStudentCreateSerializer(Serializer):
     avatar = URLField(required=False, allow_null=True)
     password = CharField(write_only=True, required=True)
     center = UUIDField()
+    branch = UUIDField(required=False, allow_null=True)
     date_of_birth = DateField(required=False, allow_null=True)
     notes = CharField(required=False, allow_blank=True)
     status = ChoiceField(choices=Student.Status.choices, default=Student.Status.ACTIVE)
@@ -78,6 +79,16 @@ class DirectorStudentCreateSerializer(Serializer):
             raise PermissionDenied("Markaz konteksti topilmadi.")
         if not centers.filter(id=value).exists():
             raise PermissionDenied("Bu markaz sizga tegishli emas.")
+        return value
+
+    def validate_branch(self, value):
+        if value is None:
+            return value
+        centers = self.context.get("centers")
+        from apps.models import Branch
+
+        if not Branch.objects.filter(id=value, center__in=centers).exists():
+            raise PermissionDenied("Bu filial sizga tegishli emas.")
         return value
 
     def validate_phone(self, value):
@@ -93,6 +104,7 @@ class DirectorStudentCreateSerializer(Serializer):
     def create(self, validated_data):
         password = validated_data.pop("password")
         center_id = validated_data.pop("center")
+        branch_id = validated_data.pop("branch", None)
         parent_id = validated_data.pop("parent", None)
         date_of_birth = validated_data.pop("date_of_birth", None)
         notes = validated_data.pop("notes", "")
@@ -110,6 +122,7 @@ class DirectorStudentCreateSerializer(Serializer):
         return Student.objects.create(
             user=user,
             center_id=center_id,
+            branch_id=branch_id,
             parent_id=parent_id,
             date_of_birth=date_of_birth,
             notes=notes,
@@ -129,8 +142,8 @@ class DirectorStudentCreateSerializer(Serializer):
                 setattr(instance, field, validated_data[field])
         if "parent" in validated_data:
             instance.parent_id = validated_data["parent"]
-        instance.save()
-        return instance
+        if "branch" in validated_data:
+            instance.branch_id = validated_data["branch"]
 
 
 class DirectorTeacherListSerializer(ModelSerializer):
@@ -163,26 +176,45 @@ class DirectorTeacherCreateSerializer(Serializer):
     email = EmailField(required=False, allow_null=True)
     avatar = URLField(required=False, allow_null=True)
     password = CharField(write_only=True, required=True)
-
+    center = UUIDField()
+    branch = UUIDField(required=False, allow_null=True)
     specialization = CharField(max_length=255, required=False, allow_blank=True)
     experience = IntegerField(min_value=0, required=False, default=0)
     salary = DecimalField(max_digits=12, decimal_places=2, required=False, allow_null=True)
     bio = CharField(required=False, allow_blank=True)
     date_of_birth = DateField(required=False, allow_null=True)
 
+    def validate_center(self, value):
+        centers = self.context.get("centers")
+        if centers is None:
+            raise PermissionDenied("Markaz konteksti topilmadi.")
+        if not centers.filter(id=value).exists():
+            raise PermissionDenied("Bu markaz sizga tegishli emas.")
+        return value
+
+    def validate_branch(self, value):
+        if value is None:
+            return value
+        centers = self.context.get("centers")
+        from apps.models import Branch
+
+        if not Branch.objects.filter(id=value, center__in=centers).exists():
+            raise PermissionDenied("Bu filial sizga tegishli emas.")
+        return value
+
     def validate_phone(self, value):
-        qs = User.objects.filter(phone=value)
+        normalized = normalize_phone(value)
+        qs = User.objects.filter(phone=normalized)
         if self.instance:
             qs = qs.exclude(id=self.instance.user_id)
         if qs.exists():
             raise ValidationError("Bu telefon raqam allaqachon mavjud.")
-        return value
+        return normalized
 
     @transaction.atomic
     def create(self, validated_data):
-        center = self.context.get("center")
-        if not center:
-            raise ValidationError("Faol markaz topilmadi.")
+        center_id = validated_data.pop("center")
+        branch_id = validated_data.pop("branch", None)
         password = validated_data.pop("password")
 
         user = User.objects.create_user(
@@ -196,13 +228,14 @@ class DirectorTeacherCreateSerializer(Serializer):
         )
         teacher = Teacher.objects.create(
             user=user,
+            branch_id=branch_id,
             specialization=validated_data.get("specialization", ""),
             experience=validated_data.get("experience", 0),
             salary=validated_data.get("salary"),
             bio=validated_data.get("bio", ""),
             date_of_birth=validated_data.get("date_of_birth"),
         )
-        teacher.centers.add(center)
+        teacher.centers.set([center_id])
         return teacher
 
     @transaction.atomic
@@ -216,6 +249,10 @@ class DirectorTeacherCreateSerializer(Serializer):
         for field in ["specialization", "experience", "salary", "bio", "date_of_birth"]:
             if field in validated_data:
                 setattr(instance, field, validated_data[field])
+        if "branch" in validated_data:
+            instance.branch_id = validated_data["branch"]
+        if "center" in validated_data:
+            instance.centers.set([validated_data["center"]])
         instance.save()
         return instance
 

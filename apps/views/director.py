@@ -133,7 +133,7 @@ class DirectorTeacherListCreateView(ListCreateAPIView):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context["center"] = get_single_center_or_404(self.request.user)
+        context["centers"] = get_director_centers(self.request.user)
         return context
 
 
@@ -156,7 +156,7 @@ class DirectorTeacherDetailView(RetrieveUpdateDestroyAPIView):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context["center"] = get_single_center_or_404(self.request.user)
+        context["centers"] = get_director_centers(self.request.user)
         return context
 
     def delete(self, request, *args, **kwargs):
@@ -440,7 +440,6 @@ class DirectorAdminDetailView(RetrieveUpdateDestroyAPIView):
         instance.user.is_active = False
         instance.user.save(update_fields=["is_deleted", "is_active"])
         return Response(status=status.HTTP_204_NO_CONTENT)
-
 
 
 class DirectorAnalyticsBaseView(APIView):
