@@ -70,7 +70,7 @@ class NotificationRecipient(BaseModel):
 
 class ContactMessage(TimeStampedModel):
     full_name = CharField(max_length=150)
-    phone = CharField(max_length=12)
+    phone = CharField(max_length=15)
     center_name = CharField(max_length=200, blank=True, null=True)
     message = TextField()
     is_read = BooleanField(default=False)
