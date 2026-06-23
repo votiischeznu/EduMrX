@@ -1,17 +1,26 @@
 from datetime import date
+
 from dateutil.relativedelta import relativedelta
 from django.contrib.auth import get_user_model
-from django.db.models import Sum, Count, Q
+from django.db.models import Count, Q, Sum
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.models import Lesson, GroupStudent
-from apps.models import Student, Teacher, Attendance, Center, Group, Payment
+from apps.models import (
+    Attendance,
+    Center,
+    Group,
+    GroupStudent,
+    Lesson,
+    Payment,
+    Student,
+    Teacher,
+)
 
-a: int = 2
+User = get_user_model()
 
 
 @extend_schema(tags=["AdminDashboard"])
@@ -38,7 +47,7 @@ class AdminDashboardView(APIView):
             return Response({"detail": "Markaz topilmadi."}, status=404)
 
         students_qs = Student.objects.filter(center=center)
-        total_students = students_qs.filter(status="active").count()
+        total_students = students_qs.filter(status=Student.Status.ACTIVE).count()
 
         new_this_month = students_qs.filter(
             enrolled_at__month=current_month,
@@ -52,20 +61,20 @@ class AdminDashboardView(APIView):
 
         students_by_status = students_qs.values("status").annotate(count=Count("id"))
 
-        # ── TEACHERS ─────────────────────────────────────────
+        # ===================== TEACHERS =====================
         total_teachers = Teacher.objects.filter(centers=center).count()
 
-        # ── GROUPS ───────────────────────────────────────────
+        # ===================== GROUPS ========================
         groups_qs = Group.objects.filter(center=center)
-        active_groups = groups_qs.filter(status="active").count()
-        completed_groups = groups_qs.filter(status="completed").count()
+        active_groups = groups_qs.filter(status=Group.Status.ACTIVE).count()
+        completed_groups = groups_qs.filter(status=Group.Status.COMPLETED).count()
 
-        # ── FINANCE ──────────────────────────────────────────
+        # ===================== FINANCE =======================
         payments_qs = Payment.objects.filter(group__center=center)
 
         monthly_income = (
             payments_qs.filter(
-                status="paid",
+                status=Payment.Status.PAID,
                 period_month=current_month,
                 period_year=current_year,
             ).aggregate(total=Sum("final_amount"))["total"]
@@ -74,7 +83,7 @@ class AdminDashboardView(APIView):
 
         last_month_income = (
             payments_qs.filter(
-                status="paid",
+                status=Payment.Status.PAID,
                 period_month=last_month.month,
                 period_year=last_month.year,
             ).aggregate(total=Sum("final_amount"))["total"]
@@ -88,40 +97,40 @@ class AdminDashboardView(APIView):
             )
 
         # Qarzdor studentlar
-        overdue_payments = payments_qs.filter(status="overdue")
+        overdue_payments = payments_qs.filter(status=Payment.Status.OVERDUE)
         total_debt = overdue_payments.aggregate(total=Sum("final_amount"))["total"] or 0
         debtors_count = overdue_payments.values("student").distinct().count()
 
         # Kutilayotgan to'lovlar
         pending_income = (
             payments_qs.filter(
-                status="pending",
+                status=Payment.Status.PENDING,
                 period_month=current_month,
                 period_year=current_year,
             ).aggregate(total=Sum("final_amount"))["total"]
             or 0
         )
 
-        # ── ATTENDANCE ───────────────────────────────────────
+        # ===================== ATTENDANCE ====================
         attendance_qs = Attendance.objects.filter(
             lesson__group__center=center,
             lesson__date__month=current_month,
             lesson__date__year=current_year,
         )
         total_att = attendance_qs.count()
-        present_att = attendance_qs.filter(status="present").count()
+        present_att = attendance_qs.filter(status=Attendance.Status.PRESENT).count()
         attendance_rate = (
             round((present_att / total_att) * 100, 1) if total_att > 0 else 0
         )
 
-        # ── TOP GROUPS (davomat bo'yicha) ─────────────────────
+        # ===================== TOP GROUPS (davomat bo'yicha) =
         top_groups = (
-            Group.objects.filter(center=center, status="active")
+            Group.objects.filter(center=center, status=Group.Status.ACTIVE)
             .annotate(
                 present_count=Count(
                     "lessons__attendances",
                     filter=Q(
-                        lessons__attendances__status="present",
+                        lessons__attendances__status=Attendance.Status.PRESENT,
                         lessons__date__month=current_month,
                         lessons__date__year=current_year,
                     ),
@@ -178,9 +187,6 @@ class AdminDashboardView(APIView):
         )
 
 
-User = get_user_model()
-
-
 @extend_schema(tags=["StudentDashboard"])
 class StudentDashboardView(APIView):
     permission_classes = [IsAuthenticated]
@@ -220,12 +226,12 @@ class StudentDashboardView(APIView):
                 }
             )
 
-        # ── ATTENDANCE ───────────────────────────────────────
+        # ===================== ATTENDANCE ====================
         attendance_qs = Attendance.objects.filter(student=student)
 
         total_att = attendance_qs.count()
-        present_att = attendance_qs.filter(status="present").count()
-        absent_att = attendance_qs.filter(status="absent").count()
+        present_att = attendance_qs.filter(status=Attendance.Status.PRESENT).count()
+        absent_att = attendance_qs.filter(status=Attendance.Status.ABSENT).count()
         attendance_rate = (
             round((present_att / total_att) * 100, 1) if total_att > 0 else 0
         )
@@ -235,7 +241,7 @@ class StudentDashboardView(APIView):
             lesson__date__month=current_month,
             lesson__date__year=current_year,
         )
-        monthly_present = monthly_att.filter(status="present").count()
+        monthly_present = monthly_att.filter(status=Attendance.Status.PRESENT).count()
         monthly_total = monthly_att.count()
         monthly_rate = (
             round((monthly_present / monthly_total) * 100, 1)
@@ -243,12 +249,12 @@ class StudentDashboardView(APIView):
             else 0
         )
 
-        # ── PAYMENTS ─────────────────────────────────────────
+        # ===================== PAYMENTS ======================
         payments_qs = Payment.objects.filter(student=student)
 
         monthly_payment = (
             payments_qs.filter(
-                status="paid",
+                status=Payment.Status.PAID,
                 period_month=current_month,
                 period_year=current_year,
             ).aggregate(total=Sum("final_amount"))["total"]
@@ -256,15 +262,15 @@ class StudentDashboardView(APIView):
         )
 
         total_debt = (
-            payments_qs.filter(status="overdue").aggregate(total=Sum("final_amount"))[
-                "total"
-            ]
+            payments_qs.filter(status=Payment.Status.OVERDUE).aggregate(
+                total=Sum("final_amount")
+            )["total"]
             or 0
         )
 
         pending_payment = (
             payments_qs.filter(
-                status="pending",
+                status=Payment.Status.PENDING,
                 period_month=current_month,
                 period_year=current_year,
             ).aggregate(total=Sum("final_amount"))["total"]
@@ -282,7 +288,7 @@ class StudentDashboardView(APIView):
             "paid_at",
         )[:5]
 
-        # ── UPCOMING LESSONS ─────────────────────────────────
+        # ===================== UPCOMING LESSONS ===============
         upcoming_lessons = (
             Lesson.objects.filter(
                 group__enrollments__student=student,
