@@ -17,7 +17,7 @@ from rest_framework.serializers import (
 )
 
 from apps.models import User, Teacher, Student, Group, Room, Course, Payment
-from apps.serializers.utils import normalize_phone
+from apps.utils.phone import normalize_phone
 
 
 class UserSummarySerializer(ModelSerializer):

@@ -8,7 +8,7 @@ from rest_framework.fields import CharField, ChoiceField, EmailField
 from rest_framework.serializers import ModelSerializer, Serializer
 from django.core.exceptions import ValidationError as DjangoValidationError
 from apps.models import User
-from apps.serializers.utils import normalize_phone
+from apps.utils.phone import normalize_phone
 
 PHONE_REGEX = r"^\998\d{9}$"
 

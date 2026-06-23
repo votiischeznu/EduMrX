@@ -6,7 +6,7 @@ from rest_framework.serializers import ModelSerializer, Serializer
 
 from apps.models import Attendance, Parent, GroupStudent
 from apps.models import Student, Teacher
-from apps.serializers.utils import normalize_phone
+from apps.utils.phone import normalize_phone
 
 User = get_user_model()
 

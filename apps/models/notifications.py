@@ -11,7 +11,7 @@ from django.db.models import (
     SET_NULL,
 )
 
-from apps.models import BaseModel
+from apps.models import BaseModel, TimeStampedModel
 
 
 class Notification(BaseModel):
@@ -64,3 +64,19 @@ class NotificationRecipient(BaseModel):
     def __str__(self):
         status = "Read" if self.is_read else "Unread"
         return f"{self.recipient} | {self.notification.title} | {status}"
+
+
+
+
+class ContactMessage(TimeStampedModel):
+    full_name = CharField(max_length=150)
+    phone = CharField(max_length=12)
+    center_name = CharField(max_length=200, blank=True, null=True)
+    message = TextField()
+    is_read = BooleanField(default=False)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.full_name} — {self.phone}"

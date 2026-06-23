@@ -62,7 +62,7 @@ from apps.serializers.director import (
     DirectorAdminCreateSerializer,
     DirectorAdminDetailSerializer,
     DirectorAdminListSerializer,
-DirectorGroupCreateSerializer
+    DirectorGroupCreateSerializer
 )
 
 from apps.serializers.manager import (
@@ -75,3 +75,5 @@ from apps.serializers.manager import (
     ManagerGroupCreateSerializer,
     ManagerPaymentSerializer,
 )
+from apps.serializers.notifications import ContactMessageCreateSerializer, ContactMessageListSerializer, \
+    ContactMessageMarkReadSerializer

@@ -4,6 +4,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from celery.schedules import crontab
 
 load_dotenv(".env")
 
@@ -134,9 +135,7 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ),
+    "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
     "DEFAULT_PAGINATION_CLASS": "apps.pagination.CustomPagination",
     "PAGE_SIZE": 20,
 }
@@ -166,6 +165,13 @@ SPECTACULAR_SETTINGS = {
         {"name": "Super Admin", "description": "Super admin panel"},
         {"name": "Users", "description": "Foydalanuvchilar"},
     ],
+}
+
+CELERY_BEAT_SCHEDULE = {
+    "delete-old-contact-messages": {
+        "task": "apps.tasks.contact.delete_old_contact_messages",
+        "schedule": crontab(hour=3, minute=0, day_of_month=1),  # Har oyning 1-sanasi, soat 03:00 da
+    },
 }
 
 SIMPLE_JWT = {

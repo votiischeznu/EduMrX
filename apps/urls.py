@@ -1,6 +1,11 @@
 # apps/urls.py
 from django.urls import include, path
 from rest_framework.routers import SimpleRouter
+from apps.views.notifications import (
+    ContactMessageCreateView,
+    SuperAdminContactMessageListView,
+    SuperAdminContactMessageMarkReadView,
+)
 
 from apps.views import (
     AccountRecoveryViewSet,
@@ -114,6 +119,13 @@ urlpatterns = [
     path("super-admin/finance/chart/", SuperAdminFinanceChartView.as_view()),
     path("super-admin/finance/centers/", SuperAdminFinanceCentersView.as_view()),
     path("super-admin/finance/transactions/", SuperAdminFinanceTransactionsView.as_view()),
+    path("contact/", ContactMessageCreateView.as_view()),
+    path("superadmin/contact/", SuperAdminContactMessageListView.as_view()),
+    path(
+        "superadmin/contact/<int:pk>/mark-read/",
+        SuperAdminContactMessageMarkReadView.as_view(),
+        name="superadmin-contact-mark-read",
+    ),
     # ── Director ──────────────────────────────────────────
     path("director/dashboard/", DirectorDashboardView.as_view()),
     path("director/admins/", DirectorAdminListCreateView.as_view()),

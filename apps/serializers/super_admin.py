@@ -6,7 +6,7 @@ from rest_framework.fields import JSONField, CharField, IntegerField, BooleanFie
 from rest_framework.serializers import Serializer, ModelSerializer
 
 from apps.models import Center
-from apps.serializers.utils import normalize_phone
+from apps.utils.phone import normalize_phone
 
 User = get_user_model()
 

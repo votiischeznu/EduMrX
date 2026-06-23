@@ -6,14 +6,14 @@ from django.contrib.auth.models import (
     PermissionsMixin,
 )
 from django.db.models import (
-    EmailField,
-    CharField,
     BooleanField,
-    TextChoices,
+    CharField,
+    DateTimeField,
+    EmailField,
     Index,
+    TextChoices,
     URLField,
     UUIDField,
-    DateTimeField,
 )
 from django.utils.translation import gettext_lazy as _
 
@@ -58,23 +58,19 @@ class User(AbstractBaseUser, PermissionsMixin):
     id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     phone = CharField(_("Telefon"), max_length=50, unique=True)
     email = EmailField(_("Email"), blank=True, null=True, unique=True)
-    backup_phone = CharField(
-        _("Qo'shimcha telefon"), max_length=30, blank=True, null=True, unique=True
-    )
+    backup_phone = CharField(_("Qo'shimcha telefon"), max_length=30, blank=True, null=True, unique=True)
     first_name = CharField(_("Ism"), max_length=100)
     last_name = CharField(_("Familiya"), max_length=100)
-    role = CharField(
-        _("Rol"), max_length=20, choices=Role.choices, default=Role.STUDENT
-    )
+    role = CharField(_("Rol"), max_length=20, choices=Role.choices, default=Role.STUDENT)
     avatar = URLField(_("Rasm"), blank=True, null=True)
     is_deleted = BooleanField(default=False)
+    telegram_chat_id = CharField(max_length=50, blank=True, null=True)
 
     is_active = BooleanField(_("Faol"), default=True)
     is_staff = BooleanField(_("Xodim"), default=False)
     must_change_password = BooleanField(default=False)
     created_at = DateTimeField(auto_now_add=True)
     updated_at = DateTimeField(auto_now=True)
-
 
     objects = UserManager()
 

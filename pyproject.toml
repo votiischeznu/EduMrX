@@ -24,6 +24,9 @@ dependencies = [
     "fakeredis>=2.36.0",
     "tzdata>=2026.2",
     "model-bakery>=1.23.5",
+    "requests>=2.34.2",
+    "celery>=5.6.3",
+    "celery-types>=0.26.0",
 ]
 
 

@@ -16,7 +16,7 @@ from rest_framework.serializers import (
 )
 from apps.service import get_director_centers
 from apps.models import Attendance, CenterStaff, Course, Group, GroupStudent, Lesson, Room, Student, Teacher, User, Branch
-from apps.serializers.utils import normalize_phone
+from apps.utils.phone import normalize_phone
 
 
 class UserSummarySerializer(ModelSerializer):

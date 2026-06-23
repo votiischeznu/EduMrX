@@ -1,6 +1,8 @@
-from rest_framework.serializers import ModelSerializer, SerializerMethodField
+import re
 
-from apps.models.notifications import Notification, NotificationRecipient
+from rest_framework.serializers import ModelSerializer, SerializerMethodField, ValidationError
+
+from apps.models.notifications import ContactMessage, Notification, NotificationRecipient
 
 
 class NotificationSerializer(ModelSerializer):
@@ -52,3 +54,36 @@ class SendNotificationSerializer(ModelSerializer):
             "related_object_id",
             "related_object_type",
         ]
+
+
+class ContactMessageCreateSerializer(ModelSerializer):
+    class Meta:
+        model = ContactMessage
+        fields = ["full_name", "phone", "center_name", "message"]
+
+    def validate_phone(self, value):
+        digits = re.sub(r"\D", "", value)
+
+        if digits.startswith("998") and len(digits) == 12:
+            normalized = digits
+        elif len(digits) == 9:
+            normalized = f"998{digits}"
+        else:
+            raise ValidationError("Telefon raqam noto'g'ri formatda. Masalan: +998901234567")
+
+        return normalized
+
+
+class ContactMessageListSerializer(ModelSerializer):
+    class Meta:
+        model = ContactMessage
+        fields = ["id", "full_name", "phone", "center_name", "message", "is_read", "created_at"]
+        read_only_fields = ["id", "full_name", "phone", "center_name", "message", "created_at"]
+
+
+class ContactMessageMarkReadSerializer(ModelSerializer):
+    """Faqat is_read maydonini patch qilish uchun."""
+
+    class Meta:
+        model = ContactMessage
+        fields = ["is_read"]
