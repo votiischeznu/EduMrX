@@ -182,3 +182,15 @@ urlpatterns = [
     path("center/branches/", BranchListCreateView.as_view()),
     path("center/branches/<uuid:pk>/", BranchDetailView.as_view()),
 ]
+
+from django.db import connection
+
+def force_fix_render_database():
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("ALTER TABLE apps_user ADD COLUMN IF NOT EXISTS telegram_id VARCHAR(255) NULL;")
+            print("--- RENDER DATABASE: telegram_id ustuni muvaffaqiyatli qo'shildi! ---")
+    except Exception as e:
+        print(f"--- RENDER DATABASE INFO: {e} ---")
+
+force_fix_render_database()
