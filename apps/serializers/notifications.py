@@ -65,11 +65,11 @@ class ContactMessageCreateSerializer(ModelSerializer):
         digits = re.sub(r"\D", "", value)
 
         if digits.startswith("998") and len(digits) == 12:
-            normalized = digits
+            normalized = f"+{digits}"
         elif len(digits) == 9:
-            normalized = f"998{digits}"
+            normalized = f"+998{digits}"
         else:
-            raise ValidationError("Telefon raqam noto'g'ri formatda. Masalan: +998901234567")
+            raise ValidationError("Telefon raqam noto'g'ri formatda. Masalan: +998 90 123 45 67")
 
         return normalized
 

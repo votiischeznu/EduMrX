@@ -1,9 +1,8 @@
 from django.contrib.auth.password_validation import validate_password
 from rest_framework.exceptions import ValidationError
-from rest_framework.fields import CharField
+from rest_framework.fields import CharField, SerializerMethodField
 from rest_framework.serializers import Serializer, ModelSerializer
 from apps.models import User, Student, Teacher, Parent
-
 
 
 class UserUpdateMixin:
@@ -83,19 +82,21 @@ class TeacherProfileSerializer(UserUpdateMixin, ModelSerializer):
 
 
 class AdminProfileSerializer(ModelSerializer):
+    center_ids = SerializerMethodField()
+
     class Meta:
         model = User
-        fields = [
-            "id",
-            "phone",
-            "email",
-            "first_name",
-            "last_name",
-            "full_name",
-            "role",
-            "avatar",
-        ]
-        read_only_fields = ["id", "phone", "role"]
+        fields = ["id", "phone", "email", "first_name", "last_name", "full_name", "role", "avatar", "center_ids"]
+        read_only_fields = ["id", "phone", "role", "center_ids"]
+
+    def get_center_ids(self, obj):
+        if hasattr(obj, "centers"):
+            return list(obj.centers.values_list("id", flat=True))
+
+        if hasattr(obj, "center_set"):
+            return list(obj.center_set.values_list("id", flat=True))
+
+        return []
 
 
 class PasswordChangeSerializer(Serializer):
