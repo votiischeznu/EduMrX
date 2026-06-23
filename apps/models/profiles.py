@@ -41,7 +41,7 @@ class Teacher(TimeStampedModel):
         return self.full_name
 
     def clean(self):
-        if self.user.role != User.Role.TEACHER:
+        if self.user.role != User.Role.TEACHER: # TODO is bilan property
             raise ValidationError(_("Faqat TEACHER rolidagi foydalanuvchi o'qituvchi bo'la oladi"))
 
     def delete(self, *args, **kwargs):
@@ -64,7 +64,7 @@ class Teacher(TimeStampedModel):
 
 
 class Parent(TimeStampedModel):
-    user = OneToOneField(User, CASCADE, related_name="parent_profile", limit_choices_to={"role": User.Role.PARENT})
+    user = OneToOneField(User, CASCADE, related_name="parent_profile", limit_choices_to={"role": User.Role.PARENT}) # TODO apps. deb yozish
     address = TextField(_("Manzil"), blank=True)
     notes = TextField(_("Izoh"), blank=True)
     occupation = CharField(_("Kasbi"), max_length=255, blank=True)
