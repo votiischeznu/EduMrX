@@ -170,7 +170,7 @@ SPECTACULAR_SETTINGS = {
 CELERY_BEAT_SCHEDULE = {
     "delete-old-contact-messages": {
         "task": "apps.tasks.contact.delete_old_contact_messages",
-        "schedule": crontab(hour=3, minute=0, day_of_month=1),  # Har oyning 1-sanasi, soat 03:00 da
+        "schedule": crontab(hour=3, minute=0, day_of_month=1),
     },
 }
 
@@ -184,10 +184,12 @@ APPEND_SLASH = False
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://([a-z0-9-]+\.)?edumrx\.uz$",
     r"^http://([a-z0-9-]+\.)?localhost:3000$",
+    r"^http://([a-z0-9-]+\.)?localhost:3001$",
 ]
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "http://localhost:3001",
     "http://127.0.0.1:3000",
     "https://edu-x-henna.vercel.app",
 ]
@@ -198,7 +200,9 @@ CSRF_TRUSTED_ORIGINS = [
     "https://edumrx.uz",
     "https://*.edumrx.uz",
     "http://localhost:3000",
+    "http://localhost:3001",
     "http://*.localhost:3000",
+    "http://*.localhost:3001",
 ]
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
