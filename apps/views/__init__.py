@@ -29,9 +29,7 @@ from apps.views.super_admin import (
     SuperAdminDashboardView,
     SuperAdminDirectorDetailView,
     SuperAdminDirectorListCreateView,
-    SuperAdminStudentDetailView,
-    SuperAdminStudentListCreateView,
-)
+    SuperAdminStudentDetailView)
 from apps.views.profile import (
     GroupModelViewSet,
     GroupStudentModelViewSet,

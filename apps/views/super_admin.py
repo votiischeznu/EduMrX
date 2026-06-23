@@ -1,31 +1,31 @@
 from datetime import date
 
-from django.db.models import Count, Sum, Q
+from django.db.models import Count, Q, Sum
+from django.db.models.functions import TruncMonth
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
-from rest_framework.filters import SearchFilter, OrderingFilter
+from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView
-from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.models import Student, Center, User, Payment
+from apps.models import Center, Payment, Student, User
 from apps.pagination import CustomPagination
 from apps.permissions import IsSuperAdmin
 from apps.serializers import (
-    DirectorCreateUpdateSerializer,
-    DirectorListSerializer,
+    CenterDetailSerializer,
     CenterListSerializer,
     CenterStudentCountSerializer,
-    CenterDetailSerializer,
+    DirectorCreateUpdateSerializer,
+    DirectorListSerializer,
     StudentCreateUpdateSerializer,
     StudentDetailSerializer,
     StudentListSerializer,
 )
-from django.db.models.functions import TruncMonth
 from apps.serializers.stats import SuperAdminDashboardSerializer
 
 UZ_MONTHS = {
@@ -322,34 +322,6 @@ class SuperAdminCenterDetailView(RetrieveUpdateDestroyAPIView):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
     serializer_class = CenterDetailSerializer
 
-
-@extend_schema(tags=["SuperAdminStudent"])
-class SuperAdminStudentListCreateView(ListCreateAPIView):
-    queryset = Student.objects.select_related("user", "center", "parent__user").filter(user__is_deleted=False)
-
-    permission_classes = [IsSuperAdmin]
-    pagination_class = CustomPagination
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ["status", "center"]
-    search_fields = [
-        "user__first_name",
-        "user__last_name",
-        "user__phone",
-        "user__email",
-    ]
-    ordering_fields = ["enrolled_at", "status", "user__first_name"]
-    ordering = ["-enrolled_at"]
-
-    def get_serializer_class(self):
-        if self.request.method == "POST":
-            return StudentCreateUpdateSerializer
-        return StudentListSerializer
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        student = serializer.save()
-        return Response(StudentDetailSerializer(student).data, status=status.HTTP_201_CREATED)
 
 
 @extend_schema(tags=["SuperAdminStudent"])
