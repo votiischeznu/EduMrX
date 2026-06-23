@@ -1,5 +1,4 @@
 from django.db import transaction
-from models import Branch
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.serializers import (
     CharField,
@@ -15,9 +14,8 @@ from rest_framework.serializers import (
     URLField,
     UUIDField,
 )
-from service import get_director_centers
-
-from apps.models import Attendance, CenterStaff, Course, Group, GroupStudent, Lesson, Room, Student, Teacher, User
+from apps.service import get_director_centers
+from apps.models import Attendance, CenterStaff, Course, Group, GroupStudent, Lesson, Room, Student, Teacher, User, Branch
 from apps.serializers.utils import normalize_phone
 
 
