@@ -25,11 +25,9 @@ class MyProfileRetrieveUpdateAPIView(RetrieveUpdateAPIView):
 
     @cached_property
     def _user_with_profiles(self):
-        return User.objects.select_related(
-            "student_profile",
-            "teacher_profile",
-            "parent_profile",
-        ).get(pk=self.request.user.pk)
+        return User.objects.select_related("student_profile", "teacher_profile", "parent_profile").get(
+            pk=self.request.user.pk
+        )
 
     def get_serializer_class(self):
         role = self.request.user.role
@@ -44,15 +42,17 @@ class MyProfileRetrieveUpdateAPIView(RetrieveUpdateAPIView):
     def get_object(self):
         user = self._user_with_profiles
 
-        if user.is_staff or user.role == User.Role.ADMIN:
+        if user.is_staff:
             return user
 
         role_profile_map = {
             User.Role.STUDENT: ("student_profile", "Talaba profili topilmadi."),
             User.Role.TEACHER: ("teacher_profile", "O'qituvchi profili topilmadi."),
             User.Role.PARENT: ("parent_profile", "Ota-ona profili topilmadi."),
-            User.Role.DIRECTOR: ("director_profile", "Director profili topilmadi."),
         }
+
+        if user.is_director:
+            return user
 
         attr, msg = role_profile_map.get(user.role, (None, None))
 
