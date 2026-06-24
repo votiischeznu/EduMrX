@@ -4,7 +4,7 @@ from drf_spectacular.utils import extend_schema
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
-from serializers.profile import DirectorProfileSerializer
+from apps.serializers.profile import DirectorProfileSerializer
 
 from apps.models import Group, GroupStudent, Room, User
 from apps.serializers import (
