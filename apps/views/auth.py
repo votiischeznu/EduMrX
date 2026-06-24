@@ -1,8 +1,9 @@
 from django.contrib.auth import update_session_auth_hash
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
+from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.generics import GenericAPIView, CreateAPIView
+from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -17,16 +18,9 @@ from apps.serializers import (
     RecoveryVerifySerializer,
     RegisterModelSerializer,
 )
-from apps.serializers.auth import RegisterVerifyOTPSerializer
+from apps.serializers.auth import RegisterVerifyOTPSerializer, TelegramOAuthSerializer
 from apps.serializers.profile import PasswordChangeSerializer
 from apps.service.redis_otp import AccountRecoveryService, OTPService
-
-import hashlib
-import hmac
-import time
-from django.conf import settings
-from rest_framework import status
-from apps.serializers.auth import TelegramOAuthSerializer
 
 
 @extend_schema(tags=["Auth"])
@@ -35,9 +29,7 @@ class PasswordChangeAPIView(GenericAPIView):
     serializer_class = PasswordChangeSerializer
 
     def post(self, request):
-        serializer = self.serializer_class(
-            data=request.data, context={"request": request}
-        )
+        serializer = self.serializer_class(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         if user.must_change_password:
@@ -63,9 +55,7 @@ class RegisterCreateAPIView(CreateAPIView):
         email = data.get("email", "")
         method = data.get("method", "telegram_bot")
 
-        result = OTPService.start_registration(
-            phone=phone, email=email, method=method, registration_data=data
-        )
+        result = OTPService.start_registration(phone=phone, email=email, method=method, registration_data=data)
         return Response(result)
 
 
@@ -98,9 +88,7 @@ class LoginAPIView(GenericAPIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        serializer = self.get_serializer(
-            data=request.data, context={"request": request}
-        )
+        serializer = self.get_serializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
 
         user = serializer.validated_data["user"]
@@ -141,9 +129,7 @@ class AccountRecoveryViewSet(GenericViewSet):
     )
     def start_recovery(self, request):
         data, user = self._validate_and_get_user(request)
-        result = AccountRecoveryService.start(
-            user=user, new_phone=data["new_phone"], method=data["method"]
-        )
+        result = AccountRecoveryService.start(user=user, new_phone=data["new_phone"], method=data["method"])
         return Response(result)
 
     @action(
@@ -168,8 +154,8 @@ class AccountRecoveryViewSet(GenericViewSet):
         AccountRecoveryService.complete(user=user, new_password=data["new_password"])
         return Response({"message": "Parol va telefon muvaffaqiyatli yangilandi"})
 
-# apps/views/auth.py (qo'shimcha)
 
+# apps/views/auth.py (qo'shimcha)
 
 
 class TelegramOAuthView(APIView):

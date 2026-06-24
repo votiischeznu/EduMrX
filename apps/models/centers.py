@@ -1,24 +1,30 @@
+import uuid
+
 from django.core.exceptions import ValidationError
 from django.db.models import (
-    ImageField,
-    EmailField,
-    CharField,
-    TextChoices,
-    OneToOneField,
     CASCADE,
-    ForeignKey,
     SET_NULL,
+    CharField,
     DateField,
-    TextField,
-    Index,
     DecimalField,
+    EmailField,
+    ForeignKey,
+    ImageField,
+    Index,
+    OneToOneField,
     PositiveIntegerField,
+    SlugField,
+    TextChoices,
+    TextField,
 )
 from django.utils import timezone
+from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 from apps.models import TimeStampedModel
 from apps.models.users import User
+
+
 
 
 class Center(TimeStampedModel):
@@ -34,7 +40,7 @@ class Center(TimeStampedModel):
         INACTIVE = "inactive", _("Nofaol")
 
     name = CharField(_("Nomi"), max_length=255)
-    slug = CharField(_("Slug"), max_length=255, unique=True) # TODO backend ozida name orqali olish
+    slug = SlugField(_("Slug"), max_length=255, unique=True)  # TODO backend ozida name orqali olish ✅
     logo = ImageField(_("Logo"), upload_to="centers/logos/%Y/", blank=True, null=True)
     address = TextField(_("Manzil"), blank=True)
     phone = CharField(_("Telefon"), max_length=50, blank=True)
@@ -76,6 +82,15 @@ class Center(TimeStampedModel):
     def __str__(self) -> str:
         return self.name
 
+    def save(self, *args, **kwargs):
+        if not self.slug or self.name != Center.objects.get(pk=self.pk).name:
+            new_slug = slugify(self.name)
+            if self.slug != new_slug:
+                self.slug = new_slug
+                if Center.objects.exclude(pk=self.pk).filter(slug=self.slug).exists():
+                    self.slug = f"{self.slug}-{uuid.uuid4().hex[:6]}"
+        super().save(*args, **kwargs)
+
     @property
     def effective_branch_limit(self):
         if self.branch_limit is not None:
@@ -106,7 +121,7 @@ class CenterStaff(TimeStampedModel):
         return f"{self.user.full_name} — {self.center.name}"
 
     def clean(self):
-        if self.user.role != User.Role.ADMIN: # TODO togrilash kk
+        if self.user and not self.user.is_admin:  # TODO togrilash kk ✅
             raise ValidationError(_("Faqat ADMIN rolidagi foydalanuvchi xodim bo'la oladi"))
 
 

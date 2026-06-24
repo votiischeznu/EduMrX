@@ -7,3 +7,6 @@ class AppsConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
 
     verbose_name = _("O'quv Markazi Boshqaruvi")
+
+def ready(self):
+    import apps.signals.contact  # noqa

@@ -3,7 +3,6 @@ from datetime import date
 from django.db.models import Count, Q, Sum
 from django.db.models.functions import TruncMonth
 from django.utils import timezone
-from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.filters import OrderingFilter, SearchFilter
@@ -24,7 +23,6 @@ from apps.serializers import (
     DirectorListSerializer,
     StudentCreateUpdateSerializer,
     StudentDetailSerializer,
-    StudentListSerializer,
 )
 from apps.serializers.stats import SuperAdminDashboardSerializer
 
@@ -321,7 +319,6 @@ class SuperAdminCenterDetailView(RetrieveUpdateDestroyAPIView):
     permission_classes = [IsSuperAdmin]
     parser_classes = [MultiPartParser, FormParser, JSONParser]
     serializer_class = CenterDetailSerializer
-
 
 
 @extend_schema(tags=["SuperAdminStudent"])

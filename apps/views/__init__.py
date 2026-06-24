@@ -62,3 +62,35 @@ from apps.views.director import (
     DirectorAnalyticsBranchesView,
     DirectorAnalyticsBranchTabsView
 )
+from apps.views.center import BranchDetailView, BranchListCreateView
+
+
+from apps.views.manager import (
+    ManagerAttendanceView,
+    ManagerCourseDetailView,
+    ManagerCourseListCreateView,
+    ManagerDashboardView,
+    ManagerGroupDetailView,
+    ManagerGroupEnrollView,
+    ManagerGroupListCreateView,
+    ManagerLessonDetailView,
+    ManagerLessonListCreateView,
+    ManagerPaymentListView,
+    ManagerRoomDetailView,
+    ManagerRoomListCreateView,
+    ManagerStudentDetailView,
+    ManagerStudentListCreateView,
+    ManagerTeacherDetailView,
+    ManagerTeacherListCreateView,
+)
+
+from apps.views.notifications import (
+    ContactMessageCreateView,
+    SuperAdminContactMessageListView,
+    SuperAdminContactMessageMarkReadView,
+    DirectorSendNotificationView,
+    ManagerSendNotificationView
+)
+
+from views.telegram_link import TelegramLinkStartView, TelegramLinkStatusView
+

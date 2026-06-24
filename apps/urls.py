@@ -2,15 +2,12 @@
 from django.urls import include, path
 from rest_framework.routers import SimpleRouter
 
-from apps.views.notifications import (
-    ContactMessageCreateView,
-    SuperAdminContactMessageListView,
-    SuperAdminContactMessageMarkReadView,
-)
-
 from apps.views import (
     AccountRecoveryViewSet,
     AdminDashboardView,
+    BranchDetailView,
+    BranchListCreateView,
+    ContactMessageCreateView,
     DirectorAdminDetailView,
     DirectorAdminListCreateView,
     DirectorAnalyticsBranchesView,
@@ -29,6 +26,7 @@ from apps.views import (
     DirectorLessonListCreateView,
     DirectorRoomDetailView,
     DirectorRoomListCreateView,
+    DirectorSendNotificationView,
     DirectorStudentDetailView,
     DirectorStudentListCreateView,
     DirectorTeacherDetailView,
@@ -41,27 +39,6 @@ from apps.views import (
     ManagementStudentListCreateView,
     ManagementTeacherDetailView,
     ManagementTeacherListCreateView,
-    MyProfileRetrieveUpdateAPIView,
-    RegisterCreateAPIView,
-    RegisterVerifyAPIView,
-    RoomModelViewSet,
-    StudentDashboardView,
-    StudentStatsView,
-    SuperAdminCenterDetailView,
-    SuperAdminCenterListCreateView,
-    SuperAdminCenterStudentListView,
-    SuperAdminDashboardView,
-    SuperAdminDirectorDetailView,
-    SuperAdminDirectorListCreateView,
-    SuperAdminFinanceCentersView,
-    SuperAdminFinanceChartView,
-    SuperAdminFinanceSummaryView,
-    SuperAdminFinanceTransactionsView,
-    SuperAdminStudentDetailView,
-    TelegramOAuthView,
-)
-from apps.views.center import BranchDetailView, BranchListCreateView
-from apps.views.manager import (
     ManagerAttendanceView,
     ManagerCourseDetailView,
     ManagerCourseListCreateView,
@@ -74,10 +51,33 @@ from apps.views.manager import (
     ManagerPaymentListView,
     ManagerRoomDetailView,
     ManagerRoomListCreateView,
+    ManagerSendNotificationView,
     ManagerStudentDetailView,
     ManagerStudentListCreateView,
     ManagerTeacherDetailView,
     ManagerTeacherListCreateView,
+    MyProfileRetrieveUpdateAPIView,
+    RegisterCreateAPIView,
+    RegisterVerifyAPIView,
+    RoomModelViewSet,
+    StudentDashboardView,
+    StudentStatsView,
+    SuperAdminCenterDetailView,
+    SuperAdminCenterListCreateView,
+    SuperAdminCenterStudentListView,
+    SuperAdminContactMessageListView,
+    SuperAdminContactMessageMarkReadView,
+    SuperAdminDashboardView,
+    SuperAdminDirectorDetailView,
+    SuperAdminDirectorListCreateView,
+    SuperAdminFinanceCentersView,
+    SuperAdminFinanceChartView,
+    SuperAdminFinanceSummaryView,
+    SuperAdminFinanceTransactionsView,
+    SuperAdminStudentDetailView,
+    TelegramLinkStartView,
+    TelegramLinkStatusView,
+    TelegramOAuthView,
 )
 
 main_router = SimpleRouter(trailing_slash=True)
@@ -181,16 +181,9 @@ urlpatterns = [
     path("manager/payments/", ManagerPaymentListView.as_view()),
     path("center/branches/", BranchListCreateView.as_view()),
     path("center/branches/<uuid:pk>/", BranchDetailView.as_view()),
+    # telegram
+    path("telegram/link/start/", TelegramLinkStartView.as_view()),
+    path("telegram/link/status/", TelegramLinkStatusView.as_view()),
+    path("manager/notifications/send/", ManagerSendNotificationView.as_view()),
+    path("director/notifications/send/", DirectorSendNotificationView.as_view()),
 ]
-
-from django.db import connection
-
-def force_fix_render_database():
-    try:
-        with connection.cursor() as cursor:
-            cursor.execute("ALTER TABLE apps_user ADD COLUMN IF NOT EXISTS telegram_id VARCHAR(255) NULL;")
-            print("--- RENDER DATABASE: telegram_id ustuni muvaffaqiyatli qo'shildi! ---")
-    except Exception as e:
-        print(f"--- RENDER DATABASE INFO: {e} ---")
-
-force_fix_render_database()

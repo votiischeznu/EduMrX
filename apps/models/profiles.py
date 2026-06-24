@@ -1,18 +1,18 @@
 from django.core.exceptions import ValidationError
 from django.db.models import (
-    CharField,
-    TextChoices,
-    OneToOneField,
     CASCADE,
-    ForeignKey,
     SET_NULL,
+    CharField,
     DateField,
-    TextField,
-    PositiveSmallIntegerField,
     DecimalField,
-    Index,
-    QuerySet,
     F,
+    ForeignKey,
+    Index,
+    OneToOneField,
+    PositiveSmallIntegerField,
+    QuerySet,
+    TextChoices,
+    TextField,
 )
 from django.utils.translation import gettext_lazy as _
 
@@ -41,7 +41,7 @@ class Teacher(TimeStampedModel):
         return self.full_name
 
     def clean(self):
-        if self.user.role != User.Role.TEACHER: # TODO is bilan property
+        if self.user and not self.user.is_teacher:  # TODO is bilan property ✅
             raise ValidationError(_("Faqat TEACHER rolidagi foydalanuvchi o'qituvchi bo'la oladi"))
 
     def delete(self, *args, **kwargs):
@@ -64,7 +64,9 @@ class Teacher(TimeStampedModel):
 
 
 class Parent(TimeStampedModel):
-    user = OneToOneField(User, CASCADE, related_name="parent_profile", limit_choices_to={"role": User.Role.PARENT}) # TODO apps. deb yozish
+    user = OneToOneField(
+        "apps.User", CASCADE, related_name="parent_profile", limit_choices_to={"role": User.Role.PARENT}
+    )  # TODO apps. deb yozish ✅
     address = TextField(_("Manzil"), blank=True)
     notes = TextField(_("Izoh"), blank=True)
     occupation = CharField(_("Kasbi"), max_length=255, blank=True)
@@ -76,7 +78,7 @@ class Parent(TimeStampedModel):
         return self.user.full_name
 
     def clean(self):
-        if self.user.role != User.Role.PARENT:
+        if self.user and not self.user.is_parent:
             raise ValidationError(_("Faqat PARENT rolidagi foydalanuvchi ota-ona bo'la oladi"))
 
     def delete(self, *args, **kwargs):
@@ -181,7 +183,7 @@ class Student(TimeStampedModel):
             Center.objects.filter(id=center_id).update(total_students=F("total_students") - 1)
 
     def clean(self):
-        if self.user.role != User.Role.STUDENT:
+        if self.user and not self.user.is_student:
             raise ValidationError(_("Faqat STUDENT rolidagi foydalanuvchi talaba bo'la oladi"))
 
     @property

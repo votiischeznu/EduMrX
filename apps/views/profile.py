@@ -2,19 +2,19 @@ from django.http import Http404
 from django.utils.functional import cached_property
 from drf_spectacular.utils import extend_schema
 from rest_framework.generics import RetrieveUpdateAPIView
-from rest_framework.permissions import AllowAny
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
+from serializers.profile import DirectorProfileSerializer
 
-from apps.models import User, Group, Room, GroupStudent
+from apps.models import Group, GroupStudent, Room, User
 from apps.serializers import (
-    StudentProfileSerializer,
     AdminProfileSerializer,
     GroupModelSerializer,
-    RoomModelSerializer,
     GroupStudentModelSerializer,
-    TeacherProfileSerializer,
     ParentProfileSerializer,
+    RoomModelSerializer,
+    StudentProfileSerializer,
+    TeacherProfileSerializer,
 )
 
 
@@ -37,6 +37,7 @@ class MyProfileRetrieveUpdateAPIView(RetrieveUpdateAPIView):
             User.Role.STUDENT: StudentProfileSerializer,
             User.Role.TEACHER: TeacherProfileSerializer,
             User.Role.PARENT: ParentProfileSerializer,
+            User.Role.DIRECTOR: DirectorProfileSerializer,
         }
         return role_serializer_map.get(role, AdminProfileSerializer)
 
@@ -50,6 +51,7 @@ class MyProfileRetrieveUpdateAPIView(RetrieveUpdateAPIView):
             User.Role.STUDENT: ("student_profile", "Talaba profili topilmadi."),
             User.Role.TEACHER: ("teacher_profile", "O'qituvchi profili topilmadi."),
             User.Role.PARENT: ("parent_profile", "Ota-ona profili topilmadi."),
+            User.Role.DIRECTOR: ("director_profile", "Director profili topilmadi."),
         }
 
         attr, msg = role_profile_map.get(user.role, (None, None))
