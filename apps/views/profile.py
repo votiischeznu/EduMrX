@@ -25,8 +25,14 @@ class MyProfileRetrieveUpdateAPIView(RetrieveUpdateAPIView):
 
     @cached_property
     def _user_with_profiles(self):
-        return User.objects.select_related("student_profile", "teacher_profile", "parent_profile").get(
-            pk=self.request.user.pk
+        return (
+            User.objects.select_related(
+                "student_profile",
+                "teacher_profile",
+                "parent_profile",
+            )
+            .prefetch_related("directed_centers")
+            .get(pk=self.request.user.pk)
         )
 
     def get_serializer_class(self):
