@@ -92,5 +92,5 @@ from apps.views.notifications import (
     ManagerSendNotificationView
 )
 
-from views.telegram_link import TelegramLinkStartView, TelegramLinkStatusView
+from apps.views.telegram_link import TelegramLinkStartView, TelegramLinkStatusView
 
