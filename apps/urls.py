@@ -95,7 +95,7 @@ urlpatterns = [
     path("auth/register/", RegisterCreateAPIView.as_view()),
     path("auth/register/verify/", RegisterVerifyAPIView.as_view()),
     path("auth/", include(auth_router.urls)),
-    path("api/v1/auth/telegram/", TelegramOAuthView.as_view()),
+    path("auth/telegram/", TelegramOAuthView.as_view()),
     # ── Main Router ───────────────────────────────────────
     path("", include(main_router.urls)),
     # ── Profile ───────────────────────────────────────────
