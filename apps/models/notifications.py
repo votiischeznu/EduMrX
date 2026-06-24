@@ -1,14 +1,14 @@
 from django.db.models import (
-    CharField,
-    UUIDField,
-    TextChoices,
-    DateTimeField,
-    TextField,
-    BooleanField,
-    ForeignKey,
-    Index,
     CASCADE,
     SET_NULL,
+    BooleanField,
+    CharField,
+    DateTimeField,
+    ForeignKey,
+    Index,
+    TextChoices,
+    TextField,
+    UUIDField,
 )
 
 from apps.models import BaseModel, TimeStampedModel
@@ -64,8 +64,6 @@ class NotificationRecipient(BaseModel):
     def __str__(self):
         status = "Read" if self.is_read else "Unread"
         return f"{self.recipient} | {self.notification.title} | {status}"
-
-
 
 
 class ContactMessage(TimeStampedModel):

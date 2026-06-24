@@ -1,6 +1,15 @@
+# apps/service/services.py
+import logging
+
 from django.db import transaction
 from django.utils import timezone
-from apps.models import Notification, NotificationRecipient, GroupStudent
+
+from apps.models import GroupStudent, Notification, NotificationRecipient, User
+from apps.service.telegram_bot import TelegramBotService
+
+logger = logging.getLogger(__name__)
+
+NOTIFIABLE_ROLES = [User.Role.PARENT, User.Role.STUDENT, User.Role.TEACHER]
 
 
 class NotificationService:
@@ -15,7 +24,19 @@ class NotificationService:
         sender=None,
         related_object_id=None,
         related_object_type="",
+        also_telegram: bool = False,
     ) -> Notification:
+        """
+        also_telegram=True bo'lsa, in-app notification yaratilgandan tashqari,
+        recipient_ids ichidan FAQAT role IN (PARENT, STUDENT, TEACHER) bo'lgan
+        va telegram_id'si bor foydalanuvchilarga Telegram orqali ham xabar
+        boradi. Boshqa rollar (Manager, Director, SuperAdmin) bu orqali
+        Telegram xabar olmaydi — chunki ular bu funksiyada xabar YUBORUVCHI
+        tomon hisoblanadi.
+
+        Telegram yuborilmasa ham (token yo'q, chat topilmadi va h.k.),
+        in-app notification baribir yaratiladi.
+        """
         notification = Notification.objects.create(
             title=title,
             body=body,
@@ -35,7 +56,41 @@ class NotificationService:
             ignore_conflicts=True,
         )
 
+        if also_telegram:
+            NotificationService._send_telegram_for_recipients(
+                recipient_ids=recipient_ids, title=title, body=body
+            )
+
         return notification
+
+    @staticmethod
+    def _send_telegram_for_recipients(*, recipient_ids: list, title: str, body: str):
+        """
+        FAQAT role IN (PARENT, STUDENT, TEACHER) bo'lganlarga yuboriladi.
+        Bu filter ataylab shu yerda turadi — chaqiruvchi kod bu cheklovni
+        chetlab o'tolmaydi.
+        """
+        chat_ids = list(
+            User.objects.filter(
+                id__in=recipient_ids,
+                role__in=NOTIFIABLE_ROLES,
+                telegram_id__isnull=False,
+            ).values_list("telegram_id", flat=True)
+        )
+
+        if not chat_ids:
+            return
+
+        text = f"<b>{title}</b>\n\n{body}"
+
+        try:
+            result = TelegramBotService.send_bulk(chat_ids, text)
+            logger.info(
+                "Telegram notification yuborildi: sent=%s failed=%s",
+                result["sent"], result["failed"],
+            )
+        except Exception as e:
+            logger.error("Telegram notification yuborishda xatolik: %s", e)
 
     @staticmethod
     def mark_read(*, user, notification_id) -> bool:

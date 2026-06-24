@@ -2,10 +2,10 @@ import uuid
 
 from django.contrib.auth.models import (
     AbstractBaseUser,
-    BaseUserManager,
     PermissionsMixin,
 )
 from django.db.models import (
+    BigIntegerField,
     BooleanField,
     CharField,
     DateTimeField,
@@ -15,36 +15,9 @@ from django.db.models import (
     URLField,
     UUIDField,
 )
-from django.db.models.fields import BigIntegerField
 from django.utils.translation import gettext_lazy as _
 
-
-class UserManager(BaseUserManager):
-    def _create_user(self, phone: str, password: str | None, **extra_fields):
-        if not phone:
-            raise ValueError(_("Telefon raqam majburiy"))
-        user = self.model(phone=phone, **extra_fields)
-        user.set_password(password)
-        user.save(using=self._db)
-        return user
-
-    def create_user(self, phone: str, password: str | None = None, **extra_fields):
-        extra_fields.setdefault("is_staff", False)
-        extra_fields.setdefault("is_superuser", False)
-        extra_fields.setdefault("role", User.Role.STUDENT)
-        return self._create_user(phone, password, **extra_fields)
-
-    def create_superuser(self, phone: str, password: str | None = None, **extra_fields):
-        extra_fields.setdefault("is_staff", True)
-        extra_fields.setdefault("is_superuser", True)
-        extra_fields.setdefault("role", User.Role.SUPER_ADMIN)  # TODO universal
-
-        if extra_fields.get("is_staff") is not True:
-            raise ValueError(_("Superuser uchun is_staff=True bo'lishi shart"))
-        if extra_fields.get("is_superuser") is not True:
-            raise ValueError(_("Superuser uchun is_superuser=True bo'lishi shart"))
-
-        return self._create_user(phone, password, **extra_fields)
+from apps.models.manager import UserManager
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -57,7 +30,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         PARENT = "parent", _("Ota-ona")
 
     id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    telegram_id = BigIntegerField(null=True, blank=True, unique=True, db_index=True, verbose_name="Telegram ID")
     phone = CharField(_("Telefon"), max_length=50, unique=True)
     email = EmailField(_("Email"), blank=True, null=True, unique=True)
     backup_phone = CharField(_("Qo'shimcha telefon"), max_length=30, blank=True, null=True, unique=True)
@@ -66,7 +38,24 @@ class User(AbstractBaseUser, PermissionsMixin):
     role = CharField(_("Rol"), max_length=20, choices=Role.choices, default=Role.STUDENT)
     avatar = URLField(_("Rasm"), blank=True, null=True)
     is_deleted = BooleanField(default=False)
-    telegram_chat_id = CharField(max_length=50, blank=True, null=True)
+    telegram_id = BigIntegerField(
+        _("Telegram ID"),
+        unique=True,
+        null=True,
+        blank=True,
+        help_text=_("Foydalanuvchining Telegram chat/user ID raqami"),
+    )
+    telegram_username = CharField(
+        max_length=150,
+        null=True,
+        blank=True,
+        verbose_name=_("Telegram username"),
+    )
+    telegram_linked_at = DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_("Telegram bog'langan vaqti"),
+    )
 
     is_active = BooleanField(_("Faol"), default=True)
     is_staff = BooleanField(_("Xodim"), default=False)

@@ -1,3 +1,4 @@
+# apps/service/redis_otp.py
 import collections.abc
 
 if not hasattr(collections, "MutableMapping"):
@@ -6,17 +7,18 @@ if not hasattr(collections, "MutableMapping"):
 import hashlib
 import json
 import logging
+import os
 import random
 import uuid
+
+import fakeredis
 import redis
 from django.conf import settings as django_settings
 from django.core.mail import send_mail
+from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
 from apps.models import User
-
-import os
-import fakeredis
 
 try:
     if os.getenv("REDIS_URL"):
@@ -46,10 +48,7 @@ class OTPService:
         return f"bot_token:{token}"
 
     @staticmethod
-    def start_registration(
-        phone: str, email: str, method: str, registration_data: dict
-    ):
-
+    def start_registration(phone: str, email: str, method: str, registration_data: dict):
         otp_code = str(random.randint(1000, 9999))
         hashed_otp = _hash_otp(otp_code)
         payload = {
@@ -62,6 +61,10 @@ class OTPService:
             "method": method,
             "attempts": 0,
             "purpose": "registration",
+            # Telegram orqali tanlangan bo'lsa, bot /start bosilganda
+            # shu ikki maydon to'ldiriladi (run_bot.py ga qarang).
+            "telegram_chat_id": None,
+            "telegram_username": "",
         }
 
         r.setex(OTPService._key(phone), OTP_TTL, json.dumps(payload))
@@ -69,9 +72,7 @@ class OTPService:
         if method == "telegram_bot":
             link_token = f"reg_{uuid.uuid4().hex[:16]}"
             bot_payload = {"phone": phone, "email": email}
-            r.setex(
-                OTPService._bot_token_key(link_token), OTP_TTL, json.dumps(bot_payload)
-            )
+            r.setex(OTPService._bot_token_key(link_token), OTP_TTL, json.dumps(bot_payload))
 
             return {
                 "message": "Iltimos, Telegram botimizga o'ting va akkauntni faollashtirish uchun START tugmasini bosing.",
@@ -127,6 +128,24 @@ class OTPService:
             password=data["password"],
         )
         user.is_active = True
+
+        # ── Telegram orqali ro'yxatdan o'tgan bo'lsa, telegram_id ni
+        # shu yerda birga saqlaymiz — foydalanuvchi profilidan alohida
+        # "ulash" qilishiga hojat qolmaydi.
+        telegram_chat_id = data.get("telegram_chat_id")
+        if telegram_chat_id:
+            already_taken = User.objects.filter(telegram_id=telegram_chat_id).exclude(id=user.id).exists()
+            if not already_taken:
+                user.telegram_id = telegram_chat_id
+                user.telegram_username = data.get("telegram_username", "")
+                user.telegram_linked_at = timezone.now()
+            else:
+                logger.warning(
+                    "Telegram chat_id=%s allaqachon boshqa userga bog'langan, user_id=%s uchun bog'lanmadi.",
+                    telegram_chat_id,
+                    user.id,
+                )
+
         user.save()
 
         r.delete(key)
@@ -151,9 +170,7 @@ class AccountRecoveryService:
         if method == "telegram_bot":
             link_token = f"rec_{uuid.uuid4().hex[:16]}"
             bot_payload = {"user_id": str(user.id), "new_phone": new_phone}
-            r.setex(
-                OTPService._bot_token_key(link_token), OTP_TTL, json.dumps(bot_payload)
-            )
+            r.setex(OTPService._bot_token_key(link_token), OTP_TTL, json.dumps(bot_payload))
 
             return {
                 "message": "Parolni tiklash uchun botimizga o'ting va START tugmasini bosing.",
@@ -163,9 +180,7 @@ class AccountRecoveryService:
 
         elif method == "email":
             if not user.email:
-                raise ValidationError(
-                    "Ushbu foydalanuvchining hisobiga email bog'lanmagan. Bot orqali tiklang."
-                )
+                raise ValidationError("Ushbu foydalanuvchining hisobiga email bog'lanmagan. Bot orqali tiklang.")
             try:
                 send_mail(
                     subject="Akkauntni tiklash tasdiqlash kodi",
