@@ -155,7 +155,7 @@ class DirectorTeacherListSerializer(ModelSerializer):
 
     class Meta:
         model = Teacher
-        fields = ["id", "user", "specialization", "experience", "salary", "created_at"]
+        fields = ["id", "user", "specialization", "experience", "salary", "date_of_birth"]
 
 
 class DirectorTeacherDetailSerializer(ModelSerializer):
@@ -163,7 +163,7 @@ class DirectorTeacherDetailSerializer(ModelSerializer):
 
     class Meta:
         model = Teacher
-        fields = ["id", "user", "specialization", "experience", "salary", "bio", "date_of_birth", "created_at"]
+        fields = ["id", "user", "specialization", "experience", "salary", "bio", "date_of_birth"]
 
 
 class DirectorTeacherCreateSerializer(Serializer):
