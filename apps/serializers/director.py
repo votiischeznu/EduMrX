@@ -240,13 +240,14 @@ class DirectorTeacherCreateSerializer(Serializer):
         center_id = validated_data.pop("center")
         branch_id = validated_data.pop("branch", None)
         password = validated_data.pop("password")
-        first_name = validated_data("first_name")
-        last_name = validated_data("last_name")
-        email = validated_data.get("email")
-        avatar = validated_data.get("avatar")
+        first_name = validated_data.pop("first_name")
+        last_name = validated_data.pop("last_name")
+        email = validated_data.pop("email", None)
+        avatar = validated_data.pop("avatar", None)
+        phone = validated_data.pop("phone")
 
         user = User.objects.create_user(
-            phone=validated_data["phone"],
+            phone=phone,
             password=password,
             first_name=first_name,
             last_name=last_name,
@@ -281,6 +282,8 @@ class DirectorTeacherCreateSerializer(Serializer):
             instance.branch_id = validated_data["branch"]
         if "center" in validated_data:
             instance.centers.set([validated_data["center"]])
+        if "password" in validated_data:
+            user.set_password(validated_data.pop("password"))
         instance.save()
         return instance
 
