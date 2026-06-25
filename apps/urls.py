@@ -79,6 +79,19 @@ from apps.views import (
     TelegramLinkStatusView,
     TelegramOAuthView,
 )
+from apps.views.finance import (
+    ExpenseDetailView,
+    ExpenseSummaryView,
+    ExpenseListCreateView,
+    ExpenseCategoryDetailView,
+    ExpenseCategoryListCreateView,
+    PaymentListCreateView,
+    PaymentSummaryView,
+    PaymentDetailView,
+    StudentPaymentListView,
+    DebtListCreateView,
+)
+
 
 main_router = SimpleRouter(trailing_slash=True)
 main_router.register("rooms", RoomModelViewSet, basename="rooms")
@@ -95,7 +108,7 @@ urlpatterns = [
     path("auth/register/", RegisterCreateAPIView.as_view()),
     path("auth/register/verify/", RegisterVerifyAPIView.as_view()),
     path("auth/", include(auth_router.urls)),
-    path("api/v1/auth/telegram/", TelegramOAuthView.as_view()),
+    path("auth/telegram/", TelegramOAuthView.as_view()),
     # ── Main Router ───────────────────────────────────────
     path("", include(main_router.urls)),
     # ── Profile ───────────────────────────────────────────
@@ -186,4 +199,16 @@ urlpatterns = [
     path("telegram/link/status/", TelegramLinkStatusView.as_view()),
     path("manager/notifications/send/", ManagerSendNotificationView.as_view()),
     path("director/notifications/send/", DirectorSendNotificationView.as_view()),
+    path("expense-categories/", ExpenseCategoryListCreateView.as_view()),
+    path("expense-categories/<uuid:pk>/", ExpenseCategoryDetailView.as_view()),
+    path("expenses/", ExpenseListCreateView.as_view()),
+    path("expenses/summary/", ExpenseSummaryView.as_view()),
+    path("expenses/<uuid:pk>/", ExpenseDetailView.as_view()),
+    path("payments/", PaymentListCreateView.as_view()),
+    path("payments/summary/", PaymentSummaryView.as_view()),
+    path("payments/<uuid:pk>/", PaymentDetailView.as_view()),
+    # O'quvchi to'lov tarixi
+    path("students/<uuid:student_id>/payments/", StudentPaymentListView.as_view()),
+    # Qarzlar
+    path("debts/", DebtListCreateView.as_view()),
 ]

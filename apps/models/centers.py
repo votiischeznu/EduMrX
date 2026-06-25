@@ -83,12 +83,20 @@ class Center(TimeStampedModel):
         return self.name
 
     def save(self, *args, **kwargs):
-        if not self.slug or self.name != Center.objects.get(pk=self.pk).name:
+        if not self.slug:
+            # Yangi object
             new_slug = slugify(self.name)
-            if self.slug != new_slug:
-                self.slug = new_slug
-                if Center.objects.exclude(pk=self.pk).filter(slug=self.slug).exists():
-                    self.slug = f"{self.slug}-{uuid.uuid4().hex[:6]}"
+            self.slug = new_slug
+            if Center.objects.filter(slug=self.slug).exists():
+                self.slug = f"{self.slug}-{uuid.uuid4().hex[:6]}"
+        elif self.pk:
+            old = Center.objects.filter(pk=self.pk).values_list("name", flat=True).first()
+            if old and old != self.name:
+                new_slug = slugify(self.name)
+                if new_slug != self.slug:
+                    self.slug = new_slug
+                    if Center.objects.exclude(pk=self.pk).filter(slug=self.slug).exists():
+                        self.slug = f"{self.slug}-{uuid.uuid4().hex[:6]}"
         super().save(*args, **kwargs)
 
     @property
