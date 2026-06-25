@@ -72,10 +72,10 @@ class DirectorStudentDetailSerializer(ModelSerializer):
 
 class DirectorStudentCreateSerializer(Serializer):
     phone = CharField(max_length=50, required=True)
-    first_name = CharField(max_length=100, source="user.first_name")
-    last_name = CharField(max_length=100, source="user.last_name")
-    email = EmailField(required=False, allow_null=True, source="user.email")
-    avatar = URLField(required=False, allow_null=True, source="user.avatar")
+    first_name = CharField(max_length=100)
+    last_name = CharField(max_length=100)
+    email = EmailField(required=False, allow_null=True)
+    avatar = URLField(required=False, allow_null=True)
     password = CharField(write_only=True, required=True)
     center = UUIDField()
     branch = UUIDField(required=False, allow_null=True)

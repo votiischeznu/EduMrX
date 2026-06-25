@@ -1,6 +1,3 @@
-volumes:
-  media:
-  pgdata:
 services:
   backend:
     build: .
@@ -21,3 +18,7 @@ services:
     image: redis:alpine
     ports:
       - "6379:6379"
+
+volumes:
+  media:
+  pgdata:
