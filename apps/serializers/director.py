@@ -40,23 +40,49 @@ class UserSummarySerializer(ModelSerializer):
 class DirectorStudentListSerializer(ModelSerializer):
     user = UserSummarySerializer(read_only=True)
     center_name = CharField(source="center.name", read_only=True)
+    branch_name = CharField(source="branch.name", read_only=True, allow_null=True)
+    parent_name = CharField(source="parent.full_name", read_only=True, allow_null=True)
+    parent_phone = CharField(source="parent.user.phone", read_only=True, allow_null=True)
 
     class Meta:
         model = Student
-        fields = ["id", "user", "center", "center_name", "status", "date_of_birth", "enrolled_at"]
+        fields = [
+            "id",
+            "user",
+            "center",
+            "center_name",
+            "branch",
+            "branch_name",
+            "parent",
+            "parent_name",
+            "parent_phone",
+            "status",
+            "date_of_birth",
+            "enrolled_at",
+        ]
 
 
 class DirectorStudentDetailSerializer(ModelSerializer):
     user = UserSummarySerializer(read_only=True)
     center_name = CharField(source="center.name", read_only=True)
-    parent_name = SerializerMethodField()
+    parent_name = CharField(source="parent.full_name", read_only=True, allow_null=True)
+    parent_phone = CharField(source="parent.user.phone", read_only=True, allow_null=True)
 
     class Meta:
         model = Student
-        fields = ["id", "user", "center", "center_name", "parent", "date_of_birth", "notes", "status", "enrolled_at"]
-
-    def get_parent_name(self, obj):
-        return obj.parent.full_name if obj.parent else None
+        fields = [
+            "id",
+            "user",
+            "center",
+            "center_name",
+            "parent",
+            "parent_name",
+            "parent_phone",
+            "date_of_birth",
+            "notes",
+            "status",
+            "enrolled_at",
+        ]
 
 
 class DirectorStudentCreateSerializer(Serializer):
@@ -98,7 +124,7 @@ class DirectorStudentCreateSerializer(Serializer):
             qs = qs.exclude(id=self.instance.user_id)
         if qs.exists():
             raise ValidationError("Bu telefon raqam allaqachon mavjud.")
-        return value
+        return normalized
 
     @transaction.atomic
     def create(self, validated_data):
@@ -111,11 +137,12 @@ class DirectorStudentCreateSerializer(Serializer):
         st_status = validated_data.pop("status", Student.Status.ACTIVE)
         first_name = validated_data.pop("first_name")
         last_name = validated_data.pop("last_name")
+        phone = validated_data.pop("phone")
         email = validated_data.pop("email", None)
         avatar = validated_data.pop("avatar", None)
 
         user = User.objects.create_user(
-            phone=validated_data["phone"],
+            phone=phone,
             password=password,
             first_name=first_name,
             last_name=last_name,
@@ -155,7 +182,7 @@ class DirectorTeacherListSerializer(ModelSerializer):
 
     class Meta:
         model = Teacher
-        fields = ["id", "user", "specialization", "experience", "salary", "created_at"]
+        fields = ["id", "user", "specialization", "experience", "salary", "date_of_birth"]
 
 
 class DirectorTeacherDetailSerializer(ModelSerializer):
@@ -163,7 +190,7 @@ class DirectorTeacherDetailSerializer(ModelSerializer):
 
     class Meta:
         model = Teacher
-        fields = ["id", "user", "specialization", "experience", "salary", "bio", "date_of_birth", "created_at"]
+        fields = ["id", "user", "specialization", "experience", "salary", "bio", "date_of_birth"]
 
 
 class DirectorTeacherCreateSerializer(Serializer):
