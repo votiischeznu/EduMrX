@@ -29,7 +29,7 @@ media
 # misc
 .DS_Store
 *.pem
-
+static/
 # debug
 npm-debug.log*
 yarn-debug.log*

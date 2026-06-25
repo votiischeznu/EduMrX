@@ -76,6 +76,13 @@ class DirectorStudentListCreateView(ListCreateAPIView):
         context["centers"] = get_director_centers(self.request.user)
         return context
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        student = serializer.save()
+        response_data = DirectorStudentListSerializer(student, context=self.get_serializer_context()).data
+        return Response(response_data, status=status.HTTP_201_CREATED)
+
 
 @extend_schema(tags=["2. DirectorStudents"])
 class DirectorStudentDetailView(RetrieveUpdateDestroyAPIView):

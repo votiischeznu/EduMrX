@@ -240,7 +240,7 @@ class PaymentSummaryView(APIView):
         )
 
 
-class DebtListCreateView(ListCreateAPIView):
+class DebtListCreateView(ListCreateAPIView):    
     permission_classes = [IsAuthenticated, IsDirector]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ["status", "group", "student"]
