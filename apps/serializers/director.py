@@ -15,7 +15,19 @@ from rest_framework.serializers import (
     UUIDField,
 )
 from apps.service import get_director_centers
-from apps.models import Attendance, CenterStaff, Course, Group, GroupStudent, Lesson, Room, Student, Teacher, User, Branch
+from apps.models import (
+    Attendance,
+    CenterStaff,
+    Course,
+    Group,
+    GroupStudent,
+    Lesson,
+    Room,
+    Student,
+    Teacher,
+    User,
+    Branch,
+)
 from apps.utils.phone import normalize_phone
 
 
@@ -60,10 +72,10 @@ class DirectorStudentDetailSerializer(ModelSerializer):
 
 class DirectorStudentCreateSerializer(Serializer):
     phone = CharField(max_length=50, required=True)
-    first_name = CharField(max_length=100)
-    last_name = CharField(max_length=100)
-    email = EmailField(required=False, allow_null=True)
-    avatar = URLField(required=False, allow_null=True)
+    first_name = CharField(max_length=100, source="user.first_name")
+    last_name = CharField(max_length=100, source="user.last_name")
+    email = EmailField(required=False, allow_null=True, source="user.email")
+    avatar = URLField(required=False, allow_null=True, source="user.avatar")
     password = CharField(write_only=True, required=True)
     center = UUIDField()
     branch = UUIDField(required=False, allow_null=True)
@@ -108,14 +120,18 @@ class DirectorStudentCreateSerializer(Serializer):
         date_of_birth = validated_data.pop("date_of_birth", None)
         notes = validated_data.pop("notes", "")
         st_status = validated_data.pop("status", Student.Status.ACTIVE)
+        first_name = validated_data.pop("first_name")
+        last_name = validated_data.pop("last_name")
+        email = validated_data.pop("email", None)
+        avatar = validated_data.pop("avatar", None)
 
         user = User.objects.create_user(
             phone=validated_data["phone"],
             password=password,
-            first_name=validated_data["first_name"],
-            last_name=validated_data["last_name"],
-            email=validated_data.get("email"),
-            avatar=validated_data.get("avatar"),
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            avatar=avatar,
             role=User.Role.STUDENT,
         )
         return Student.objects.create(
@@ -150,14 +166,7 @@ class DirectorTeacherListSerializer(ModelSerializer):
 
     class Meta:
         model = Teacher
-        fields = [
-            "id",
-            "user",
-            "specialization",
-            "experience",
-            "salary",
-            "created_at",
-        ]
+        fields = ["id", "user", "specialization", "experience", "salary", "created_at"]
 
 
 class DirectorTeacherDetailSerializer(ModelSerializer):
@@ -215,14 +224,18 @@ class DirectorTeacherCreateSerializer(Serializer):
         center_id = validated_data.pop("center")
         branch_id = validated_data.pop("branch", None)
         password = validated_data.pop("password")
+        first_name = validated_data("first_name")
+        last_name = validated_data("last_name")
+        email = validated_data.get("email")
+        avatar = validated_data.get("avatar")
 
         user = User.objects.create_user(
             phone=validated_data["phone"],
             password=password,
-            first_name=validated_data["first_name"],
-            last_name=validated_data["last_name"],
-            email=validated_data.get("email"),
-            avatar=validated_data.get("avatar"),
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            avatar=avatar,
             role=User.Role.TEACHER,
         )
         teacher = Teacher.objects.create(
