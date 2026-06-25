@@ -43,7 +43,7 @@ class DirectorStudentListSerializer(ModelSerializer):
 
     class Meta:
         model = Student
-        fields = ["id", "user", "center", "center_name", "status", "enrolled_at", "created_at"]
+        fields = ["id", "user", "center", "center_name", "status", "date_of_birth", "enrolled_at"]
 
 
 class DirectorStudentDetailSerializer(ModelSerializer):
@@ -53,18 +53,7 @@ class DirectorStudentDetailSerializer(ModelSerializer):
 
     class Meta:
         model = Student
-        fields = [
-            "id",
-            "user",
-            "center",
-            "center_name",
-            "parent",
-            "date_of_birth",
-            "notes",
-            "status",
-            "enrolled_at",
-            "created_at",
-        ]
+        fields = ["id", "user", "center", "center_name", "parent", "date_of_birth", "notes", "status", "enrolled_at"]
 
     def get_parent_name(self, obj):
         return obj.parent.full_name if obj.parent else None
