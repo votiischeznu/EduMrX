@@ -1,5 +1,6 @@
 from datetime import date
 
+from django.db.models import QuerySet
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
@@ -26,8 +27,10 @@ from apps.serializers import (
     DirectorLessonListSerializer,
     DirectorRoomSerializer,
     DirectorStudentCreateSerializer,
+    DirectorStudentDetailSerializer,
     DirectorStudentListSerializer,
     DirectorTeacherCreateSerializer,
+    DirectorTeacherDetailSerializer,
     DirectorTeacherListSerializer,
 )
 from apps.service.director_dashboard import get_dashboard_data, get_director_centers, get_single_center_or_404
@@ -50,9 +53,18 @@ class DirectorDashboardView(APIView):
         return Response(data)
 
 
+class SoftDeleteUserMixin:
+    def delete(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.user.is_deleted = True
+        instance.user.is_active = False
+        instance.user.save(update_fields=["is_deleted", "is_active"])
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 @extend_schema(tags=["DirectorStudents"])
 class DirectorStudentListCreateView(ListCreateAPIView):
-    queryset = Student.objects.filter(user__is_deleted=False).select_related("user", "center", "parent__user")
+    queryset = Student.objects.filter(user__is_deleted=False).select_related("user", "center", "branch", "parent__user")
     permission_classes = [IsAuthenticated, IsDirector]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ["status", "center"]
@@ -60,16 +72,14 @@ class DirectorStudentListCreateView(ListCreateAPIView):
     ordering_fields = ["enrolled_at", "created_at"]
     ordering = ["-created_at"]
 
-    def get_queryset(self):
-        qs = super().get_queryset()
+    def get_queryset(self) -> QuerySet:
         centers = get_director_centers(self.request.user)
-        return qs.filter(center__in=centers)
+        return super().get_queryset().filter(center__in=centers)
 
     def get_serializer_class(self):
         if self.request.method == "POST":
             return DirectorStudentCreateSerializer
-        else:
-            return DirectorStudentListSerializer
+        return DirectorStudentListSerializer
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -80,115 +90,150 @@ class DirectorStudentListCreateView(ListCreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         student = serializer.save()
+        # Response uchun list serializer ishlatamiz (faqat o'qish uchun)
         response_data = DirectorStudentListSerializer(student, context=self.get_serializer_context()).data
         return Response(response_data, status=status.HTTP_201_CREATED)
 
 
-@extend_schema(tags=["2. DirectorStudents"])
-class DirectorStudentDetailView(RetrieveUpdateDestroyAPIView):
-    queryset = Student.objects.select_related("user", "center", "parent__user")
+@extend_schema(tags=["DirectorStudents"])
+class DirectorStudentDetailView(SoftDeleteUserMixin, RetrieveUpdateDestroyAPIView):
+    queryset = Student.objects.select_related("user", "center", "branch", "parent__user")
     permission_classes = [IsAuthenticated, IsDirector]
     http_method_names = ["get", "patch", "delete"]
 
-    def get_queryset(self):
-        qs = super().get_queryset()
+    def get_queryset(self) -> QuerySet:
         centers = get_director_centers(self.request.user)
-        return qs.filter(center__in=centers, user__is_deleted=False)
+        return super().get_queryset().filter(center__in=centers, user__is_deleted=False)
 
     def get_serializer_class(self):
         if self.request.method == "PATCH":
             return DirectorStudentCreateSerializer
-        else:
-            return DirectorStudentListSerializer
+        return DirectorStudentDetailSerializer
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context["centers"] = get_director_centers(self.request.user)
+        # update validatsiyasida instance kerak (phone unique check uchun)
+        if self.request.method == "PATCH":
+            context["instance"] = self.get_object()
         return context
 
-    def delete(self, request, *args, **kwargs):
+    def update(self, request, *args, **kwargs):
+        """
+        PATCH — update qilib, response'ni DetailSerializer bilan qaytaradi.
+        Shu yerda override qilmasak DRF CreateSerializer'dan
+        to_representation chaqirib xato beradi.
+        """
+        partial = kwargs.pop("partial", True)  # PATCH har doim partial
         instance = self.get_object()
-        instance.user.is_deleted = True
-        instance.user.is_active = False
-        instance.user.save(update_fields=["is_deleted", "is_active"])
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        student = serializer.save()
+        response_data = DirectorStudentDetailSerializer(student, context=self.get_serializer_context()).data
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 @extend_schema(tags=["DirectorTeacher"])
 class DirectorTeacherListCreateView(ListCreateAPIView):
-    queryset = Teacher.objects.prefetch_related("user", "centers")
+    """
+    GET  /director/teachers/  — ro'yxat
+    POST /director/teachers/  — yangi o'qituvchi yaratish
+    """
+
+    queryset = Teacher.objects.filter(user__is_deleted=False).select_related("user").prefetch_related("centers")
     permission_classes = [IsAuthenticated, IsDirector]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ["branch"]
     search_fields = ["user__first_name", "user__last_name", "user__phone"]
     ordering_fields = ["created_at", "experience"]
     ordering = ["-created_at"]
 
-    def get_queryset(self):
-        qs = super().get_queryset()
+    def get_queryset(self) -> QuerySet:
         centers = get_director_centers(self.request.user)
-        return qs.filter(centers__in=centers, user__is_deleted=False)
+        return super().get_queryset().filter(centers__in=centers, user__is_deleted=False).distinct()
 
     def get_serializer_class(self):
         if self.request.method == "POST":
             return DirectorTeacherCreateSerializer
-        else:
-            return DirectorTeacherListSerializer
+        return DirectorTeacherListSerializer
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context["centers"] = get_director_centers(self.request.user)
         return context
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        teacher = serializer.save()
+        response_data = DirectorTeacherListSerializer(teacher, context=self.get_serializer_context()).data
+        return Response(response_data, status=status.HTTP_201_CREATED)
+
 
 @extend_schema(tags=["DirectorTeacher"])
-class DirectorTeacherDetailView(RetrieveUpdateDestroyAPIView):
-    queryset = Teacher.objects.prefetch_related("user", "centers")
+class DirectorTeacherDetailView(SoftDeleteUserMixin, RetrieveUpdateDestroyAPIView):
+    """
+    GET    /director/teachers/<id>/  — batafsil
+    PATCH  /director/teachers/<id>/  — tahrirlash
+    DELETE /director/teachers/<id>/  — soft-delete
+    """
+
+    queryset = Teacher.objects.select_related("user").prefetch_related("centers")
     permission_classes = [IsAuthenticated, IsDirector]
     http_method_names = ["get", "patch", "delete"]
 
-    def get_queryset(self):
-        qs = super().get_queryset()
+    def get_queryset(self) -> QuerySet:
         centers = get_director_centers(self.request.user)
-        return qs.filter(centers__in=centers, user__is_deleted=False)
+        return super().get_queryset().filter(centers__in=centers, user__is_deleted=False).distinct()
 
     def get_serializer_class(self):
         if self.request.method == "PATCH":
             return DirectorTeacherCreateSerializer
-        else:
-            return DirectorTeacherListSerializer
+        return DirectorTeacherDetailSerializer
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context["centers"] = get_director_centers(self.request.user)
+        if self.request.method == "PATCH":
+            context["instance"] = self.get_object()
         return context
 
-    def delete(self, request, *args, **kwargs):
+    def update(self, request, *args, **kwargs):
+        """
+        PATCH — update qilib, response'ni DetailSerializer bilan qaytaradi.
+        """
+        partial = kwargs.pop("partial", True)
         instance = self.get_object()
-        instance.user.is_deleted = True
-        instance.user.is_active = False
-        instance.user.save(update_fields=["is_deleted", "is_active"])
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        teacher = serializer.save()
+        response_data = DirectorTeacherDetailSerializer(teacher, context=self.get_serializer_context()).data
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 @extend_schema(tags=["DirectorRoom"])
 class DirectorRoomListCreateView(ListCreateAPIView):
-    queryset = Room.objects.all()
+    queryset = Room.objects.select_related("center", "branch")
     permission_classes = [IsAuthenticated, IsDirector]
     serializer_class = DirectorRoomSerializer
     filter_backends = [SearchFilter]
     search_fields = ["name"]
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
         qs = super().get_queryset()
         centers = get_director_centers(self.request.user)
         return qs.filter(center__in=centers).order_by("name")
 
     def perform_create(self, serializer):
-        center = get_single_center_or_404(self.request.user)
         branch = serializer.validated_data.get("branch")
+        centers = get_director_centers(self.request.user)
 
-        if branch and branch.center_id != center.id:
-            raise ValidationError({"branch": "Bu branch ushbu centerga tegishli emas."})
+        if branch:
+            if branch.center_id not in centers.values_list("id", flat=True):
+                raise ValidationError({"branch": "Bu filial sizga tegishli emas."})
+            center = branch.center
+        else:
+            center = get_single_center_or_404(self.request.user)
 
         serializer.save(center=center)
 

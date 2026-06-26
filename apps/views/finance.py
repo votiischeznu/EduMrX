@@ -1,33 +1,33 @@
-from django.db.models import Sum, Count, Q
+from django.db.models import Count, Q, Sum
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from rest_framework.generics import (
-    ListCreateAPIView,
-    RetrieveUpdateDestroyAPIView,
-    ListAPIView,
-    RetrieveUpdateAPIView,
     DestroyAPIView,
+    ListAPIView,
+    ListCreateAPIView,
+    RetrieveUpdateAPIView,
+    RetrieveUpdateDestroyAPIView,
 )
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.models import Payment, Debt, Center
-from apps.models.payments import ExpenseCategory, Expense
+from apps.models import Center, Debt, Payment
+from apps.models.payments import Expense, ExpenseCategory
 from apps.permissions import IsDirector
 from apps.serializers.finance import (
-    PaymentListSerializer,
-    PaymentDetailSerializer,
-    PaymentCreateSerializer,
-    PaymentUpdateSerializer,
-    DebtListSerializer,
     DebtCreateSerializer,
-    ExpenseCategorySerializer,
+    DebtListSerializer,
     ExpenseCategoryCreateSerializer,
-    ExpenseListSerializer,
-    ExpenseDetailSerializer,
+    ExpenseCategorySerializer,
     ExpenseCreateSerializer,
+    ExpenseDetailSerializer,
+    ExpenseListSerializer,
     ExpenseUpdateSerializer,
+    PaymentCreateSerializer,
+    PaymentDetailSerializer,
+    PaymentListSerializer,
+    PaymentUpdateSerializer,
 )
 
 
@@ -240,7 +240,7 @@ class PaymentSummaryView(APIView):
         )
 
 
-class DebtListCreateView(ListCreateAPIView):    
+class DebtListCreateView(ListCreateAPIView):
     permission_classes = [IsAuthenticated, IsDirector]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ["status", "group", "student"]
@@ -283,14 +283,6 @@ class DebtListCreateView(ListCreateAPIView):
 
         serializer = self.get_serializer(qs, many=True)
         return Response({"results": serializer.data, "total_debt": total_debt})
-
-
-def get_director_center(request):
-    center_id = request.query_params.get("center_id")
-    qs = Center.objects.filter(director=request.user, is_deleted=False)
-    if center_id:
-        return qs.filter(id=center_id).first()
-    return qs.first()
 
 
 class ExpenseCategoryListCreateView(ListCreateAPIView):

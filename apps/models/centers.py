@@ -84,7 +84,6 @@ class Center(TimeStampedModel):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            # Yangi object
             new_slug = slugify(self.name)
             self.slug = new_slug
             if Center.objects.filter(slug=self.slug).exists():

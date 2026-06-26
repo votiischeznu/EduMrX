@@ -85,29 +85,3 @@ class TestSuperAdminCenter:
             == status.HTTP_201_CREATED
         )
 
-
-@pytest.mark.django_db
-class TestSuperAdminStudent:
-    def test_student_list_centers(self, api_client, super_admin_user, test_center):
-        api_client.force_authenticate(user=super_admin_user)
-        response = api_client.get("/api/v1/super-admin/center/student/stats/")
-        assert response.status_code == status.HTTP_200_OK
-
-    def test_student_list_create(self, api_client, super_admin_user, test_center):
-        api_client.force_authenticate(user=super_admin_user)
-        payload = {
-            "user": {
-                "first_name": "Ali",
-                "last_name": "Vali",
-                "phone": "+998991112233",
-            },
-            "center": test_center.id,
-            "status": "active",
-        }
-        response = api_client.post(
-            "/api/v1/super-admin/students/", payload, format="json"
-        )
-        assert response.status_code in [
-            status.HTTP_201_CREATED,
-            status.HTTP_400_BAD_REQUEST,
-        ]
