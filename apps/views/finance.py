@@ -1,5 +1,6 @@
 from django.db.models import Count, Q, Sum
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.utils import extend_schema
 from rest_framework import filters
 from rest_framework.generics import (
     DestroyAPIView,
@@ -39,6 +40,7 @@ def get_director_center(request):
     return qs.first()
 
 
+@extend_schema(tags=["Finance - Payments"])
 class PaymentListCreateView(ListCreateAPIView):
     permission_classes = [IsAuthenticated, IsDirector]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -96,6 +98,7 @@ class PaymentListCreateView(ListCreateAPIView):
         return Response({"results": serializer.data, **{k: v or 0 for k, v in totals.items()}})
 
 
+@extend_schema(tags=["Finance - Payments"])
 class PaymentDetailView(RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated, IsDirector]
     http_method_names = ["get", "patch", "delete"]
@@ -126,6 +129,7 @@ class PaymentDetailView(RetrieveUpdateDestroyAPIView):
             instance.save(update_fields=["status"])
 
 
+@extend_schema(tags=["Finance - Payments"])
 class StudentPaymentListView(ListAPIView):
     permission_classes = [IsAuthenticated, IsDirector]
     serializer_class = PaymentListSerializer
@@ -178,6 +182,7 @@ class StudentPaymentListView(ListAPIView):
         )
 
 
+@extend_schema(tags=["Finance - Reports"])
 class PaymentSummaryView(APIView):
     permission_classes = [IsAuthenticated, IsDirector]
 
@@ -240,6 +245,7 @@ class PaymentSummaryView(APIView):
         )
 
 
+@extend_schema(tags=["Finance - Debts"])
 class DebtListCreateView(ListCreateAPIView):
     permission_classes = [IsAuthenticated, IsDirector]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -285,6 +291,7 @@ class DebtListCreateView(ListCreateAPIView):
         return Response({"results": serializer.data, "total_debt": total_debt})
 
 
+@extend_schema(tags=["Finance - Expense Categories"])
 class ExpenseCategoryListCreateView(ListCreateAPIView):
     permission_classes = [IsAuthenticated, IsDirector]
     filter_backends = [filters.SearchFilter]
@@ -295,7 +302,6 @@ class ExpenseCategoryListCreateView(ListCreateAPIView):
 
     def get_queryset(self):
         center = self.get_center()
-        # Tizim kategoriyalari + shu markazning o'z kategoriyalari
         return ExpenseCategory.objects.filter(
             Q(is_system=True) | Q(center=center),
             is_active=True,
@@ -312,6 +318,7 @@ class ExpenseCategoryListCreateView(ListCreateAPIView):
         return ctx
 
 
+@extend_schema(tags=["Finance - Expenses"])
 class ExpenseCategoryDetailView(RetrieveUpdateAPIView, DestroyAPIView):
     permission_classes = [IsAuthenticated, IsDirector]
     http_method_names = ["get", "patch", "delete"]
@@ -343,6 +350,7 @@ class ExpenseCategoryDetailView(RetrieveUpdateAPIView, DestroyAPIView):
         instance.save(update_fields=["is_active"])
 
 
+@extend_schema(tags=["Finance - Expense"])
 class ExpenseListCreateView(ListCreateAPIView):
     permission_classes = [IsAuthenticated, IsDirector]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -388,6 +396,7 @@ class ExpenseListCreateView(ListCreateAPIView):
         return Response({"results": serializer.data, "total_amount": total})
 
 
+@extend_schema(tags=["Finance - Expense"])
 class ExpenseDetailView(RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated, IsDirector]
     http_method_names = ["get", "patch", "delete"]
@@ -417,6 +426,7 @@ class ExpenseDetailView(RetrieveUpdateDestroyAPIView):
             instance.delete()
 
 
+@extend_schema(tags=["Finance - Reports"])
 class ExpenseSummaryView(APIView):
     permission_classes = [IsAuthenticated, IsDirector]
 
