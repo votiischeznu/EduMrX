@@ -294,39 +294,39 @@ class DirectorTeacherCreateSerializer(Serializer):
             raise ValidationError("Bu telefon raqam allaqachon mavjud.")
         return normalized
 
+    def validate_email(self, value):
+        if value and User.objects.filter(email=value).exists():
+            instance = self.context.get("instance")
+            if not instance or instance.user.email != value:
+                raise ValidationError("Bu email allaqachon ro'yxatdan o'tgan.")
+        return value
+
     # ------------------------------------------------------------------
     # Create / Update
     # ------------------------------------------------------------------
-
     @transaction.atomic
     def create(self, validated_data):
+        # 1. Ma'lumotlarni pop qilish
         center_id = validated_data.pop("center")
         branch_id = validated_data.pop("branch", None)
         password = validated_data.pop("password")
-        first_name = validated_data.pop("first_name")
-        last_name = validated_data.pop("last_name")
-        email = validated_data.pop("email", None)
-        avatar = validated_data.pop("avatar", None)
-        phone = validated_data.pop("phone")
 
+        # User yaratish
         user = User.objects.create_user(
-            phone=phone,
+            phone=validated_data.pop("phone"),
             password=password,
-            first_name=first_name,
-            last_name=last_name,
-            email=email,
-            avatar=avatar,
+            first_name=validated_data.pop("first_name"),
+            last_name=validated_data.pop("last_name"),
+            email=validated_data.pop("email", None),
+            avatar=validated_data.pop("avatar", None),
             role=User.Role.TEACHER,
         )
+
         teacher = Teacher.objects.create(
             user=user,
             branch_id=branch_id,
             centers_id=center_id,
-            specialization=validated_data.get("specialization", ""),
-            experience=validated_data.get("experience", 0),
-            salary=validated_data.get("salary"),
-            bio=validated_data.get("bio", ""),
-            date_of_birth=validated_data.get("date_of_birth"),
+            **validated_data,
         )
         return teacher
 
@@ -336,17 +336,22 @@ class DirectorTeacherCreateSerializer(Serializer):
         password = validated_data.pop("password", None)
         if password:
             user.set_password(password)
-        for field in ["phone", "first_name", "last_name", "email", "avatar"]:
+
+        user_fields = ["phone", "first_name", "last_name", "email", "avatar"]
+        for field in user_fields:
             if field in validated_data:
-                setattr(user, field, validated_data[field])
+                setattr(user, field, validated_data.pop(field))
         user.save()
-        for field in ["specialization", "experience", "salary", "bio", "date_of_birth"]:
-            if field in validated_data:
-                setattr(instance, field, validated_data[field])
+
         if "branch" in validated_data:
-            instance.branch_id = validated_data["branch"]
+            instance.branch_id = validated_data.pop("branch")
+
         if "center" in validated_data:
-            instance.centers_id = validated_data["center"]
+            instance.centers_id = validated_data.pop("center")
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
         instance.save()
         return instance
 
