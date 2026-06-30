@@ -1,4 +1,4 @@
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, Q, Sum, Case, When, F
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework import filters
@@ -75,9 +75,9 @@ class PaymentListCreateView(ListCreateAPIView):
 
         totals = qs.aggregate(
             total_amount=Sum("final_amount"),
-            paid_total=Sum("final_amount", filter=Q(status=Payment.Status.PAID)),
-            pending_total=Sum("final_amount", filter=Q(status=Payment.Status.PENDING)),
-            overdue_total=Sum("final_amount", filter=Q(status=Payment.Status.OVERDUE)),
+            paid_total=Sum(Case(When(status=Payment.Status.PAID, then=F("final_amount")), default=0)),
+            pending_total=Sum(Case(When(status=Payment.Status.PENDING, then=F("final_amount")), default=0)),
+            overdue_total=Sum(Case(When(status=Payment.Status.OVERDUE, then=F("final_amount")), default=0)),
         )
 
         page = self.paginate_queryset(qs)
@@ -156,8 +156,8 @@ class StudentPaymentListView(ListAPIView):
         qs = self.filter_queryset(self.get_queryset())
 
         totals = qs.aggregate(
-            total_paid=Sum("final_amount", filter=Q(status=Payment.Status.PAID)),
-            total_debt=Sum("final_amount", filter=Q(status=Payment.Status.OVERDUE)),
+            total_paid=Sum(Case(When(status=Payment.Status.PAID, then=F("final_amount")), default=0)),
+            total_debt=Sum(Case(When(status=Payment.Status.OVERDUE, then=F("final_amount")), default=0)),
         )
 
         page = self.paginate_queryset(qs)
@@ -188,6 +188,9 @@ class PaymentSummaryView(APIView):
 
     def get(self, request):
         center = get_director_center(request)
+        if not center:
+            return Response({"error": "Markaz topilmadi"}, status=400)
+
         year = request.query_params.get("year")
         month = request.query_params.get("month")
 
@@ -199,13 +202,13 @@ class PaymentSummaryView(APIView):
 
         totals = qs.aggregate(
             total=Sum("final_amount"),
-            paid=Sum("final_amount", filter=Q(status=Payment.Status.PAID)),
-            pending=Sum("final_amount", filter=Q(status=Payment.Status.PENDING)),
-            overdue=Sum("final_amount", filter=Q(status=Payment.Status.OVERDUE)),
-            refunded=Sum("final_amount", filter=Q(status=Payment.Status.REFUNDED)),
+            paid=Sum(Case(When(status=Payment.Status.PAID, then=F("final_amount")), default=0)),
+            pending=Sum(Case(When(status=Payment.Status.PENDING, then=F("final_amount")), default=0)),
+            overdue=Sum(Case(When(status=Payment.Status.OVERDUE, then=F("final_amount")), default=0)),
+            refunded=Sum(Case(When(status=Payment.Status.REFUNDED, then=F("final_amount")), default=0)),
             count_total=Count("id"),
-            count_paid=Count("id", filter=Q(status=Payment.Status.PAID)),
-            count_overdue=Count("id", filter=Q(status=Payment.Status.OVERDUE)),
+            count_paid=Count(Case(When(status=Payment.Status.PAID, then=1))),
+            count_overdue=Count(Case(When(status=Payment.Status.OVERDUE, then=1))),
         )
 
         by_method = (
@@ -219,7 +222,7 @@ class PaymentSummaryView(APIView):
             qs.values("branch__name")
             .annotate(
                 total=Sum("final_amount"),
-                paid=Sum("final_amount", filter=Q(status=Payment.Status.PAID)),
+                paid=Sum(Case(When(status=Payment.Status.PAID, then=F("final_amount")), default=0)),
             )
             .order_by("-total")
         )
@@ -230,7 +233,7 @@ class PaymentSummaryView(APIView):
                 qs.values("period_month")
                 .annotate(
                     total=Sum("final_amount"),
-                    paid=Sum("final_amount", filter=Q(status=Payment.Status.PAID)),
+                    paid=Sum(Case(When(status=Payment.Status.PAID, then=F("final_amount")), default=0)),
                 )
                 .order_by("period_month")
             )
@@ -259,7 +262,15 @@ class DebtListCreateView(ListCreateAPIView):
 
     def get_queryset(self):
         center = self.get_center()
-        return Debt.objects.filter(student__center=center).select_related("student", "group").order_by("due_date")
+        if not center:
+            return Debt.objects.none()
+
+        queryset = Debt.objects.filter(student__center=center)
+        center_id = self.request.query_params.get("center_id")
+        if center_id:
+            queryset = queryset.filter(student__center_id=center_id)
+
+        return queryset
 
     def get_serializer_class(self):
         if self.request.method == "POST":
@@ -267,9 +278,9 @@ class DebtListCreateView(ListCreateAPIView):
         return DebtListSerializer
 
     def get_serializer_context(self):
-        ctx = super().get_serializer_context()
-        ctx["center"] = self.get_center()
-        return ctx
+        context = super().get_serializer_context()
+        context["center"] = self.get_center()
+        return context
 
     def list(self, request, *args, **kwargs):
         qs = self.filter_queryset(self.get_queryset())

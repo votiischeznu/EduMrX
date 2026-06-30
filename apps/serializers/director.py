@@ -238,15 +238,7 @@ class DirectorTeacherDetailSerializer(ModelSerializer):
 
     class Meta:
         model = Teacher
-        fields = [
-            "id",
-            "user",
-            "specialization",
-            "experience",
-            "salary",
-            "bio",
-            "date_of_birth",
-        ]
+        fields = ["id", "user", "specialization", "experience", "salary", "bio", "date_of_birth"]
 
 
 class DirectorTeacherCreateSerializer(Serializer):

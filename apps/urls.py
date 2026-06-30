@@ -211,4 +211,5 @@ urlpatterns = [
     path("students/<uuid:student_id>/payments/", StudentPaymentListView.as_view()),
     # Qarzlar
     path("debts/", DebtListCreateView.as_view()),
+    path("debts/summary/", DebtSummaryView.as_view()),
 ]

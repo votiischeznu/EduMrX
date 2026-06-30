@@ -23,15 +23,7 @@ from apps.utils.phone import normalize_phone
 class UserSummarySerializer(ModelSerializer):
     class Meta:
         model = User
-        fields = [
-            "id",
-            "phone",
-            "first_name",
-            "last_name",
-            "full_name",
-            "avatar",
-            "email",
-        ]
+        fields = ["id", "phone", "first_name", "last_name", "full_name", "avatar", "email"]
 
 
 # ─── STUDENT SERIALIZERS ───
