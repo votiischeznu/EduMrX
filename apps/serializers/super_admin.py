@@ -2,10 +2,10 @@ import re
 
 from django.contrib.auth import get_user_model
 from rest_framework.exceptions import ValidationError
-from rest_framework.fields import JSONField, CharField, IntegerField, BooleanField
-from rest_framework.serializers import Serializer, ModelSerializer
+from rest_framework.fields import BooleanField, CharField, IntegerField, JSONField
+from rest_framework.serializers import ModelSerializer, Serializer
 
-from apps.models import Center
+from apps.models import Center, Student
 from apps.utils.phone import normalize_phone
 
 User = get_user_model()
@@ -17,6 +17,30 @@ class SuperAdminMenuStatsSerializer(Serializer):
     directors = JSONField()
     centers = JSONField()
     payments = JSONField()
+
+
+class SuperAdminStudentListSerializer(ModelSerializer):
+    full_name = CharField(source="user.full_name", read_only=True)
+    phone = CharField(source="user.phone", read_only=True)
+    email = CharField(source="user.email", read_only=True)
+    center_name = CharField(source="center.name", read_only=True)
+    branch_name = CharField(source="branch.name", read_only=True, default=None)
+    parent_name = CharField(source="parent.user.full_name", read_only=True, default=None)
+
+    class Meta:
+        model = Student
+        fields = [
+            "id",
+            "full_name",
+            "phone",
+            "email",
+            "center_name",
+            "branch_name",
+            "parent_name",
+            "status",
+            "enrolled_at",
+            "created_at",
+        ]
 
 
 class DirectorCreateUpdateSerializer(ModelSerializer):
@@ -44,26 +68,16 @@ class DirectorCreateUpdateSerializer(ModelSerializer):
     def validate_phone(self, value):
         normalized = normalize_phone(value)
         user_id = self.instance.id if self.instance else None
-        if (
-            User.objects.filter(phone=normalized, is_deleted=False)
-            .exclude(id=user_id)
-            .exists()
-        ):
-            raise ValidationError(
-                "Bu telefon raqam allaqachon boshqa direktor tomonidan band qilingan."
-            )
+        if User.objects.filter(phone=normalized, is_deleted=False).exclude(id=user_id).exists():
+            raise ValidationError("Bu telefon raqam allaqachon boshqa direktor tomonidan band qilingan.")
         return normalized
 
     def create(self, validated_data):
         password = validated_data.pop("password", None)
         if not password:
-            raise ValidationError(
-                {"password": "Yangi direktor uchun parol kiritish majburiy."}
-            )
+            raise ValidationError({"password": "Yangi direktor uchun parol kiritish majburiy."})
 
-        user = User.objects.create_user(
-            role=User.Role.DIRECTOR, password=password, **validated_data
-        )
+        user = User.objects.create_user(role=User.Role.DIRECTOR, password=password, **validated_data)
         return user
 
     def update(self, instance, validated_data):
@@ -167,9 +181,7 @@ class CenterDetailSerializer(ModelSerializer):
     def validate_slug(self, value):
         SLUG_REGEX = r"^[a-z0-9-_]+$"
         if not re.match(SLUG_REGEX, value):
-            raise ValidationError(
-                "Slug formati noto'g'ri. Faqat kichik harflar va chiziqchalar mumkin."
-            )
+            raise ValidationError("Slug formati noto'g'ri. Faqat kichik harflar va chiziqchalar mumkin.")
         return value
 
 

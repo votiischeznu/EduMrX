@@ -75,23 +75,23 @@ from apps.views import (
     SuperAdminFinanceSummaryView,
     SuperAdminFinanceTransactionsView,
     SuperAdminStudentDetailView,
+    SuperAdminStudentListView,
     TelegramLinkStartView,
     TelegramLinkStatusView,
     TelegramOAuthView,
 )
 from apps.views.finance import (
-    ExpenseDetailView,
-    ExpenseSummaryView,
-    ExpenseListCreateView,
+    DebtListCreateView,
     ExpenseCategoryDetailView,
     ExpenseCategoryListCreateView,
+    ExpenseDetailView,
+    ExpenseListCreateView,
+    ExpenseSummaryView,
+    PaymentDetailView,
     PaymentListCreateView,
     PaymentSummaryView,
-    PaymentDetailView,
     StudentPaymentListView,
-    DebtListCreateView,
 )
-
 
 main_router = SimpleRouter(trailing_slash=True)
 main_router.register("rooms", RoomModelViewSet, basename="rooms")
@@ -131,6 +131,7 @@ urlpatterns = [
     path("super-admin/center/student/stats/", SuperAdminCenterStudentListView.as_view()),
     path("super-admin/centers/", SuperAdminCenterListCreateView.as_view()),
     path("super-admin/centers/<uuid:pk>/", SuperAdminCenterDetailView.as_view()),
+    path("super-admin/students/", SuperAdminStudentListView.as_view()),
     path("super-admin/finance/summary/", SuperAdminFinanceSummaryView.as_view()),
     path("super-admin/finance/chart/", SuperAdminFinanceChartView.as_view()),
     path("super-admin/finance/centers/", SuperAdminFinanceCentersView.as_view()),

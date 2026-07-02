@@ -11,6 +11,7 @@ from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from serializers.super_admin import SuperAdminStudentListSerializer
 
 from apps.models import Center, Payment, Student, User
 from apps.pagination import CustomPagination
@@ -23,8 +24,9 @@ from apps.serializers import (
     DirectorListSerializer,
     StudentCreateUpdateSerializer,
     StudentDetailSerializer,
+    SuperAdminDashboardSerializer,
+    SuperAdminStudentListSerializer,
 )
-from apps.serializers.stats import SuperAdminDashboardSerializer
 
 UZ_MONTHS = {
     1: "Yan",
@@ -340,3 +342,19 @@ class SuperAdminStudentDetailView(RetrieveUpdateDestroyAPIView):
         user.save()
 
         instance.delete()
+
+
+@extend_schema(tags=["SuperAdminStudent"])
+class SuperAdminStudentListView(ListAPIView):
+    queryset = (
+        Student.objects.select_related("user", "center", "branch", "parent__user")
+        .filter(user__is_deleted=False)
+        .order_by("-created_at")
+    )
+    permission_classes = [IsSuperAdmin]
+    pagination_class = CustomPagination
+    serializer_class = SuperAdminStudentListSerializer
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = ["user__first_name", "user__last_name", "user__phone", "user__email", "center__name"]
+    ordering_fields = ["created_at", "enrolled_at"]
+    ordering = ["-created_at"]
