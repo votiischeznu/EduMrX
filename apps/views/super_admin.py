@@ -11,7 +11,6 @@ from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from serializers.super_admin import SuperAdminStudentListSerializer
 
 from apps.models import Center, Payment, Student, User
 from apps.pagination import CustomPagination

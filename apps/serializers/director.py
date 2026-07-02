@@ -150,6 +150,18 @@ class DirectorStudentCreateSerializer(Serializer):
             raise ValidationError("Bu telefon raqam allaqachon mavjud.")
         return normalized
 
+    def validate_email(self, value):
+        if not value:
+            return value
+        normalized_email = value.strip().lower()
+        qs = User.objects.filter(email__iexact=normalized_email, is_deleted=False)
+        instance = self.context.get("instance")
+        if instance:
+            qs = qs.exclude(id=instance.user_id)
+        if qs.exists():
+            raise ValidationError("Bu elektron pochta allaqachon ro'yxatdan o'tgan.")
+        return normalized_email
+
     # ------------------------------------------------------------------
     # Create / Update
     # ------------------------------------------------------------------

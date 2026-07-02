@@ -7,22 +7,22 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.filters import SearchFilter, OrderingFilter
+from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from apps.models import Student, Teacher, Attendance
+from apps.models import Attendance, Student, Teacher
 from apps.pagination import CustomPagination
 from apps.serializers import (
-    StudentListSerializer,
-    StudentDetailSerializer,
     AttendanceSerializer,
+    StudentCreateUpdateSerializer,
+    StudentDetailSerializer,
+    StudentListSerializer,
+    TeacherCreateUpdateSerializer,
     TeacherDetailSerializer,
     TeacherListSerializer,
-    StudentCreateUpdateSerializer,
-    TeacherCreateUpdateSerializer,
 )
 
 
@@ -68,9 +68,7 @@ class ManagementStudentDetailView(RetrieveUpdateDestroyAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         student_instance = serializer.save()
-        fresh_student = Student.objects.for_user(request.user).get(
-            pk=student_instance.pk
-        )
+        fresh_student = Student.objects.for_user(request.user).get(pk=student_instance.pk)
         return Response(self.get_serializer(fresh_student).data)
 
 
@@ -99,9 +97,7 @@ class ManagementTeacherListCreateView(ListCreateAPIView):
         if user.is_admin:
             return qs.filter(centers__staff_members__user=user)
         if user.is_student:
-            return qs.filter(
-                teaching_groups__enrollments__student__user=user
-            ).distinct()
+            return qs.filter(teaching_groups__enrollments__student__user=user).distinct()
 
         return Teacher.objects.none()
 
@@ -127,9 +123,7 @@ class ManagementTeacherDetailView(RetrieveUpdateDestroyAPIView):
         if user.is_admin:
             return qs.filter(centers__staff_members__user=user)
         if user.is_student:
-            return qs.filter(
-                teaching_groups__enrollments__student__user=user
-            ).distinct()
+            return qs.filter(teaching_groups__enrollments__student__user=user).distinct()
 
         return Teacher.objects.none()
 
@@ -177,14 +171,10 @@ class ManagementAttendanceViewSet(ModelViewSet):
                 raise PermissionDenied("Bu dars sizning markazingizga tegishli emas.")
         elif user.is_admin:
             if not center.staff_members.filter(user=user).exists():
-                raise PermissionDenied(
-                    "Siz ushbu markaz darslariga davomat qila olmaysiz."
-                )
+                raise PermissionDenied("Siz ushbu markaz darslariga davomat qila olmaysiz.")
         elif user.is_teacher:
             if lesson.group.teacher.user != user:
-                raise PermissionDenied(
-                    "Siz faqat o'zingiz dars o'tadigan guruhga davomat qila olasiz."
-                )
+                raise PermissionDenied("Siz faqat o'zingiz dars o'tadigan guruhga davomat qila olasiz.")
         else:
             raise PermissionDenied("Sizda davomat olish huquqi yo'q.")
 
@@ -208,9 +198,7 @@ class ManagementAttendanceViewSet(ModelViewSet):
         attendance_qs = attendance_qs.filter(marked_at__gte=start_date)
 
         stats = attendance_qs.aggregate(
-            total=Count("id"),
-            absent=Count("id", filter=Q(status__iexact="absent"))
-            | Count("id", filter=Q(status__iexact="Kelmadi")),
+            total=Count("id"), absent=Count("id", filter=Q(status__iexact="absent") | Q(status__iexact="Kelmadi"))
         )
         total_count = stats["total"] or 0
         absent_count = stats["absent"] or 0
@@ -227,4 +215,4 @@ class ManagementAttendanceViewSet(ModelViewSet):
             "period": period,
         }
 
-        return Response(data, status=status.HTTP_OK)
+        return Response(data, status=status.HTTP_200_OK)
