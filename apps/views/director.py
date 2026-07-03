@@ -1,17 +1,18 @@
 from datetime import date
 
+from django.core.exceptions import ValidationError
 from django.db.models import QuerySet
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
-from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.exceptions import NotFound
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.models import Attendance, Branch, Center, CenterStaff, Course, Group, Lesson, Room, Student, Teacher
+from apps.models import Attendance, Branch, CenterStaff, Course, Group, Lesson, Room, Student, Teacher
 from apps.permissions import IsDirector
 from apps.serializers import (
     DirectorAdminCreateSerializer,
@@ -33,24 +34,46 @@ from apps.serializers import (
     DirectorTeacherDetailSerializer,
     DirectorTeacherListSerializer,
 )
-from apps.service.director_dashboard import get_dashboard_data, get_director_centers, get_single_center_or_404
-from apps.service.director_finance_service import (
+from apps.service import (
     DirectorFinanceBranchesService,
     DirectorFinanceChartService,
     DirectorFinanceService,
     DirectorFinanceTransactionsService,
+    get_dashboard_data_from_centers,
+    get_director_centers,
+    get_single_center_or_404,
 )
 
 
-class DirectorDashboardView(APIView):
+class DirectorAnalyticsBaseView(APIView):
     permission_classes = [IsAuthenticated, IsDirector]
 
+    def get_centers_and_branch(self, request):
+        centers = get_director_centers(request.user)
+        branch = None
+        branch_id = request.query_params.get("branch_id")
+        if branch_id:
+            try:
+                branch = Branch.objects.get(id=branch_id, center__in=centers)
+            except (Branch.DoesNotExist, ValueError, ValidationError):
+                raise NotFound("Filial topilmadi yoki sizga tegishli emas.")
+        return centers, branch
+
+
+@extend_schema(tags=["DirectorAnalytics"])
+class DirectorDashboardView(DirectorAnalyticsBaseView):
+    """GET /api/v1/director/dashboard/?branch_id=<uuid>&period=this_month"""
+
+    ALLOWED_PERIODS = {"this_month", "last_month", "3months", "year"}
+
     def get(self, request):
-        center = Center.objects.filter(director=request.user).first()
-        if not center:
-            return Response({"detail": "Sizga biriktirilgan markaz topilmadi."}, status=404)
-        data = get_dashboard_data(center)
-        return Response(data)
+        period = request.query_params.get("period", "this_month")
+        if period not in self.ALLOWED_PERIODS:
+            period = "this_month"
+
+        centers, branch = self.get_centers_and_branch(request)
+        data = get_dashboard_data_from_centers(centers, branch=branch, period=period)
+        return Response({"status": "success", "data": data})
 
 
 class SoftDeleteUserMixin:
@@ -113,22 +136,19 @@ class DirectorStudentDetailView(SoftDeleteUserMixin, RetrieveUpdateDestroyAPIVie
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context["centers"] = get_director_centers(self.request.user)
-        # update validatsiyasida instance kerak (phone unique check uchun)
         if self.request.method == "PATCH":
             context["instance"] = self.get_object()
         return context
 
     def update(self, request, *args, **kwargs):
-        """
-        PATCH — update qilib, response'ni DetailSerializer bilan qaytaradi.
-        Shu yerda override qilmasak DRF CreateSerializer'dan
-        to_representation chaqirib xato beradi.
-        """
-        partial = kwargs.pop("partial", True)  # PATCH har doim partial
         instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+
+        # Bu yerda serializerdagi validate_email/phone avtomatik chaqiriladi
+        # Agar xato bo'lsa, avtomatik 400 Bad Request qaytaradi
         serializer.is_valid(raise_exception=True)
         student = serializer.save()
+        # Javobni DetailSerializer bilan qaytarish
         response_data = DirectorStudentDetailSerializer(student, context=self.get_serializer_context()).data
         return Response(response_data, status=status.HTTP_200_OK)
 
@@ -514,21 +534,6 @@ class DirectorAdminDetailView(RetrieveUpdateDestroyAPIView):
         instance.user.is_active = False
         instance.user.save(update_fields=["is_deleted", "is_active"])
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-class DirectorAnalyticsBaseView(APIView):
-    permission_classes = [IsAuthenticated, IsDirector]
-
-    def get_centers_and_branch(self, request):
-        centers = get_director_centers(request.user)
-        branch = None
-        branch_id = request.query_params.get("branch_id")
-        if branch_id:
-            try:
-                branch = Branch.objects.get(id=branch_id, center__in=centers)
-            except Branch.DoesNotExist:
-                raise NotFound("Filial topilmadi yoki sizga tegishli emas.")
-        return centers, branch
 
 
 @extend_schema(tags=["DirectorAnalytics"])

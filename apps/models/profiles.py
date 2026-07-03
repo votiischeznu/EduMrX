@@ -24,6 +24,7 @@ class Teacher(TimeStampedModel):
     user = OneToOneField(
         "apps.User", CASCADE, related_name="teacher_profile", limit_choices_to={"role": User.Role.TEACHER}
     )
+
     centers = ForeignKey("apps.Center", CASCADE, related_name="teachers", null=True, blank=True)
     branch = ForeignKey(
         "apps.Branch", SET_NULL, null=True, blank=True, related_name="teachers", verbose_name=_("Filial")

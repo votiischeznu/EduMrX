@@ -24,7 +24,7 @@ PHONE_REGEX = r"^\998\d{9}$"
 # Boshqa maydonlar (frontend xato qo'shib yuborgan bo'lsa ham) hash
 # hisobiga kiritilmaydi — aks holda hash doim mos kelmaydi.
 
-TELEGRAM_AUTH_FIELDS = {"id", "first_name", "last_name", "username", "photo_url", "auth_date"}
+TELEGRAM_AUTH_FIELDS = {"id", "phone", "first_name", "last_name", "username", "photo_url", "auth_date"}
 
 
 def validate_uzbek_phone(value: str):
