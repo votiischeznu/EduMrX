@@ -8,6 +8,7 @@ from apps.models import Parent, Student, Teacher, User
 
 class UserUpdateMixin:
     def update(self, instance, validated_data):
+        # 'user_data' bu yerda 'user' kaliti orqali keladi
         user_data = validated_data.pop("user", None)
         if user_data:
             user = instance.user
@@ -20,16 +21,7 @@ class UserUpdateMixin:
 class BaseUserProfileModelSerializer(ModelSerializer):
     class Meta:
         model = User
-        fields = [
-            "id",
-            "phone",
-            "email",
-            "first_name",
-            "last_name",
-            "full_name",
-            "role",
-            "avatar",
-        ]
+        fields = ["id", "phone", "email", "first_name", "last_name", "full_name", "role", "avatar", "gender"]
         read_only_fields = ["id", "phone", "role", "full_name"]
 
 
@@ -60,16 +52,7 @@ class StudentProfileSerializer(UserUpdateMixin, ModelSerializer):
 
     class Meta:
         model = Student
-        fields = [
-            "id",
-            "user_data",
-            "center_name",
-            "parent_name",
-            "date_of_birth",
-            "notes",
-            "status",
-            "enrolled_at",
-        ]
+        fields = ["id", "user_data", "center_name", "parent_name", "date_of_birth", "notes", "status", "enrolled_at"]
         read_only_fields = ["id", "center_name", "parent_name", "status", "enrolled_at"]
 
 
@@ -87,25 +70,45 @@ class AdminProfileSerializer(ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "phone", "email", "first_name", "last_name", "full_name", "role", "avatar", "center_ids"]
-        read_only_fields = ["id", "phone", "role", "center_ids"]
+        fields = [
+            "id",
+            "phone",
+            "email",
+            "first_name",
+            "last_name",
+            "full_name",
+            "role",
+            "avatar",
+            "gender",
+            "center_ids",
+        ]
+        read_only_fields = ["id", "phone", "role", "full_name", "center_ids"]
 
     def get_center_ids(self, obj):
         if hasattr(obj, "centers"):
             return list(obj.centers.values_list("id", flat=True))
-
-        if hasattr(obj, "center_set"):
-            return list(obj.center_set.values_list("id", flat=True))
-
         return []
 
 
-class DirectorProfileSerializer(BaseUserProfileModelSerializer):
+class DirectorProfileSerializer(ModelSerializer):
+    user_data = BaseUserProfileModelSerializer(source="*")
     center_ids = SerializerMethodField()
 
-    class Meta(BaseUserProfileModelSerializer.Meta):
-        fields = BaseUserProfileModelSerializer.Meta.fields + ["center_ids"]
-        read_only_fields = BaseUserProfileModelSerializer.Meta.read_only_fields + ["center_ids"]
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "phone",
+            "email",
+            "first_name",
+            "last_name",
+            "full_name",
+            "role",
+            "avatar",
+            "gender",
+            "center_ids",
+        ]
+        read_only_fields = ["id", "phone", "role", "full_name", "center_ids"]
 
     def get_center_ids(self, obj):
         return list(obj.directed_centers.values_list("id", flat=True))
@@ -128,7 +131,6 @@ class PasswordChangeSerializer(Serializer):
     def save(self, **kwargs):
         user = self.context["request"].user
         user.set_password(self.validated_data["new_password"])
-        if user.must_change_password:
-            user.must_change_password = False
+        user.must_change_password = False
         user.save()
         return user

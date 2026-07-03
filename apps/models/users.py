@@ -29,7 +29,12 @@ class User(AbstractBaseUser, PermissionsMixin):
         STUDENT = "student", _("Talaba")
         PARENT = "parent", _("Ota-ona")
 
+    class Gender(TextChoices):
+        MALE = "male", _("Erkak")
+        FEMALE = "female", _("Ayol")
+
     id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    gender = CharField(_("Jinsi"), max_length=10, choices=Gender.choices, null=True, blank=True)
     phone = CharField(_("Telefon"), max_length=50, unique=True)
     email = EmailField(_("Email"), blank=True, null=True, unique=True)
     backup_phone = CharField(_("Qo'shimcha telefon"), max_length=30, blank=True, null=True, unique=True)
