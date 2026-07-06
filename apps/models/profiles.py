@@ -103,19 +103,26 @@ class Parent(TimeStampedModel):
 
 class StudentQuerySet(QuerySet):
     def for_user(self, user):
+        """
+        FIX: har bir branch endi user__is_deleted=False bilan filtrlanadi.
+        Avval bu yerda is_deleted umuman tekshirilmagan edi — Director,
+        Manager(is_admin) va Teacher panellarida (apps.views.management
+        orqali) o'chirilgan o'quvchilar ro'yxatda ko'rinib qolishi
+        mumkin edi.
+        """
         if user.is_anonymous:
             return self.none()
         if user.is_super_admin:
-            return self.all()
+            return self.filter(user__is_deleted=False)
         if user.is_director:
-            return self.filter(center__director=user)
+            return self.filter(center__director=user, user__is_deleted=False)
         if user.is_admin:
             staff_profile = getattr(user, "staff_profile", None)
             if staff_profile is None:
                 return self.none()
-            return self.filter(center=staff_profile.center)
+            return self.filter(center=staff_profile.center, user__is_deleted=False)
         if user.is_teacher:
-            return self.filter(enrollments__group__teacher__user=user).distinct()
+            return self.filter(enrollments__group__teacher__user=user, user__is_deleted=False).distinct()
         return self.none()
 
 

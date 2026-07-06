@@ -53,10 +53,6 @@ def _get_12m_start(today: date) -> date:
 
 
 def _generate_empty_12m_dict(start_date: date) -> dict:
-    """
-    Oxirgi 12 oy uchun standart 0 qiymatli dict generatsiya qiladi.
-    Bu bazada ma'lumot bo'lmagan bo'sh oylarni to'ldirish uchun kerak.
-    """
     months_dict = {}
     current_date = start_date
     for _ in range(12):
@@ -255,7 +251,7 @@ class SuperAdminDashboardView(APIView):
 
 @extend_schema(tags=["SuperAdminDirector"])
 class SuperAdminDirectorListCreateView(ListCreateAPIView):
-    queryset = User.objects.filter(role=User.Role.DIRECTOR, is_deleted=False)
+    queryset = User.objects.filter(role=User.Role.DIRECTOR)
     permission_classes = [IsSuperAdmin]
     pagination_class = CustomPagination
     filter_backends = [SearchFilter, OrderingFilter]
@@ -271,7 +267,7 @@ class SuperAdminDirectorListCreateView(ListCreateAPIView):
 
 @extend_schema(tags=["SuperAdminDirector"])
 class SuperAdminDirectorDetailView(RetrieveUpdateDestroyAPIView):
-    queryset = User.objects.filter(role=User.Role.DIRECTOR, is_deleted=False)
+    queryset = User.objects.filter(role=User.Role.DIRECTOR)
     permission_classes = [IsSuperAdmin]
 
     def get_serializer_class(self):
@@ -280,10 +276,10 @@ class SuperAdminDirectorDetailView(RetrieveUpdateDestroyAPIView):
         return DirectorListSerializer
 
     def perform_destroy(self, instance):
-        instance.is_deleted = True
-        instance.is_active = False
-        instance.phone = f"{instance.phone}_del_{instance.id.hex[:4]}"
-        instance.save()
+        # FIX: takrorlangan phone-bo'shatish kodi User.soft_delete()ga
+        # ko'chirildi — endi SuperAdminStudentDetailView va Manager/Director
+        # panellaridagi barcha delete oqimlari bitta manbaga tayanadi.
+        instance.soft_delete()
 
 
 @extend_schema(tags=["SuperAdminCenter"])
@@ -334,12 +330,8 @@ class SuperAdminStudentDetailView(RetrieveUpdateDestroyAPIView):
         return StudentDetailSerializer
 
     def perform_destroy(self, instance):
-        user = instance.user
-        user.is_deleted = True
-        user.is_active = False
-        user.phone = f"{user.phone}_del_{user.id.hex[:4]}"
-        user.save()
-
+        # FIX: xuddi Director bilan bir xil — User.soft_delete()ga ko'chirildi.
+        instance.user.soft_delete()
         instance.delete()
 
 

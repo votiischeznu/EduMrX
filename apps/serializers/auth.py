@@ -3,12 +3,10 @@ import hashlib
 import hmac
 import re
 import time
-from datetime import timedelta
 
 from django.conf import settings
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
-from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import CharField, ChoiceField, EmailField
@@ -57,13 +55,11 @@ class RegisterModelSerializer(ModelSerializer):
 
     def validate_phone(self, value):
         normalized = normalize_phone(value)
-        user = User.objects.filter(phone=normalized).first()
-        if user:
-            six_months_ago = timezone.now() - timedelta(days=180)
-            if not user.is_active and user.updated_at < six_months_ago:
-                user.phone = f"{user.phone}_{user.id.hex[:5]}"
-                user.save(update_fields=["phone"])
-                return value
+        # User.objects endi default holda is_deleted=False bo'lganlarni
+        # qaytaradi (apps/models/manager.py), shuning uchun bu yerda
+        # o'chirilgan/eski userlar bilan qo'lda ishlashning hojati yo'q —
+        # agar topilsa, demak u haqiqatan ham faol va band.
+        if User.objects.filter(phone=normalized).exists():
             raise ValidationError("Bu telefon raqam allaqachon mavjud va faol holatda.")
         return value
 
@@ -108,6 +104,9 @@ class LoginModelSerializer(Serializer):
 
         normalized = re.sub(r"[\s\-\(\)]", "", raw_phone).lstrip("+")
 
+        # User.objects endi is_deleted=True bo'lganlarni umuman qaytarmaydi,
+        # shuning uchun o'chirilgan user bu yerda "topilmadi" deb chiqadi —
+        # xavfsizlik nuqtai nazaridan to'g'ri (aniq sabab oshkor qilinmaydi).
         user = User.objects.filter(phone=normalized).first() or User.objects.filter(phone="+" + normalized).first()
         if not user or not user.check_password(password):
             raise ValidationError("Telefon raqam yoki parol xato.")
@@ -143,14 +142,11 @@ class RecoveryStartSerializer(Serializer):
 
     def validate_new_phone(self, value):
         normalized = normalize_phone(value)
-        user = User.objects.filter(phone=normalized).first()
-        if user:
-            six_months_ago = timezone.now() - timedelta(days=180)
-            if not user.is_active and user.updated_at < six_months_ago:
-                user.phone = f"{user.phone}_{user.id.hex[:5]}"
-                user.save(update_fields=["phone"])
-                return value
-
+        # is_deleted=True bo'lgan eski userlar User.objects orqali umuman
+        # ko'rinmaydi (va ularning telefoni soft_delete() paytida allaqachon
+        # bo'shatilgan), shuning uchun bu yerda topilgan har qanday user —
+        # haqiqatan ham faol va raqam band.
+        if User.objects.filter(phone=normalized).exists():
             raise ValidationError("Bu yangi telefon raqam allaqachon boshqa foydalanuvchi tomonidan band qilingan")
         return value
 
@@ -205,7 +201,6 @@ def verify_telegram_hash(data: dict, bot_token: str) -> bool:
 class TelegramOAuthSerializer(serializers.Serializer):
     """
     Telegram Login Widget orqali login.
-
     DIQQAT: bu faqat 'tan olish' (foydalanuvchini telegram_id orqali
     topish) uchun ishlatiladi — bu yerda yangi user YARATILMAYDI.
     Chunki sizning tizimingizda har bir user (Parent/Student/Teacher/
@@ -239,6 +234,7 @@ class TelegramOAuthSerializer(serializers.Serializer):
         if now - attrs["auth_date"] > max_age:
             raise serializers.ValidationError("Telegram auth_date eskirgan. Qaytadan urinib ko'ring.")
 
+        # User.objects is_deleted=True bo'lgan userni umuman qaytarmaydi.
         user = User.objects.filter(telegram_id=attrs["id"]).first()
         if not user:
             raise serializers.ValidationError(

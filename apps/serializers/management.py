@@ -1,11 +1,9 @@
 from django.contrib.auth import get_user_model
 from rest_framework.exceptions import ValidationError
-from rest_framework.fields import CharField, EmailField, ImageField, DateField
-from rest_framework.fields import URLField, IntegerField
+from rest_framework.fields import CharField, DateField, EmailField, ImageField, IntegerField, URLField
 from rest_framework.serializers import ModelSerializer, Serializer
 
-from apps.models import Attendance, Parent, GroupStudent
-from apps.models import Student, Teacher
+from apps.models import Attendance, GroupStudent, Parent, Student, Teacher
 from apps.utils.phone import normalize_phone
 
 User = get_user_model()
@@ -103,7 +101,30 @@ class TeacherCreateUpdateSerializer(ModelSerializer):
         return attrs
 
     def validate_phone(self, value):
-        return normalize_phone(value)
+        normalized = normalize_phone(value)
+        # FIX: avval bu yerda unikalik umuman tekshirilmagan edi — boshqa
+        # userning raqami bilan ham o'qituvchi yaratish/yangilash mumkin
+        # bo'lardi. User.objects endi is_deleted=True bo'lganlarni
+        # ko'rsatmaydi, shuning uchun bu tekshiruv faqat haqiqiy band
+        # raqamlarni ushlaydi.
+        qs = User.objects.filter(phone=normalized)
+        if self.instance:
+            qs = qs.exclude(id=self.instance.user_id)
+        if qs.exists():
+            raise ValidationError({"phone": "Bu telefon raqam allaqachon mavjud."})
+        return normalized
+
+    def validate_email(self, value):
+        # FIX: xuddi shu sabab bilan email unikaligi ham tekshirilmagan edi.
+        if not value:
+            return None
+        value = value.strip().lower()
+        qs = User.objects.filter(email__iexact=value)
+        if self.instance:
+            qs = qs.exclude(id=self.instance.user_id)
+        if qs.exists():
+            raise ValidationError({"email": "Bu email allaqachon ro'yxatdan o'tgan."})
+        return value
 
     def create(self, validated_data):
         password = validated_data.pop("password", None)
@@ -182,9 +203,7 @@ class StudentDetailSerializer(ModelSerializer):
     avatar = ImageField(source="user.avatar", read_only=True)
     center_name = CharField(source="center.name", read_only=True)
     parent = ParentShortSerializer(read_only=True)
-    parent_phone = CharField(
-        source="parent.user.phone", read_only=True, allow_null=True
-    )
+    parent_phone = CharField(source="parent.user.phone", read_only=True, allow_null=True)
     student_id = CharField(source="generated_student_id", read_only=True)
 
     class Meta:
@@ -252,9 +271,7 @@ class StudentCreateUpdateSerializer(ModelSerializer):
     def validate_email(self, value):
         if value:
             if User.objects.filter(email=value).exists():
-                raise ValidationError(
-                    "Bu elektron pochta allaqachon ro'yxatdan o'tgan."
-                )
+                raise ValidationError("Bu elektron pochta allaqachon ro'yxatdan o'tgan.")
         return value
 
     def validate_phone(self, value):
@@ -373,18 +390,12 @@ class AttendanceSerializer(ModelSerializer):
         lesson = attrs.get("lesson")
         student = attrs.get("student")
         if lesson and student:
-            if not GroupStudent.objects.filter(
-                group=lesson.group, student=student, is_active=True
-            ).exists():
-                raise ValidationError(
-                    "Bu talaba ko'rsatilgan guruh faol talabalari ro'yxatida mavjud emas!"
-                )
+            if not GroupStudent.objects.filter(group=lesson.group, student=student, is_active=True).exists():
+                raise ValidationError("Bu talaba ko'rsatilgan guruh faol talabalari ro'yxatida mavjud emas!")
         return attrs
 
 
 class StudentStatsResponseSerializer(Serializer):
     active = IntegerField(help_text="Faol talabalar soni")
     new_this_month = IntegerField(help_text="Shu oyda qo'shilgan yangi talabalar soni")
-    minus_this_month = IntegerField(
-        help_text="Shu oyda chiqib ketgan/muzlatilgan talabalar soni"
-    )
+    minus_this_month = IntegerField(help_text="Shu oyda chiqib ketgan/muzlatilgan talabalar soni")

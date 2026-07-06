@@ -6,7 +6,7 @@ class IsSuperAdmin(BasePermission):
 
     def has_permission(self, request, view):
         user = request.user
-        return bool(user and user.is_authenticated and user.is_superuser)
+        return bool(user and user.is_authenticated and user.is_active and user.is_superuser)
 
 
 class IsDirector(BasePermission):
@@ -14,7 +14,7 @@ class IsDirector(BasePermission):
 
     def has_permission(self, request, view):
         user = request.user
-        return bool(user and user.is_authenticated and user.is_director)
+        return bool(user and user.is_authenticated and user.is_active and user.is_director)
 
 
 class IsManager(BasePermission):
@@ -22,7 +22,7 @@ class IsManager(BasePermission):
 
     def has_permission(self, request, view):
         user = request.user
-        return bool(user and user.is_authenticated and user.is_admin)
+        return bool(user and user.is_authenticated and user.is_active and user.is_admin)
 
 
 class IsTeacher(BasePermission):
@@ -30,7 +30,7 @@ class IsTeacher(BasePermission):
 
     def has_permission(self, request, view):
         user = request.user
-        return bool(user and user.is_authenticated and user.is_teacher)
+        return bool(user and user.is_authenticated and user.is_active and user.is_teacher)
 
 
 class IsParent(BasePermission):
@@ -38,7 +38,7 @@ class IsParent(BasePermission):
 
     def has_permission(self, request, view):
         user = request.user
-        return bool(user and user.is_authenticated and user.is_parent)
+        return bool(user and user.is_authenticated and user.is_active and user.is_parent)
 
 
 class IsStudent(BasePermission):
@@ -46,4 +46,4 @@ class IsStudent(BasePermission):
 
     def has_permission(self, request, view):
         user = request.user
-        return bool(user and user.is_authenticated and user.is_student)
+        return bool(user and user.is_authenticated and user.is_active and user.is_student)

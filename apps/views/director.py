@@ -77,11 +77,18 @@ class DirectorDashboardView(DirectorAnalyticsBaseView):
 
 
 class SoftDeleteUserMixin:
+    """
+    FIX: avval bu yerda faqat is_deleted/is_active o'rnatilardi, phone
+    o'zgartirilmasdi. Natijada Director panelidan o'chirilgan
+    Student/Teacher/Admin'ning telefon raqami DB'da abadiy band bo'lib
+    qolardi (unique constraint), garchi SuperAdmin panelidagi delete
+    to'g'ri ishlagan bo'lsa ham (u yerda phone bo'shatilar edi). Endi
+    ikkalasi ham User.soft_delete() orqali bir xil ishlaydi.
+    """
+
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
-        instance.user.is_deleted = True
-        instance.user.is_active = False
-        instance.user.save(update_fields=["is_deleted", "is_active"])
+        instance.user.soft_delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -113,7 +120,6 @@ class DirectorStudentListCreateView(ListCreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         student = serializer.save()
-        # Response uchun list serializer ishlatamiz (faqat o'qish uchun)
         response_data = DirectorStudentListSerializer(student, context=self.get_serializer_context()).data
         return Response(response_data, status=status.HTTP_201_CREATED)
 
@@ -143,23 +149,14 @@ class DirectorStudentDetailView(SoftDeleteUserMixin, RetrieveUpdateDestroyAPIVie
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=True)
-
-        # Bu yerda serializerdagi validate_email/phone avtomatik chaqiriladi
-        # Agar xato bo'lsa, avtomatik 400 Bad Request qaytaradi
         serializer.is_valid(raise_exception=True)
         student = serializer.save()
-        # Javobni DetailSerializer bilan qaytarish
         response_data = DirectorStudentDetailSerializer(student, context=self.get_serializer_context()).data
         return Response(response_data, status=status.HTTP_200_OK)
 
 
 @extend_schema(tags=["DirectorTeacher"])
 class DirectorTeacherListCreateView(ListCreateAPIView):
-    """
-    GET  /director/teachers/  — ro'yxat
-    POST /director/teachers/  — yangi o'qituvchi yaratish
-    """
-
     queryset = Teacher.objects.filter(user__is_deleted=False).select_related("user").prefetch_related("centers")
     permission_classes = [IsAuthenticated, IsDirector]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -192,12 +189,6 @@ class DirectorTeacherListCreateView(ListCreateAPIView):
 
 @extend_schema(tags=["DirectorTeacher"])
 class DirectorTeacherDetailView(SoftDeleteUserMixin, RetrieveUpdateDestroyAPIView):
-    """
-    GET    /director/teachers/<id>/  — batafsil
-    PATCH  /director/teachers/<id>/  — tahrirlash
-    DELETE /director/teachers/<id>/  — soft-delete
-    """
-
     queryset = Teacher.objects.select_related("user").prefetch_related("centers")
     permission_classes = [IsAuthenticated, IsDirector]
     http_method_names = ["get", "patch", "delete"]
@@ -219,9 +210,6 @@ class DirectorTeacherDetailView(SoftDeleteUserMixin, RetrieveUpdateDestroyAPIVie
         return context
 
     def update(self, request, *args, **kwargs):
-        """
-        PATCH — update qilib, response'ni DetailSerializer bilan qaytaradi.
-        """
         partial = kwargs.pop("partial", True)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
@@ -495,7 +483,15 @@ class DirectorAdminListCreateView(ListCreateAPIView):
 
 
 @extend_schema(tags=["DirectorAdmin"])
-class DirectorAdminDetailView(RetrieveUpdateDestroyAPIView):
+class DirectorAdminDetailView(SoftDeleteUserMixin, RetrieveUpdateDestroyAPIView):
+    """
+    FIX: avval bu klass SoftDeleteUserMixin'ni meros olmasdan, o'zining
+    delete() metodini alohida yozgan edi — bu SoftDeleteUserMixin bilan
+    so'zma-so'z bir xil kod (dublikat), va phone'ni bo'shatmasdi. Endi
+    mixin orqali User.soft_delete() chaqiriladi, dublikat kod olib
+    tashlandi.
+    """
+
     queryset = CenterStaff.objects.select_related("user", "center", "branch")
     permission_classes = [IsAuthenticated, IsDirector]
     http_method_names = ["get", "patch", "delete"]
@@ -527,13 +523,6 @@ class DirectorAdminDetailView(RetrieveUpdateDestroyAPIView):
 
         response_serializer = DirectorAdminDetailSerializer(staff_member, context=self.get_serializer_context())
         return Response(response_serializer.data)
-
-    def delete(self, request, *args, **kwargs):
-        instance = self.get_object()
-        instance.user.is_deleted = True
-        instance.user.is_active = False
-        instance.user.save(update_fields=["is_deleted", "is_active"])
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @extend_schema(tags=["DirectorAnalytics"])
@@ -590,8 +579,6 @@ class DirectorAnalyticsTransactionsView(DirectorAnalyticsBaseView):
 class DirectorAnalyticsBranchesView(DirectorAnalyticsBaseView):
     """
     GET /api/v1/director/analytics/centers/?page=1&limit=5&status=all&search=...&sort_by=...&sort_dir=...
-    Eslatma: nom 'centers' bo'lib qoladi (SuperAdmin bilan bir xil URL shakli uchun),
-    lekin Director uchun mazmunan bu o'z markazidagi FILIALLAR jadvali.
     """
 
     def get(self, request):

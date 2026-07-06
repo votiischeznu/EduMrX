@@ -1,9 +1,6 @@
 import uuid
 
-from django.contrib.auth.models import (
-    AbstractBaseUser,
-    PermissionsMixin,
-)
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.db.models import (
     BigIntegerField,
     BooleanField,
@@ -17,7 +14,7 @@ from django.db.models import (
 )
 from django.utils.translation import gettext_lazy as _
 
-from apps.models.manager import UserManager
+from apps.models.manager import AllUserManager, UserManager
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -61,7 +58,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         blank=True,
         verbose_name=_("Telegram bog'langan vaqti"),
     )
-
     is_active = BooleanField(_("Faol"), default=True)
     is_staff = BooleanField(_("Xodim"), default=False)
     must_change_password = BooleanField(default=False)
@@ -69,6 +65,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     updated_at = DateTimeField(auto_now=True)
 
     objects = UserManager()
+    all_objects = AllUserManager()
 
     USERNAME_FIELD = "phone"
     REQUIRED_FIELDS = ["first_name", "last_name"]
@@ -111,3 +108,26 @@ class User(AbstractBaseUser, PermissionsMixin):
     @property
     def is_parent(self) -> bool:
         return self.role == self.Role.PARENT
+
+    def soft_delete(self):
+        """
+        Userni o'chiradi (is_deleted=True) va shu bilan birga unique
+        maydonlarni (phone/email/backup_phone) darhol bo'shatadi.
+
+        Nega bu muhim: agar faqat is_deleted=True qilib qo'ysak-u,
+        phone maydonini o'zgartirmasak, DB darajasidagi unique
+        constraint tufayli boshqa hech kim shu raqam bilan ro'yxatdan
+        o'tolmaydi — hatto User.objects (filtrlangan manager) bu
+        o'chirilgan yozuvni "ko'rmasa" ham. Constraint Python filteriga
+        emas, DB'ning o'ziga bog'liq.
+        """
+        if self.phone and "_deleted_" not in self.phone:
+            self.phone = f"{self.phone}_deleted_{self.id.hex[:8]}"
+        if self.email and "_deleted_" not in self.email:
+            self.email = f"{self.email}.deleted.{self.id.hex[:8]}"
+        if self.backup_phone and "_deleted_" not in self.backup_phone:
+            self.backup_phone = f"{self.backup_phone}_deleted_{self.id.hex[:8]}"
+
+        self.is_deleted = True
+        self.is_active = False
+        self.save(update_fields=["phone", "email", "backup_phone", "is_deleted", "is_active"])

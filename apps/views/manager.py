@@ -66,9 +66,6 @@ class ManagerDashboardView(APIView):
             ).aggregate(total=Sum("amount"))["total"]
             or 0
         )
-        # FIX: Debt modeli BaseModel'dan meros oladi va created_at maydoniga ega
-        # emas (faqat due_date bor). Avval created_at__year/month ishlatilgani
-        # uchun FieldError bilan yiqilardi. due_date bilan almashtirildi.
         debts_sum = (
             Debt.objects.filter(
                 student__center=center,
@@ -140,11 +137,6 @@ class ManagerStudentDetailView(RetrieveUpdateDestroyAPIView):
             return ManagerStudentCreateSerializer
         return ManagerStudentDetailSerializer
 
-    # ESLATMA: bu yerda context ("center"/"branch") is_valid()dan KEYIN
-    # o'rnatilsa ham xato bermaydi, chunki ManagerStudentCreateSerializer'ning
-    # validate_phone/validate_email metodlari context'ga emas, self.instance'ga
-    # tayanadi. Shunga qaramay, Group bilan bo'lgan xatoni takrorlamaslik uchun
-    # xavfsizlik maqsadida context'ni is_valid()dan OLDIN o'rnatamiz.
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop("partial", False)
         instance = self.get_object()
@@ -160,9 +152,9 @@ class ManagerStudentDetailView(RetrieveUpdateDestroyAPIView):
         return Response(ManagerStudentDetailSerializer(student).data)
 
     def perform_destroy(self, instance):
-        instance.user.is_deleted = True
-        instance.user.is_active = False
-        instance.user.save(update_fields=["is_deleted", "is_active"])
+        # FIX: avval bu yerda phone bo'shatilmasdi (faqat is_deleted/is_active).
+        # Endi User.soft_delete() orqali — SuperAdmin panelidagi kabi izchil.
+        instance.user.soft_delete()
 
 
 # ==========================================
@@ -207,7 +199,6 @@ class ManagerTeacherDetailView(RetrieveUpdateDestroyAPIView):
             return ManagerTeacherCreateSerializer
         return ManagerTeacherDetailSerializer
 
-    # ESLATMA: Student bilan bir xil sabab -- xavfsizlik uchun context oldindan.
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop("partial", False)
         instance = self.get_object()
@@ -223,9 +214,8 @@ class ManagerTeacherDetailView(RetrieveUpdateDestroyAPIView):
         return Response(ManagerTeacherDetailSerializer(teacher).data)
 
     def perform_destroy(self, instance):
-        instance.user.is_deleted = True
-        instance.user.is_active = False
-        instance.user.save(update_fields=["is_deleted", "is_active"])
+        # FIX: xuddi Student bilan bir xil sabab — soft_delete() ga o'tkazildi.
+        instance.user.soft_delete()
 
 
 # ==========================================
@@ -324,17 +314,6 @@ class ManagerGroupDetailView(RetrieveUpdateDestroyAPIView):
             return ManagerGroupCreateSerializer
         return DirectorGroupCreateSerializer
 
-    # FIX: Avval `update()` ichida `serializer.is_valid(raise_exception=True)`
-    # chaqirilgandan KEYIN `perform_update()` orqali context["center"]/["branch"]
-    # o'rnatilardi. ManagerGroupCreateSerializer.validate() esa aynan
-    # is_valid() paytida ishlaydi va context.get("center")ni o'qiydi -- demak
-    # u doim None edi. Natijada:
-    #   - to'liq payload yuborilsa ham "Kurs/O'qituvchi/Xona topilmadi" (400),
-    #     chunki Course.objects.filter(center=None) hech narsa topmaydi;
-    #   - partial PATCH'da lesson_start_time/lesson_end_time yuborilmasa,
-    #     ularni solishtirish TypeError (500) berardi.
-    # Yechim: center/branch'ni serializer yaratilishidan OLDIN, bitta joyda
-    # context sifatida beramiz, keyin is_valid() chaqiramiz.
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop("partial", False)
         instance = self.get_object()
@@ -373,10 +352,6 @@ class ManagerGroupEnrollView(CreateAPIView):
 # ==========================================
 @extend_schema(tags=["ManagerLessons"])
 class ManagerLessonListCreateView(ListCreateAPIView):
-    # FIX: Lesson modelida "room" FK maydoni mavjud emas (faqat "group" bor).
-    # Avval select_related("group", "room") ishlatilgani uchun har bir GET
-    # so'rovida "Invalid field name(s) given in select_related: 'room'"
-    # FieldError bilan yiqilardi.
     queryset = Lesson.objects.select_related("group")
     permission_classes = [IsAuthenticated, IsManager]
 

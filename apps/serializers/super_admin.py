@@ -68,7 +68,7 @@ class DirectorCreateUpdateSerializer(ModelSerializer):
     def validate_phone(self, value):
         normalized = normalize_phone(value)
         user_id = self.instance.id if self.instance else None
-        if User.objects.filter(phone=normalized, is_deleted=False).exclude(id=user_id).exists():
+        if User.objects.filter(phone=normalized).exclude(id=user_id).exists():
             raise ValidationError("Bu telefon raqam allaqachon boshqa direktor tomonidan band qilingan.")
         return normalized
 
