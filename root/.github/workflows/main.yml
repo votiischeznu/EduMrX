@@ -1,0 +1,83 @@
+name: Django CI
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgress
+          POSTGRES_PASSWORD: ${{ secrets.TEST_DB_PASSWORD }}
+          POSTGRES_DB: edumrx_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgress"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      # 1. Kodni yuklab olish
+      - uses: actions/checkout@v4
+
+      # 2. Python muhitini tayyorlash
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      # 3. uv o'rnatish va kutubxonalarni sync qilish
+      - name: Install dependencies
+        run: |
+          pip install uv
+          uv sync
+
+      # 4. .env.test faylni generatsiya qilish (test_settings.py aynan shu faylni o'qiydi)
+      - name: Create .env.test
+        run: |
+          cat <<EOF > .env.test
+          POSTGRES_HOST=127.0.0.1
+          POSTGRES_NAME=edumrx_test
+          POSTGRES_USER=postgress
+          POSTGRES_PASSWORD=${{ secrets.TEST_DB_PASSWORD }}
+          POSTGRES_PORT=5432
+          DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}
+          REDIS_URL=redis://localhost:6379/0
+          SUPABASE_URL=https://test.supabase.co
+          SUPABASE_SERVICE_KEY=test-key
+          SUPABASE_BUCKET=media
+          TELEGRAM_BOT_TOKEN=test-token
+          ADMIN_ID=123456
+          EMAIL_HOST_USER=test@example.com
+          EMAIL_HOST_PASSWORD=test-pass
+          EOF
+
+      # 5. Migratsiyalarni ishga tushirish
+      - name: Run migrations
+        env:
+          DJANGO_SETTINGS_MODULE: root.test_settings
+        run: uv run python manage.py migrate --noinput
+
+      # 6. Testlarni ishga tushirish
+      - name: Run Tests
+        env:
+          DJANGO_SETTINGS_MODULE: root.test_settings
+        run: uv run pytest -v
