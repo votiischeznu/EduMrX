@@ -6,8 +6,7 @@ from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
 
-from apps.models import Branch, Course, Group, Payment, Room, Student, Teacher, User
-from models import Center
+from apps.models import Branch, Center, Course, Group, Payment, Room, Student, Teacher, User
 
 
 @pytest.fixture
