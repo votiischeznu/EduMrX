@@ -1,29 +1,11 @@
-import pytest
-from django.utils import timezone
 from datetime import timedelta
+
+import pytest
+from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
-from rest_framework.test import APIClient
-from apps.models import Center, User
 
-
-@pytest.fixture
-def api_client():
-    return APIClient()
-
-
-@pytest.fixture
-def super_admin_user():
-    user = User.objects.create_user(
-        phone="+998940000101",
-        first_name="Admin",
-        last_name="SuperAdmin",
-        is_active=True,
-        is_superuser=True,
-        is_staff=True,
-    )
-    user.set_password("123m")
-    user.save()
-    return user
+from apps.models import Center
 
 
 @pytest.fixture
@@ -41,7 +23,7 @@ def test_center(super_admin_user):
 class TestSuperAdminDashboard:
     def test_dashboard_stats(self, api_client, super_admin_user):
         api_client.force_authenticate(user=super_admin_user)
-        response = api_client.get("/api/v1/super-admin/dashboard/")
+        response = api_client.get(reverse("super-admin-dashboard"))
         assert response.status_code == status.HTTP_200_OK
         assert "data" in response.data
 
@@ -51,7 +33,7 @@ class TestSuperAdminDirector:
     def test_director_list_and_create(self, api_client, super_admin_user):
         api_client.force_authenticate(user=super_admin_user)
         assert (
-            api_client.get("/api/v1/super-admin/directors/").status_code
+            api_client.get(reverse("super-admin-directors-list-create")).status_code
             == status.HTTP_200_OK
         )
         payload = {
@@ -61,7 +43,7 @@ class TestSuperAdminDirector:
             "password": "pass",
         }
         assert (
-            api_client.post("/api/v1/super-admin/directors/", payload).status_code
+            api_client.post(reverse("super-admin-directors-list-create"), payload).status_code
             == status.HTTP_201_CREATED
         )
 
@@ -71,7 +53,7 @@ class TestSuperAdminCenter:
     def test_center_crud(self, api_client, super_admin_user):
         api_client.force_authenticate(user=super_admin_user)
         assert (
-            api_client.get("/api/v1/super-admin/centers/").status_code
+            api_client.get(reverse("super-admin-centers-list-create")).status_code
             == status.HTTP_200_OK
         )
         payload = {
@@ -81,7 +63,6 @@ class TestSuperAdminCenter:
             "plan": "pro",
         }
         assert (
-            api_client.post("/api/v1/super-admin/centers/", payload).status_code
+            api_client.post(reverse("super-admin-centers-list-create"), payload).status_code
             == status.HTTP_201_CREATED
         )
-

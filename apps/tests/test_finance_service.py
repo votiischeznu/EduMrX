@@ -5,7 +5,7 @@ import pytest
 from django.utils import timezone
 from model_bakery import baker
 
-from apps.models import Payment, Debt, Student, Center
+from apps.models import Center, Debt, Payment, Student
 from apps.service import FinanceCentersService, FinanceChartService, FinanceService
 
 

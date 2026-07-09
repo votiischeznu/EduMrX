@@ -25,8 +25,6 @@ from apps.models import TimeStampedModel
 from apps.models.users import User
 
 
-
-
 class Center(TimeStampedModel):
     class Plan(TextChoices):
         TRIAL = "trial", _("Trial")

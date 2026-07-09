@@ -1,113 +1,21 @@
 from datetime import date, time, timedelta
 
 import pytest
+from django.urls import reverse
 from rest_framework import status
-from rest_framework.test import APIClient
 
-from apps.models import Attendance, Center, Course, Group, Lesson, Room, Student, Teacher, User
-
-
-@pytest.fixture
-def api_client():
-    return APIClient()
-
-
-@pytest.fixture
-def director_user():
-    user = User.objects.create_user(
-        phone="998901111111",
-        first_name="Vali",
-        last_name="Valijonov",
-        role=User.Role.DIRECTOR,
-        is_active=True,
-    )
-    user.set_password("123m")
-    user.save()
-    return user
-
-
-@pytest.fixture
-def center(director_user):
-    return Center.objects.create(
-        name="EduMRX Test Markaz",
-        slug="edumrx-test-markaz",
-        director=director_user,
-    )
+from apps.models import Attendance, Center, Course, Group, Lesson, Teacher, User
 
 
 @pytest.fixture
 def other_center():
+    """Bu fayl uchun mahalliy: direktorsiz markaz.
+    conftest.py dagi `student_in_other_center` fixture'i aynan shu
+    `other_center` ga bog'lanadi (pytest fixture override mexanizmi)."""
     return Center.objects.create(
         name="Boshqa Markaz",
         slug="boshqa-markaz",
     )
-
-
-@pytest.fixture
-def course(center):
-    return Course.objects.create(
-        name="Python",
-        duration_months=10,
-        price="2000000",
-        status=Course.Status.ACTIVE,
-        center=center,
-    )
-
-
-@pytest.fixture
-def teacher_user():
-    user = User.objects.create_user(
-        phone="998902222222",
-        first_name="Sherzod",
-        last_name="O'qituvchi",
-        role=User.Role.TEACHER,
-        is_active=True,
-    )
-    user.set_password("123m")
-    user.save()
-    return user
-
-
-@pytest.fixture
-def group(center, course, teacher, room):
-    return Group.objects.create(
-        name="Frontend-01",
-        course=course,
-        teacher=teacher,
-        room=room,
-        center=center,
-        start_date=date.today(),
-        lesson_days=[0],
-        lesson_start_time=time(9, 0),
-        lesson_end_time=time(10, 0),
-    )
-
-
-@pytest.fixture
-def room(center):
-    return Room.objects.create(center=center, name="101", capacity=20)
-
-
-@pytest.fixture
-def lesson(group):
-    return Lesson.objects.create(group=group, date=date.today(), start_time=time(9, 0), end_time=time(10, 0))
-
-
-@pytest.fixture
-def student_in_center(center):
-    user = User.objects.create_user(phone="998903333333", first_name="Ali", last_name="Student", role=User.Role.STUDENT)
-    return Student.objects.create(user=user, center=center)
-
-
-@pytest.fixture
-def student_in_other_center(other_center):
-    user = User.objects.create_user(phone="998904444444", first_name="Vali", last_name="Other", role=User.Role.STUDENT)
-    return Student.objects.create(user=user, center=other_center)
-
-
-@pytest.fixture
-def teacher(teacher_user, center):
-    return Teacher.objects.create(user=teacher_user, centers=center)
 
 
 @pytest.mark.django_db
@@ -120,7 +28,7 @@ class TestDirectorCourseView:
             "price": "2000000",
             "status": "active",
         }
-        response = api_client.post("/api/v1/director/courses/", payload)
+        response = api_client.post(reverse("director-courses-list-create"), payload)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_create_course(self, api_client, director_user, center):
@@ -131,7 +39,7 @@ class TestDirectorCourseView:
             "price": "2000000",
             "status": "active",
         }
-        response = api_client.post("/api/v1/director/courses/", payload)
+        response = api_client.post(reverse("director-courses-list-create"), payload)
         assert response.status_code == status.HTTP_201_CREATED
         assert Course.objects.filter(name="Python", center=center).exists()
 
@@ -140,7 +48,7 @@ class TestDirectorCourseView:
         Course.objects.create(name="Not Mine", duration_months=1, price="100", center=other_center)
 
         api_client.force_authenticate(user=director_user)
-        response = api_client.get("/api/v1/director/courses/")
+        response = api_client.get(reverse("director-courses-list-create"))
 
         assert response.status_code == status.HTTP_200_OK
         names = [c["name"] for c in response.data.get("results", response.data)]
@@ -164,7 +72,7 @@ class TestDirectorGroupView:
             "lesson_start_time": time(9, 0).isoformat(),
             "lesson_end_time": time(11, 0).isoformat(),
         }
-        response = api_client.post("/api/v1/director/groups/", payload, format="json")
+        response = api_client.post(reverse("director-groups-list-create"), payload, format="json")
 
         assert response.status_code == status.HTTP_201_CREATED
         group = Group.objects.get(name="Frontend-01")
@@ -182,7 +90,7 @@ class TestDirectorGroupView:
             "lesson_start_time": time(9, 0).isoformat(),
             "lesson_end_time": time(11, 0).isoformat(),
         }
-        response = api_client.post("/api/v1/director/groups/", payload, format="json")
+        response = api_client.post(reverse("director-groups-list-create"), payload, format="json")
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert "teacher" in response.data
 
@@ -199,7 +107,7 @@ class TestDirectorGroupView:
             "lesson_start_time": time(11, 0).isoformat(),
             "lesson_end_time": time(9, 0).isoformat(),
         }
-        response = api_client.post("/api/v1/director/groups/", payload, format="json")
+        response = api_client.post(reverse("director-groups-list-create"), payload, format="json")
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_list_only_shows_own_center_groups(
@@ -233,7 +141,7 @@ class TestDirectorGroupView:
         )
 
         api_client.force_authenticate(user=director_user)
-        response = api_client.get("/api/v1/director/groups/")
+        response = api_client.get(reverse("director-groups-list-create"))
 
         assert response.status_code == status.HTTP_200_OK
         names = [g["name"] for g in response.data.get("results", response.data)]
@@ -252,7 +160,7 @@ class TestDirectorLessonCreate:
             "end_time": time(10, 30).isoformat(),
             "topic": "React Hooks",
         }
-        response = api_client.post("/api/v1/director/lessons/", payload)
+        response = api_client.post(reverse("director-lessons-list-create"), payload)
 
         assert response.status_code == status.HTTP_201_CREATED, response.data
         lesson = Lesson.objects.get(topic="React Hooks")
@@ -264,7 +172,9 @@ class TestDirectorAttendanceView:
     def test_mark_attendance_for_own_student(self, api_client, director_user, lesson, student_in_center):
         api_client.force_authenticate(user=director_user)
         payload = {"records": [{"student": str(student_in_center.id), "status": "present"}]}
-        response = api_client.post(f"/api/v1/director/lessons/{lesson.id}/attendance/", payload, format="json")
+        response = api_client.post(
+            reverse("director-lessons-attendance", kwargs={"pk": lesson.id}), payload, format="json"
+        )
 
         assert response.status_code == status.HTTP_200_OK, response.data
         assert Attendance.objects.filter(lesson=lesson, student=student_in_center).exists()
@@ -274,8 +184,9 @@ class TestDirectorAttendanceView:
     ):
         api_client.force_authenticate(user=director_user)
         payload = {"records": [{"student": str(student_in_other_center.id), "status": "present"}]}
-        response = api_client.post(f"/api/v1/director/lessons/{lesson.id}/attendance/", payload, format="json")
+        response = api_client.post(
+            reverse("director-lessons-attendance", kwargs={"pk": lesson.id}), payload, format="json"
+        )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert not Attendance.objects.filter(lesson=lesson, student=student_in_other_center).exists()
-
