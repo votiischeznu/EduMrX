@@ -1,10 +1,13 @@
 from datetime import timedelta
+
 from django.db.models import Count, Q
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema
-from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from utils.constants import DAY_NAMES
+
 from apps.models import Attendance
 
 
@@ -31,7 +34,6 @@ class AttendanceOverviewAPIView(APIView):
             start_date = today - timedelta(days=today.weekday())
             end_date = start_date + timedelta(days=6)
 
-        # 2. Optimized Query counting via 'pk' instead of 'id'
         attendance_data = (
             Attendance.objects.filter(lesson__date__range=[start_date, end_date])
             .values("lesson__date")
@@ -41,33 +43,23 @@ class AttendanceOverviewAPIView(APIView):
             )
         )
 
-        # 3. Safe dictionary building with explicit string-key parsing fallback
         attendance_map = {}
         for item in attendance_data:
             date_key = item["lesson__date"]
-            # Ensure the date key is evaluated strictly as a datetime.date object
             if date_key:
                 attendance_map[date_key] = (item["present_count"], item["absent_count"])
 
-        DAY_NAMES = {
-            0: "Dush",
-            1: "Sesh",
-            2: "Chor",
-            3: "Pay",
-            4: "Jum",
-            5: "Shan",
-            6: "Yak",
-        }
+        # 2. DAY_NAMES lug'atini bu yerdan olib tashlang!
+
         result = []
         current = start_date
 
-        # 4. Memory loop build response
         while current <= end_date:
             present, absent = attendance_map.get(current, (0, 0))
 
             result.append(
                 {
-                    "day": DAY_NAMES[current.weekday()],
+                    "day": DAY_NAMES.get(current.weekday(), "Noma'lum"),
                     "date": str(current),
                     "present": present,
                     "absent": absent,

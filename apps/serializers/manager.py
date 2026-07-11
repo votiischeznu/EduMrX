@@ -298,9 +298,7 @@ class ManagerGroupCreateSerializer(Serializer):
             raise ValidationError({"course": "Kurs topilmadi yoki ushbu markazga tegishli emas."})
 
         if attrs.get("teacher"):
-            teacher_exists = Teacher.objects.filter(
-                id=attrs["teacher"], centers=center, branch=branch
-            ).exists()
+            teacher_exists = Teacher.objects.filter(id=attrs["teacher"], centers=center, branch=branch).exists()
             if not teacher_exists:
                 raise ValidationError({"teacher": "O'qituvchi topilmadi yoki ushbu filialga tegishli emas."})
 

@@ -6,10 +6,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from apps.models.centers import Branch
-from apps.models.groups import  Group
+from apps.models.groups import Group
 from apps.models.payments import Debt
 from apps.permissions import IsDirector
-from apps.serializers.center import BranchListSerializer, BranchDetailSerializer, BranchCreateUpdateSerializer
+from apps.serializers.center import BranchCreateUpdateSerializer, BranchDetailSerializer, BranchListSerializer
 from apps.views.director import get_single_center_or_404
 
 
@@ -18,17 +18,20 @@ from apps.views.director import get_single_center_or_404
     post=extend_schema(tags=["4. Director — Branches"]),
 )
 class BranchListCreateView(ListCreateAPIView):
+    queryset = Branch.objects.all().order_by("-created_at")
     permission_classes = [IsAuthenticated, IsDirector]
     filter_backends = [filters.SearchFilter]
     search_fields = ["name", "address"]
 
     def get_queryset(self):
+        qs = super().get_queryset()
         center = get_single_center_or_404(self.request.user)
-        qs = Branch.objects.filter(center=center).exclude(status=Branch.Status.ARCHIVED)
+        qs = qs.filter(center=center).exclude(status=Branch.Status.ARCHIVED)
         status_param = self.request.query_params.get("status")
         if status_param and status_param != "all":
             qs = qs.filter(status=status_param)
-        return qs.order_by("-created_at")
+
+        return qs
 
     def get_serializer_class(self):
         return BranchCreateUpdateSerializer if self.request.method == "POST" else BranchListSerializer
@@ -63,12 +66,14 @@ class BranchListCreateView(ListCreateAPIView):
     delete=extend_schema(tags=["4. Director — Branches"]),
 )
 class BranchDetailView(RetrieveUpdateDestroyAPIView):
+    queryset = Branch.objects.all()
     permission_classes = [IsAuthenticated, IsDirector]
     http_method_names = ["get", "patch", "delete"]
 
     def get_queryset(self):
+        qs = super().get_queryset()
         center = get_single_center_or_404(self.request.user)
-        return Branch.objects.filter(center=center)
+        return qs.filter(center=center)
 
     def get_object(self):
         try:

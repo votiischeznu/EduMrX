@@ -48,7 +48,8 @@ class ManagementStudentListCreateView(ListCreateAPIView):
         return StudentListSerializer
 
     def get_queryset(self):
-        return self.queryset.for_user(self.request.user)
+        qs = super().get_queryset()
+        return qs.for_user(self.request.user)
 
 
 @extend_schema(tags=["ManagementStudent"])
@@ -62,7 +63,8 @@ class ManagementStudentDetailView(RetrieveUpdateDestroyAPIView):
         return StudentDetailSerializer
 
     def get_queryset(self):
-        return self.queryset.for_user(self.request.user)
+        qs = super().get_queryset()
+        return qs.for_user(self.request.user)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -87,8 +89,8 @@ class ManagementTeacherListCreateView(ListCreateAPIView):
         return TeacherListSerializer
 
     def get_queryset(self):
+        qs = super().get_queryset()
         user = self.request.user
-        qs = self.queryset
 
         if user.is_super_admin:
             return qs
@@ -114,7 +116,7 @@ class ManagementTeacherDetailView(RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        qs = self.queryset
+        qs = super().get_queryset()
 
         if user.is_super_admin:
             return qs
@@ -143,8 +145,8 @@ class ManagementAttendanceViewSet(ModelViewSet):
     http_method_names = ["get", "post", "patch", "delete"]
 
     def get_queryset(self):
+        qs = super().get_queryset()
         user = self.request.user
-        qs = self.queryset
 
         if user.is_super_admin:
             return qs

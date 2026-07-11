@@ -32,7 +32,8 @@ class NotificationViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return self.queryset.for_user(self.request.user).order_by("-notification__created_at")
+        qs = super().get_queryset()
+        return qs.for_user(self.request.user).order_by("-notification__created_at")
 
     @action(detail=True, methods=["post"], url_path="read")
     def mark_read(self, request, pk=None):

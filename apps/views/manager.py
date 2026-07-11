@@ -106,8 +106,9 @@ class ManagerStudentListCreateView(ListCreateAPIView):
     ordering = ["-created_at"]
 
     def get_queryset(self):
+        qs = super().get_queryset()
         center, branch = get_manager_branch_or_404(self.request.user)
-        return self.queryset.filter(center=center, branch=branch, user__is_deleted=False)
+        return qs.filter(center=center, branch=branch, user__is_deleted=False)
 
     def get_serializer_class(self):
         if self.request.method == "POST":
@@ -129,8 +130,9 @@ class ManagerStudentDetailView(RetrieveUpdateDestroyAPIView):
     http_method_names = ["get", "patch", "delete"]
 
     def get_queryset(self):
+        qs = super().get_queryset()
         center, branch = get_manager_branch_or_404(self.request.user)
-        return self.queryset.filter(center=center, branch=branch, user__is_deleted=False)
+        return qs.filter(center=center, branch=branch, user__is_deleted=False)
 
     def get_serializer_class(self):
         if self.request.method in ["PUT", "PATCH"]:
@@ -168,8 +170,9 @@ class ManagerTeacherListCreateView(ListCreateAPIView):
     search_fields = ["user__first_name", "user__last_name", "user__phone"]
 
     def get_queryset(self):
+        qs = super().get_queryset()
         center, branch = get_manager_branch_or_404(self.request.user)
-        return self.queryset.filter(centers=center, branch=branch, user__is_deleted=False)
+        return qs.filter(centers=center, branch=branch, user__is_deleted=False)
 
     def get_serializer_class(self):
         if self.request.method == "POST":
@@ -191,8 +194,9 @@ class ManagerTeacherDetailView(RetrieveUpdateDestroyAPIView):
     http_method_names = ["get", "patch", "delete"]
 
     def get_queryset(self):
+        qs = super().get_queryset()
         center, branch = get_manager_branch_or_404(self.request.user)
-        return self.queryset.filter(centers=center, branch=branch, user__is_deleted=False)
+        return qs.filter(centers=center, branch=branch, user__is_deleted=False)
 
     def get_serializer_class(self):
         if self.request.method in ["PUT", "PATCH"]:
@@ -228,8 +232,9 @@ class ManagerRoomListCreateView(ListCreateAPIView):
     serializer_class = DirectorRoomSerializer
 
     def get_queryset(self):
+        qs = super().get_queryset()
         center, branch = get_manager_branch_or_404(self.request.user)
-        return self.queryset.filter(center=center, branch=branch)
+        return qs.filter(center=center, branch=branch)
 
     def perform_create(self, serializer):
         center, branch = get_manager_branch_or_404(self.request.user)
@@ -243,8 +248,9 @@ class ManagerRoomDetailView(RetrieveUpdateDestroyAPIView):
     serializer_class = DirectorRoomSerializer
 
     def get_queryset(self):
+        qs = super().get_queryset()
         center, branch = get_manager_branch_or_404(self.request.user)
-        return self.queryset.filter(center=center, branch=branch)
+        return qs.filter(center=center, branch=branch)
 
 
 # ==========================================
@@ -257,8 +263,9 @@ class ManagerCourseListCreateView(ListCreateAPIView):
     serializer_class = DirectorCourseSerializer
 
     def get_queryset(self):
+        qs = super().get_queryset()
         center, _ = get_manager_branch_or_404(self.request.user)
-        return self.queryset.filter(center=center)
+        return qs.filter(center=center)
 
     def perform_create(self, serializer):
         center, _ = get_manager_branch_or_404(self.request.user)
@@ -272,8 +279,9 @@ class ManagerCourseDetailView(RetrieveUpdateDestroyAPIView):
     serializer_class = DirectorCourseSerializer
 
     def get_queryset(self):
+        qs = super().get_queryset()
         center, _ = get_manager_branch_or_404(self.request.user)
-        return self.queryset.filter(center=center)
+        return qs.filter(center=center)
 
 
 # ==========================================
@@ -281,11 +289,13 @@ class ManagerCourseDetailView(RetrieveUpdateDestroyAPIView):
 # ==========================================
 @extend_schema(tags=["ManagerGroups"])
 class ManagerGroupListCreateView(ListCreateAPIView):
+    queryset = Group.objects.all()
     permission_classes = [IsAuthenticated, IsManager]
 
     def get_queryset(self):
+        qs = super().get_queryset()
         center, branch = get_manager_branch_or_404(self.request.user)
-        return Group.objects.filter(center=center, branch=branch).select_related("course", "teacher__user", "branch")
+        return qs.filter(center=center, branch=branch).select_related("course", "teacher__user", "branch")
 
     def get_serializer_class(self):
         if self.request.method == "POST":
@@ -341,7 +351,9 @@ class ManagerGroupEnrollView(CreateAPIView):
         except Group.DoesNotExist:
             raise NotFound("Guruh topilmadi.")
 
-        serializer = self.get_serializer(data=request.data, context={"group": group, "center": center, "request": request})
+        serializer = self.get_serializer(
+            data=request.data, context={"group": group, "center": center, "request": request}
+        )
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({"detail": "Talabalar guruhga qo'shildi."}, status=status.HTTP_200_OK)
@@ -424,18 +436,13 @@ class ManagerAttendanceView(APIView):
         return Response(self.serializer_class(results, many=True).data)
 
 
-# ==========================================
-# PAYMENTS
-# ==========================================
 @extend_schema(tags=["ManagerPayments"])
 class ManagerPaymentListView(ListAPIView):
+    queryset = Payment.objects.select_related("student__user").order_by("-paid_at")
     permission_classes = [IsAuthenticated, IsManager]
     serializer_class = ManagerPaymentSerializer
 
     def get_queryset(self):
+        qs = super().get_queryset()
         center, branch = get_manager_branch_or_404(self.request.user)
-        return (
-            Payment.objects.filter(student__center=center, branch=branch)
-            .select_related("student__user")
-            .order_by("-paid_at")
-        )
+        return qs.filter(student__center=center, branch=branch)

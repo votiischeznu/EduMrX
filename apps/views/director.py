@@ -103,8 +103,9 @@ class DirectorStudentListCreateView(ListCreateAPIView):
     ordering = ["-created_at"]
 
     def get_queryset(self) -> QuerySet:
+        qs = super().get_queryset()
         centers = get_director_centers(self.request.user)
-        return super().get_queryset().filter(center__in=centers)
+        return qs.filter(center__in=centers)
 
     def get_serializer_class(self):
         if self.request.method == "POST":
@@ -131,8 +132,9 @@ class DirectorStudentDetailView(SoftDeleteUserMixin, RetrieveUpdateDestroyAPIVie
     http_method_names = ["get", "patch", "delete"]
 
     def get_queryset(self) -> QuerySet:
+        qs = super().get_queryset()
         centers = get_director_centers(self.request.user)
-        return super().get_queryset().filter(center__in=centers, user__is_deleted=False)
+        return qs.filter(center__in=centers, user__is_deleted=False)
 
     def get_serializer_class(self):
         if self.request.method == "PATCH":
@@ -166,8 +168,9 @@ class DirectorTeacherListCreateView(ListCreateAPIView):
     ordering = ["-created_at"]
 
     def get_queryset(self) -> QuerySet:
+        qs = super().get_queryset()
         centers = get_director_centers(self.request.user)
-        return super().get_queryset().filter(centers__in=centers, user__is_deleted=False).distinct()
+        return qs.filter(centers__in=centers, user__is_deleted=False).distinct()
 
     def get_serializer_class(self):
         if self.request.method == "POST":
@@ -194,8 +197,9 @@ class DirectorTeacherDetailView(SoftDeleteUserMixin, RetrieveUpdateDestroyAPIVie
     http_method_names = ["get", "patch", "delete"]
 
     def get_queryset(self) -> QuerySet:
+        qs = super().get_queryset()
         centers = get_director_centers(self.request.user)
-        return super().get_queryset().filter(centers__in=centers, user__is_deleted=False).distinct()
+        return qs.filter(centers__in=centers, user__is_deleted=False).distinct()
 
     def get_serializer_class(self):
         if self.request.method == "PATCH":

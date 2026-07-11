@@ -1,7 +1,16 @@
-from django.db.models import Sum, Count, Q, F
-from django.utils import timezone
 from datetime import timedelta
-from apps.models import Center, Payment, Debt
+
+from django.db.models import Count, F, Q, Sum
+from django.utils import timezone
+from utils.constants import DAYS_UZ, MONTH_NAMES
+
+from apps.models import Center, Debt, Payment
+
+
+def calculate_change(current, previous):
+    if not previous or previous == 0:
+        return 0.0
+    return round(float((current - previous) / previous * 100), 1)
 
 
 class FinanceService:
@@ -10,34 +19,21 @@ class FinanceService:
         now = timezone.now()
         start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         last_month_end = start_of_month - timedelta(seconds=1)
-        last_month_start = last_month_end.replace(
-            day=1, hour=0, minute=0, second=0, microsecond=0
-        )
+        last_month_start = last_month_end.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
         paid_qs = Payment.objects.filter(status=Payment.Status.PAID)
         total_revenue = paid_qs.aggregate(t=Sum("final_amount"))["t"] or 0
-        month_revenue = (
-            paid_qs.filter(paid_at__gte=start_of_month).aggregate(
-                t=Sum("final_amount")
-            )["t"]
-            or 0
-        )
+        month_revenue = paid_qs.filter(paid_at__gte=start_of_month).aggregate(t=Sum("final_amount"))["t"] or 0
 
         last_month_revenue = (
-            paid_qs.filter(
-                paid_at__gte=last_month_start, paid_at__lte=last_month_end
-            ).aggregate(t=Sum("final_amount"))["t"]
+            paid_qs.filter(paid_at__gte=last_month_start, paid_at__lte=last_month_end).aggregate(t=Sum("final_amount"))[
+                "t"
+            ]
             or 0
         )
-        month_revenue_change = (
-            round((month_revenue - last_month_revenue) / last_month_revenue * 100, 1)
-            if last_month_revenue
-            else 0.0
-        )
+        month_revenue_change = calculate_change(month_revenue, last_month_revenue)
 
-        debt_qs = Debt.objects.filter(
-            status__in=[Debt.Status.UNPAID, Debt.Status.PARTIALLY_PAID]
-        )
+        debt_qs = Debt.objects.filter(status__in=[Debt.Status.UNPAID, Debt.Status.PARTIALLY_PAID])
         pending_debts = debt_qs.aggregate(t=Sum("amount"))["t"] or 0
         pending_debts_students_count = debt_qs.values("student").distinct().count()
 
@@ -51,18 +47,14 @@ class FinanceService:
         )
 
         pending_debts_change = (
-            round((pending_debts - last_month_debt) / last_month_debt * 100, 1)
-            if last_month_debt
-            else 0.0
+            round((pending_debts - last_month_debt) / last_month_debt * 100, 1) if last_month_debt else 0.0
         )
 
         return {
             "total_revenue": total_revenue,
             "month_revenue": month_revenue,
             "month_revenue_change": month_revenue_change,
-            "active_centers": Center.objects.filter(
-                status=Center.Status.ACTIVE
-            ).count(),
+            "active_centers": Center.objects.filter(status=Center.Status.ACTIVE).count(),
             "total_centers": Center.objects.count(),
             "pending_debts": pending_debts,
             "pending_debts_students_count": pending_debts_students_count,
@@ -71,22 +63,6 @@ class FinanceService:
 
 
 class FinanceChartService:
-    DAYS_UZ = ["Du", "Se", "Ch", "Pa", "Ju", "Sh", "Ya"]
-    MONTHS_UZ = [
-        "Yan",
-        "Fev",
-        "Mar",
-        "Apr",
-        "May",
-        "Iyn",
-        "Iyl",
-        "Avg",
-        "Sen",
-        "Okt",
-        "Noy",
-        "Dek",
-    ]
-
     @staticmethod
     def get_chart_data(period: str) -> list:
         now = timezone.now()
@@ -189,14 +165,11 @@ class FinanceChartService:
             chart.append(row)
 
         keys_definition = {
-            f"c{idx}": center_row["student__center__name"]
-            for idx, center_row in enumerate(top_center_ids, start=1)
+            f"c{idx}": center_row["student__center__name"] for idx, center_row in enumerate(top_center_ids, start=1)
         }
 
         total_sum = (
-            Payment.objects.filter(status=Payment.Status.PAID, paid_at__year=year).aggregate(
-                t=Sum("final_amount")
-            )["t"]
+            Payment.objects.filter(status=Payment.Status.PAID, paid_at__year=year).aggregate(t=Sum("final_amount"))["t"]
             or 0
         )
 
@@ -209,12 +182,8 @@ class FinanceChartService:
 
 class FinanceCentersService:
     @staticmethod
-    def get_centers_finance_list(
-        status_filter, search, sort_by, sort_dir, page, per_page
-    ):
-        start_of_month = timezone.now().replace(
-            day=1, hour=0, minute=0, second=0, microsecond=0
-        )
+    def get_centers_finance_list(status_filter, search, sort_by, sort_dir, page, per_page):
+        start_of_month = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
         qs = Center.objects.select_related("director").annotate(
             students_count=Count("students", distinct=True),
@@ -250,10 +219,7 @@ class FinanceCentersService:
 
         total = qs.count()
         total_revenue_sum = (
-            Payment.objects.filter(status=Payment.Status.PAID).aggregate(
-                t=Sum("final_amount")
-            )["t"]
-            or 0
+            Payment.objects.filter(status=Payment.Status.PAID).aggregate(t=Sum("final_amount"))["t"] or 0
         )
 
         offset = (page - 1) * per_page
@@ -276,37 +242,7 @@ class FinanceCentersService:
 
 class FinanceTransactionsService:
     @staticmethod
-    def get_transactions_list(page, per_page):
-        qs = (
-            Payment.objects.filter(status=Payment.Status.PAID)
-            .select_related("student__center")
-            .order_by("-paid_at")
-        )
-
-        total = qs.count()
-        offset = (page - 1) * per_page
-        payments = qs[offset : offset + per_page]
-
-        data = [
-            {
-                "id": str(p.id),
-                "created_at": p.paid_at,
-                "center_name": p.student.center.name
-                if p.student and p.student.center
-                else None,
-                "amount": p.final_amount,
-                "payment_method": p.method,
-            }
-            for p in payments
-        ]
-        return data, total
-
-    @staticmethod
-    def get_transactions_list_with_student(page, per_page):
-        """
-        TZ bo'lim 6: /api/v1/super-admin/analytics/transactions/
-        Legacy formatdan farqi: student_name maydoni qo'shilgan.
-        """
+    def get_transactions_list(page, per_page, include_student=False):
         qs = (
             Payment.objects.filter(status=Payment.Status.PAID)
             .select_related("student__user", "student__center")
@@ -317,15 +253,18 @@ class FinanceTransactionsService:
         offset = (page - 1) * per_page
         payments = qs[offset : offset + per_page]
 
-        data = [
-            {
+        data = []
+        for p in payments:
+            item = {
                 "id": str(p.id),
-                "student_name": p.student.full_name if p.student else None,
-                "center_name": p.student.center.name if p.student and p.student.center else None,
                 "amount": p.final_amount,
                 "payment_method": p.method,
                 "created_at": p.paid_at,
+                "center_name": p.student.center.name if p.student and p.student.center else None,
             }
-            for p in payments
-        ]
+            if include_student:
+                item["student_name"] = p.student.full_name if p.student else None
+
+            data.append(item)
+
         return data, total

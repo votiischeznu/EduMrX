@@ -1,4 +1,4 @@
-from django.db.models import Count, Q, Sum, Case, When, F
+from django.db.models import Case, Count, F, Q, Sum, When
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework import filters
@@ -42,6 +42,7 @@ def get_director_center(request):
 
 @extend_schema(tags=["Finance - Payments"])
 class PaymentListCreateView(ListCreateAPIView):
+    queryset = Payment.objects.select_related("student", "group", "branch").order_by("-created_at")
     permission_classes = [IsAuthenticated, IsDirector]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ["branch", "group", "student", "status", "method", "period_month", "period_year"]
@@ -53,12 +54,9 @@ class PaymentListCreateView(ListCreateAPIView):
         return get_director_center(self.request)
 
     def get_queryset(self):
+        qs = super().get_queryset()
         center = self.get_center()
-        return (
-            Payment.objects.filter(student__center=center)
-            .select_related("student", "group", "branch")
-            .order_by("-created_at")
-        )
+        return qs.filter(student__center=center)
 
     def get_serializer_class(self):
         if self.request.method == "POST":
@@ -100,6 +98,7 @@ class PaymentListCreateView(ListCreateAPIView):
 
 @extend_schema(tags=["Finance - Payments"])
 class PaymentDetailView(RetrieveUpdateDestroyAPIView):
+    queryset = Payment.objects.select_related("student", "group", "branch")
     permission_classes = [IsAuthenticated, IsDirector]
     http_method_names = ["get", "patch", "delete"]
 
@@ -107,8 +106,9 @@ class PaymentDetailView(RetrieveUpdateDestroyAPIView):
         return get_director_center(self.request)
 
     def get_queryset(self):
+        qs = super().get_queryset()
         center = self.get_center()
-        return Payment.objects.filter(student__center=center).select_related("student", "group", "branch")
+        return qs.filter(student__center=center)
 
     def get_serializer_class(self):
         if self.request.method in ["PATCH", "PUT"]:
@@ -131,6 +131,7 @@ class PaymentDetailView(RetrieveUpdateDestroyAPIView):
 
 @extend_schema(tags=["Finance - Payments"])
 class StudentPaymentListView(ListAPIView):
+    queryset = Payment.objects.select_related("student__user", "group", "branch").all()
     permission_classes = [IsAuthenticated, IsDirector]
     serializer_class = PaymentListSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
@@ -141,16 +142,10 @@ class StudentPaymentListView(ListAPIView):
         return get_director_center(self.request)
 
     def get_queryset(self):
+        qs = super().get_queryset()
         center = self.get_center()
         student_id = self.kwargs["student_id"]
-        return (
-            Payment.objects.filter(
-                student__center=center,
-                student_id=student_id,
-            )
-            .select_related("student", "group", "branch")
-            .order_by("-created_at")
-        )
+        return qs.filter(student__center=center, student_id=student_id)
 
     def list(self, request, *args, **kwargs):
         qs = self.filter_queryset(self.get_queryset())
@@ -250,10 +245,12 @@ class PaymentSummaryView(APIView):
 
 @extend_schema(tags=["Finance - Debts"])
 class DebtListCreateView(ListCreateAPIView):
+    queryset = Debt.objects.select_related("student__user", "group").all()
+
     permission_classes = [IsAuthenticated, IsDirector]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ["status", "group", "student"]
-    search_fields = ["student__first_name", "student__last_name", "student__phone"]
+    search_fields = ["student__user__first_name", "student__user__last_name", "student__user__phone"]
     ordering_fields = ["due_date", "amount"]
     ordering = ["due_date"]
 
@@ -261,16 +258,15 @@ class DebtListCreateView(ListCreateAPIView):
         return get_director_center(self.request)
 
     def get_queryset(self):
+        qs = super().get_queryset()
         center = self.get_center()
         if not center:
-            return Debt.objects.none()
-
-        queryset = Debt.objects.filter(student__center=center)
+            return qs.none()
+        qs = qs.filter(student__center=center)
         center_id = self.request.query_params.get("center_id")
         if center_id:
-            queryset = queryset.filter(student__center_id=center_id)
-
-        return queryset
+            qs = qs.filter(student__center_id=center_id)
+        return qs
 
     def get_serializer_class(self):
         if self.request.method == "POST":
@@ -304,6 +300,7 @@ class DebtListCreateView(ListCreateAPIView):
 
 @extend_schema(tags=["Finance - Expense Categories"])
 class ExpenseCategoryListCreateView(ListCreateAPIView):
+    queryset = ExpenseCategory.objects.all().order_by("name")
     permission_classes = [IsAuthenticated, IsDirector]
     filter_backends = [filters.SearchFilter]
     search_fields = ["name"]
@@ -312,11 +309,9 @@ class ExpenseCategoryListCreateView(ListCreateAPIView):
         return get_director_center(self.request)
 
     def get_queryset(self):
+        qs = super().get_queryset()
         center = self.get_center()
-        return ExpenseCategory.objects.filter(
-            Q(is_system=True) | Q(center=center),
-            is_active=True,
-        ).order_by("name")
+        return qs.filter(Q(is_system=True) | Q(center=center), is_active=True)
 
     def get_serializer_class(self):
         if self.request.method == "POST":
@@ -331,6 +326,7 @@ class ExpenseCategoryListCreateView(ListCreateAPIView):
 
 @extend_schema(tags=["Finance - Expenses"])
 class ExpenseCategoryDetailView(RetrieveUpdateAPIView, DestroyAPIView):
+    queryset = ExpenseCategory.objects.all()
     permission_classes = [IsAuthenticated, IsDirector]
     http_method_names = ["get", "patch", "delete"]
 
@@ -338,8 +334,9 @@ class ExpenseCategoryDetailView(RetrieveUpdateAPIView, DestroyAPIView):
         return get_director_center(self.request)
 
     def get_queryset(self):
+        qs = super().get_queryset()
         center = self.get_center()
-        return ExpenseCategory.objects.filter(Q(is_system=True) | Q(center=center))
+        return qs.filter(Q(is_system=True) | Q(center=center))
 
     def get_serializer_class(self):
         if self.request.method in ["PATCH", "PUT"]:
@@ -409,6 +406,7 @@ class ExpenseListCreateView(ListCreateAPIView):
 
 @extend_schema(tags=["Finance - Expense"])
 class ExpenseDetailView(RetrieveUpdateDestroyAPIView):
+    queryset = Expense.objects.select_related("category", "branch", "performed_by")
     permission_classes = [IsAuthenticated, IsDirector]
     http_method_names = ["get", "patch", "delete"]
 
@@ -416,8 +414,9 @@ class ExpenseDetailView(RetrieveUpdateDestroyAPIView):
         return get_director_center(self.request)
 
     def get_queryset(self):
+        qs = super().get_queryset()
         center = self.get_center()
-        return Expense.objects.filter(center=center).select_related("category", "branch", "performed_by")
+        return qs.filter(center=center)
 
     def get_serializer_class(self):
         if self.request.method in ["PATCH", "PUT"]:
