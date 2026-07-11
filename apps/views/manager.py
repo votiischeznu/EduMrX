@@ -341,7 +341,7 @@ class ManagerGroupEnrollView(CreateAPIView):
         except Group.DoesNotExist:
             raise NotFound("Guruh topilmadi.")
 
-        serializer = self.get_serializer(data=request.data, context={"group": group, "request": request})
+        serializer = self.get_serializer(data=request.data, context={"group": group, "center": center, "request": request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({"detail": "Talabalar guruhga qo'shildi."}, status=status.HTTP_200_OK)
@@ -366,10 +366,14 @@ class ManagerLessonListCreateView(ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         center, branch = get_manager_branch_or_404(request.user)
-        serializer = self.get_serializer(data=request.data, context={"request": request})
+        serializer = self.get_serializer(data=request.data, context={"request": request, "center": center})
         serializer.is_valid(raise_exception=True)
 
-        group = serializer.validated_data["group"]
+        group_id = serializer.validated_data["group"]
+        try:
+            group = Group.objects.get(id=group_id)
+        except Group.DoesNotExist:
+            raise NotFound("Guruh topilmadi.")
         if group.center_id != center.id or group.branch_id != branch.id:
             raise ValidationError("Siz boshqa filial guruhiga dars qo'sha olmaysiz.")
 

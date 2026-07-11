@@ -192,12 +192,6 @@ def payment(student_in_branch, branch):
 
 @pytest.mark.django_db
 class TestManagerDashboard:
-    @pytest.mark.xfail(
-        reason="PRODUCTION BUG: ManagerDashboardView Debt.objects.filter(created_at=...) "
-        "ishlatadi, lekin Debt modelida created_at yo'q (faqat due_date bor). "
-        "views.py'da tuzating: created_at__year/month o'rniga due_date__year/month.",
-        strict=False,
-    )
     def test_dashboard_success(self, api_client, manager_user, manager_staff, student_in_branch, teacher, group):
         api_client.force_authenticate(user=manager_user)
         response = api_client.get(reverse("manager-dashboard"))
@@ -553,17 +547,6 @@ class TestManagerGroupCreate:
 
 @pytest.mark.django_db
 class TestManagerGroupDetail:
-    @pytest.mark.xfail(
-        reason="PRODUCTION BUG: ManagerGroupDetailView.update() -- "
-        "serializer.context['center']/['branch'] faqat perform_update() ichida, "
-        "ya'ni is_valid() CHAQIRILGANDAN KEYIN o'rnatiladi. Shu sababli "
-        "ManagerGroupCreateSerializer.validate() ichida context.get('center') "
-        "doim None bo'ladi. Bu holatda: agar lesson_start_time/lesson_end_time "
-        "yuborilmasa -- None >= None TypeError (500). views.py'da: context'ni "
-        "get_serializer chaqirishdan OLDIN yoki is_valid()dan OLDIN o'rnating.",
-        strict=False,
-        raises=TypeError,
-    )
     def test_update_group_partial(self, api_client, manager_user, manager_staff, group):
         api_client.force_authenticate(user=manager_user)
         payload = {"name": "Frontend-02"}
@@ -572,14 +555,6 @@ class TestManagerGroupDetail:
         group.refresh_from_db()
         assert group.name == "Frontend-02"
 
-    @pytest.mark.xfail(
-        reason="PRODUCTION BUG: xuddi shu context-timing muammosi tufayli -- "
-        "to'liq payload yuborilganda ham validate() ichida center=None bo'lgani "
-        "uchun Course.objects.filter(id=..., center=None) hech narsa topmaydi va "
-        "\"Kurs topilmadi\" bilan 400 qaytadi, garchi kurs to'g'ri markazga "
-        "tegishli bo'lsa ham.",
-        strict=False,
-    )
     def test_update_group_full_payload(
         self, api_client, manager_user, manager_staff, group, course, teacher, room
     ):
@@ -620,14 +595,9 @@ class TestManagerGroupDetail:
 
 @pytest.mark.django_db
 class TestManagerGroupEnroll:
-    @pytest.mark.skip(
-        reason="DirectorGroupEnrollSerializer haqiqiy maydon nomi noma'lum "
-        "(taxminiy 'student_ids' 400 qaytardi). Serializer kodini ko'rib, "
-        "to'g'ri maydon nomini qo'ying."
-    )
     def test_enroll_student_success(self, api_client, manager_user, manager_staff, group, student_in_branch):
         api_client.force_authenticate(user=manager_user)
-        payload = {"student_ids": [str(student_in_branch.id)]}
+        payload = {"student_id": str(student_in_branch.id), "action": "add"}
         response = api_client.post(
             reverse("manager-groups-enroll", kwargs={"pk": group.id}), payload, format="json"
         )
@@ -661,12 +631,6 @@ class TestManagerGroupEnroll:
 
 @pytest.mark.django_db
 class TestManagerLessonList:
-    @pytest.mark.xfail(
-        reason="PRODUCTION BUG: ManagerLessonListCreateView queryset "
-        "select_related('group', 'room') ishlatadi, lekin Lesson modelida "
-        "room FK yo'q. views.py'da select_related('group')ga o'zgartiring.",
-        strict=False,
-    )
     def test_list_own_branch_lessons(self, api_client, manager_user, manager_staff, lesson):
         api_client.force_authenticate(user=manager_user)
         response = api_client.get(reverse("manager-lessons-list-create"))
@@ -677,10 +641,6 @@ class TestManagerLessonList:
 
 @pytest.mark.django_db
 class TestManagerLessonCreate:
-    @pytest.mark.skip(
-        reason="DirectorLessonCreateSerializer majburiy maydonlari noma'lum "
-        "(400 qaytdi). Serializer kodini ko'rib payload'ni to'g'rilang."
-    )
     def test_create_lesson_success(self, api_client, manager_user, manager_staff, group):
         api_client.force_authenticate(user=manager_user)
         payload = {
@@ -690,6 +650,7 @@ class TestManagerLessonCreate:
             "end_time": "10:00:00",
         }
         response = api_client.post(reverse("manager-lessons-list-create"), payload, format="json")
+        print("DEBUG:", response.status_code, response.data)
         assert response.status_code == status.HTTP_201_CREATED
 
     def test_create_lesson_other_branch_group_forbidden(
@@ -739,15 +700,11 @@ class TestManagerAttendance:
         response = api_client.get(reverse("manager-lessons-attendance", kwargs={"pk": lesson.id}))
         assert response.status_code == status.HTTP_200_OK
 
-    @pytest.mark.skip(
-        reason="DirectorAttendanceBulkSerializer payload strukturasi noma'lum "
-        "(400 qaytdi). Serializer kodini ko'rib payload'ni to'g'rilang."
-    )
     def test_post_attendance_bulk(self, api_client, manager_user, manager_staff, lesson, group, student_in_branch):
         GroupStudent.objects.create(group=group, student=student_in_branch)
         api_client.force_authenticate(user=manager_user)
         payload = {
-            "attendances": [
+            "records": [
                 {"student": str(student_in_branch.id), "status": "present"},
             ]
         }

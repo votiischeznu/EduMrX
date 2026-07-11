@@ -8,11 +8,11 @@ services:
   postgres_service:
     image: postgres:alpine
     environment:
-      - POSTGRES_PASSWORD=BORcfCkSTXC6kAx8eI9TnZDeMGNBZQo8
-      - POSTGRES_DB=education_db_7rlg
-      - POSTGRES_USER=postgress
+      - POSTGRES_PASSWORD=test123
+      - POSTGRES_DB=edumrx_test
+      - POSTGRES_USER=postgres
     ports:
-      - "5433:5432"
+      - "5432:5432"
 
   redis_service:
     image: redis:alpine
