@@ -650,6 +650,7 @@ class TestManagerLessonCreate:
             "end_time": "10:00:00",
         }
         response = api_client.post(reverse("manager-lessons-list-create"), payload, format="json")
+        print("DEBUG:", response.status_code, response.data)
         assert response.status_code == status.HTTP_201_CREATED
 
     def test_create_lesson_other_branch_group_forbidden(
