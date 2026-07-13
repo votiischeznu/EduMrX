@@ -48,7 +48,7 @@ from apps.views import (
     ManagerGroupListCreateView,
     ManagerLessonDetailView,
     ManagerLessonListCreateView,
-    ManagerPaymentListView,
+    ManagerPaymentListCreateView,
     ManagerRoomDetailView,
     ManagerRoomListCreateView,
     ManagerSendNotificationView,
@@ -215,7 +215,7 @@ urlpatterns = [
     # Attendance
     path("manager/lessons/<uuid:pk>/attendance/", ManagerAttendanceView.as_view(), name="manager-lessons-attendance"),
     # Payments
-    path("manager/payments/", ManagerPaymentListView.as_view(), name="manager-payments-list"),
+    path("manager/payments/", ManagerPaymentListCreateView.as_view(), name="manager-payments-list-create"),
     path("center/branches/", BranchListCreateView.as_view(), name="branches-list-create"),
     path("center/branches/<uuid:pk>/", BranchDetailView.as_view(), name="branches-detail"),
     # telegram

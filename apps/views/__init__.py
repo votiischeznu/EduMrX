@@ -75,13 +75,13 @@ from apps.views.manager import (
     ManagerGroupListCreateView,
     ManagerLessonDetailView,
     ManagerLessonListCreateView,
-    ManagerPaymentListView,
     ManagerRoomDetailView,
     ManagerRoomListCreateView,
     ManagerStudentDetailView,
     ManagerStudentListCreateView,
     ManagerTeacherDetailView,
     ManagerTeacherListCreateView,
+    ManagerPaymentListCreateView
 )
 
 from apps.views.notifications import (

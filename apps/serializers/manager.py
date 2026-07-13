@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.utils import timezone
 from django.utils.crypto import get_random_string
 from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import (
@@ -120,6 +121,9 @@ class ManagerStudentCreateSerializer(Serializer):
         notes = validated_data.pop("notes", "")
         st_status = validated_data.pop("status", Student.Status.ACTIVE)
 
+        # FIX: rol har doim serverda qattiq belgilanadi (STUDENT) — foydalanuvchi
+        # yuborgan ma'lumotdan olinmaydi. Manager hech qachon boshqa rol
+        # (director/super_admin) bilan foydalanuvchi yarata olmaydi.
         user = User.objects.create_user(
             phone=validated_data["phone"],
             password=password,
@@ -233,6 +237,8 @@ class ManagerTeacherCreateSerializer(Serializer):
         raw_password = validated_data.pop("password", "") or None
         password = raw_password or _generate_temp_password()
 
+        # FIX: rol qattiq TEACHER — manager bu orqali director/admin/super_admin
+        # rolidagi foydalanuvchi yarata olmaydi.
         user = User.objects.create_user(
             phone=validated_data["phone"],
             password=password,
@@ -319,8 +325,6 @@ class ManagerGroupCreateSerializer(Serializer):
 
         # FIX: xuddi shu sabab bilan end_date/start_date solishtiruvi ham
         # partial PATCH'da start_date yuborilmasa xatolik berishi mumkin edi.
-        # (create paytida start_date har doim required, shu sababli bu yerda
-        # muammo yo'q edi, lekin partial update uchun ham xavfsiz qildik.)
         end_date = attrs.get("end_date")
         start_date = attrs.get("start_date")
         if end_date and start_date and end_date <= start_date:
@@ -363,9 +367,90 @@ class ManagerGroupCreateSerializer(Serializer):
         return instance
 
 
-class ManagerPaymentSerializer(ModelSerializer):
-    student = ManagerStudentListSerializer(read_only=True)
+# ==========================================
+# PAYMENTS
+# ==========================================
 
+
+class ManagerPaymentSerializer(ModelSerializer):
+    """
+    O'quvchi to'lovlarini ko'rsatish uchun.
+
+    Eslatma: to'lovni KIM to'lagani (o'quvchining o'zi yoki ota-onasi)
+    modelda alohida saqlanmaydi — Payment har doim `student`ga bog'lanadi.
+    Shu sababli ota-ona to'lov qilsa ham, u aynan shu student'ning to'lovi
+    sifatida to'g'ri qayd etiladi va manager ro'yxatida ko'rinadi.
+    """
+    student = ManagerStudentListSerializer(read_only=True)
     class Meta:
         model = Payment
-        fields = ["id", "student", "amount", "paid_at", "created_at"]
+        fields = [
+            "id",
+            "student",
+            "group",
+            "amount",
+            "discount",
+            "final_amount",
+            "method",
+            "status",
+            "period_month",
+            "period_year",
+            "due_date",
+            "paid_at",
+            "receipt_number",
+            "comment",
+            "created_at",
+        ]
+
+
+class ManagerPaymentCreateSerializer(Serializer):
+    """
+    Manager tomonidan qo'lda to'lov kiritish uchun (masalan naqd to'lov
+    reception oynasida qabul qilinganda). Yaratilgan to'lov darhol
+    status=PAID va paid_at=now bilan yoziladi — "naqd to'ladi, tizimga
+    kiritildi" ssenariysi uchun.
+    """
+
+    student = UUIDField()
+    group = UUIDField(required=False, allow_null=True)
+    amount = DecimalField(max_digits=12, decimal_places=2)
+    discount = DecimalField(max_digits=12, decimal_places=2, required=False, default=0)
+    method = ChoiceField(choices=Payment.Method.choices, default=Payment.Method.CASH)
+    period_month = IntegerField(min_value=1, max_value=12)
+    period_year = IntegerField()
+    comment = CharField(required=False, allow_blank=True)
+
+    def validate_student(self, value):
+        center = self.context.get("center")
+        branch = self.context.get("branch")
+        if not Student.objects.filter(
+            id=value, center=center, branch=branch, user__is_deleted=False
+        ).exists():
+            raise ValidationError("O'quvchi topilmadi yoki sizning filialingizga tegishli emas.")
+        return value
+
+    def validate_group(self, value):
+        if value is None:
+            return value
+        center = self.context.get("center")
+        branch = self.context.get("branch")
+        if not Group.objects.filter(id=value, center=center, branch=branch).exists():
+            raise ValidationError("Guruh topilmadi yoki sizning filialingizga tegishli emas.")
+        return value
+
+    @transaction.atomic
+    def create(self, validated_data):
+        branch = self.context.get("branch")
+
+        student_id = validated_data.pop("student")
+        group_id = validated_data.pop("group", None)
+
+        return Payment.objects.create(
+            student_id=student_id,
+            group_id=group_id,
+            branch=branch,
+            due_date=timezone.now().date(),
+            status=Payment.Status.PAID,
+            paid_at=timezone.now(),
+            **validated_data,
+        )

@@ -5,7 +5,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework import filters, status
 from rest_framework.exceptions import NotFound, ValidationError
-from rest_framework.generics import CreateAPIView, ListAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.generics import CreateAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -23,6 +23,7 @@ from apps.serializers import (
     DirectorLessonListSerializer,
     DirectorRoomSerializer,
     ManagerGroupCreateSerializer,
+    ManagerPaymentCreateSerializer,
     ManagerPaymentSerializer,
     ManagerStudentCreateSerializer,
     ManagerStudentDetailSerializer,
@@ -154,8 +155,6 @@ class ManagerStudentDetailView(RetrieveUpdateDestroyAPIView):
         return Response(ManagerStudentDetailSerializer(student).data)
 
     def perform_destroy(self, instance):
-        # FIX: avval bu yerda phone bo'shatilmasdi (faqat is_deleted/is_active).
-        # Endi User.soft_delete() orqali — SuperAdmin panelidagi kabi izchil.
         instance.user.soft_delete()
 
 
@@ -218,7 +217,6 @@ class ManagerTeacherDetailView(RetrieveUpdateDestroyAPIView):
         return Response(ManagerTeacherDetailSerializer(teacher).data)
 
     def perform_destroy(self, instance):
-        # FIX: xuddi Student bilan bir xil sabab — soft_delete() ga o'tkazildi.
         instance.user.soft_delete()
 
 
@@ -436,13 +434,27 @@ class ManagerAttendanceView(APIView):
         return Response(self.serializer_class(results, many=True).data)
 
 
+# ==========================================
+# PAYMENTS
+# ==========================================
 @extend_schema(tags=["ManagerPayments"])
-class ManagerPaymentListView(ListAPIView):
+class ManagerPaymentListCreateView(ListCreateAPIView):
     queryset = Payment.objects.select_related("student__user").order_by("-paid_at")
     permission_classes = [IsAuthenticated, IsManager]
-    serializer_class = ManagerPaymentSerializer
 
     def get_queryset(self):
         qs = super().get_queryset()
         center, branch = get_manager_branch_or_404(self.request.user)
-        return qs.filter(student__center=center, branch=branch)
+        return qs.filter(student__center=center, student__branch=branch)
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return ManagerPaymentCreateSerializer
+        return ManagerPaymentSerializer
+
+    def create(self, request, *args, **kwargs):
+        center, branch = get_manager_branch_or_404(request.user)
+        serializer = self.get_serializer(data=request.data, context={"center": center, "branch": branch})
+        serializer.is_valid(raise_exception=True)
+        payment = serializer.save()
+        return Response(ManagerPaymentSerializer(payment).data, status=status.HTTP_201_CREATED)

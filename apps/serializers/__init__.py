@@ -66,6 +66,7 @@ from apps.serializers.director import (
     DirectorGroupCreateSerializer
 )
 
+
 from apps.serializers.manager import (
     ManagerStudentListSerializer,
     ManagerStudentDetailSerializer,
@@ -74,7 +75,8 @@ from apps.serializers.manager import (
     ManagerTeacherDetailSerializer,
     ManagerTeacherCreateSerializer,
     ManagerGroupCreateSerializer,
-    ManagerPaymentSerializer,
+    ManagerPaymentCreateSerializer,
+    ManagerPaymentSerializer
 )
 from apps.serializers.notifications import ContactMessageCreateSerializer, ContactMessageListSerializer, \
     ContactMessageMarkReadSerializer
