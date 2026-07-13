@@ -1,4 +1,5 @@
 import os
+
 from dotenv import load_dotenv
 
 load_dotenv(".env.test", override=True)
@@ -15,3 +16,4 @@ DATABASES = {
         "PORT": os.getenv("POSTGRES_PORT"),
     }
 }
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")

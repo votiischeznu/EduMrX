@@ -1,4 +1,3 @@
-# apps/management/commands/run_bot.py
 import asyncio
 import hashlib
 import json
@@ -15,13 +14,19 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 from redis.asyncio import Redis
 
+# Global obyektlar
 redis_client = Redis.from_url(settings.REDIS_URL, decode_responses=True)
 storage = RedisStorage(redis=redis_client)
 dp = Dispatcher(storage=storage)
+bot = Bot(
+    token=settings.TELEGRAM_BOT_TOKEN,
+    default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+)
 
 logger = logging.getLogger(__name__)
 
 
+# --- Handlerlar o'zgarishsiz qoladi ---
 def hash_otp(otp: str) -> str:
     return hashlib.sha256(otp.encode()).hexdigest()
 
@@ -31,16 +36,13 @@ async def command_start_handler(message: types.Message, command: CommandObject):
     link_token = command.args
     if not link_token:
         await message.answer(
-            "Xush kelibsiz! Ro'yxatdan o'tish, parolni tiklash yoki "
-            "bildirishnomalarni ulash uchun saytdan foydalaning."
+            "Xush kelibsiz! Ro'yxatdan o'tish, parolni tiklash yoki bildirishnomalarni ulash uchun saytdan foydalaning."
         )
         return
 
     raw_data = await redis_client.get(f"bot_token:{link_token}")
     if not raw_data:
-        await message.answer(
-            "Xatolik: Havola muddati tugagan yoki noto'g'ri. Saytdan qayta urinib ko'ring."
-        )
+        await message.answer("Xatolik: Havola muddati tugagan yoki noto'g'ri. Saytdan qayta urinib ko'ring.")
         return
 
     # ── 1. Profilni alohida bog'lash (email orqali ro'yxatdan o'tganlar uchun) ──
@@ -70,6 +72,7 @@ async def _handle_profile_link(message: types.Message, link_token: str):
     foydalanuvchilar uchun kerak.
     """
     from asgiref.sync import sync_to_async
+
     from apps.models import User
 
     user_id = await redis_client.get(f"bot_token:{link_token}")
@@ -105,8 +108,7 @@ async def _handle_profile_link(message: types.Message, link_token: str):
     else:
         await redis_client.delete(f"bot_token:{link_token}")
         await message.answer(
-            "✅ Hisobingiz muvaffaqiyatli ulandi!\n\n"
-            "Endi tizimdagi muhim bildirishnomalar shu botga keladi."
+            "✅ Hisobingiz muvaffaqiyatli ulandi!\n\nEndi tizimdagi muhim bildirishnomalar shu botga keladi."
         )
 
 
@@ -116,8 +118,7 @@ async def _handle_recovery_start(message: types.Message, link_token: str, data: 
     existing = await redis_client.get(f"otp_verification:{user_id}")
     if existing:
         await message.answer(
-            "Sizga tasdiqlash kodi allaqachon yuborilgan. "
-            "Iltimos, o'sha koddan foydalaning yoki biroz kuting."
+            "Sizga tasdiqlash kodi allaqachon yuborilgan. Iltimos, o'sha koddan foydalaning yoki biroz kuting."
         )
         return
 
@@ -133,9 +134,7 @@ async def _handle_recovery_start(message: types.Message, link_token: str, data: 
     await redis_client.setex(f"otp_verification:{user_id}", 300, json.dumps(payload))
 
     await message.answer(
-        "Parolni tiklash tasdiqlandi ✅\n\n"
-        f"Tasdiqlash kodi: <b>{otp_code}</b>\n\n"
-        "Ushbu kodni saytga kiriting."
+        f"Parolni tiklash tasdiqlandi ✅\n\nTasdiqlash kodi: <b>{otp_code}</b>\n\nUshbu kodni saytga kiriting."
     )
     await redis_client.delete(f"bot_token:{link_token}")
 
@@ -158,8 +157,7 @@ async def _handle_registration_start(message: types.Message, link_token: str, da
     existing_raw = await redis_client.get(f"otp_verification:{phone}")
     if not existing_raw:
         await message.answer(
-            "Ro'yxatdan o'tish seansi topilmadi yoki muddati tugagan. "
-            "Saytdan qayta ro'yxatdan o'ting."
+            "Ro'yxatdan o'tish seansi topilmadi yoki muddati tugagan. Saytdan qayta ro'yxatdan o'ting."
         )
         return
 
@@ -186,18 +184,10 @@ async def _handle_registration_start(message: types.Message, link_token: str, da
 
 
 class Command(BaseCommand):
-    help = "Aiogram Telegram Botini Django ichida ishga tushirish (polling)"
+    help = "Bot webhook'ini o'rnatish"
 
     def handle(self, *args, **options):
-        bot = Bot(
-            token=settings.TELEGRAM_BOT_TOKEN,
-            default=DefaultBotProperties(parse_mode=ParseMode.HTML),
-        )
-
-        async def main():
-            await dp.start_polling(bot)
-
-        try:
-            asyncio.run(main())
-        except (KeyboardInterrupt, SystemExit):
-            self.stdout.write(self.style.WARNING("Bot to'xtatildi."))
+        webhook_url = f"{settings.WEBHOOK_URL}/webhook/bot/"
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(bot.set_webhook(webhook_url))
+        self.stdout.write(self.style.SUCCESS(f"Webhook {webhook_url} ga o'rnatildi."))

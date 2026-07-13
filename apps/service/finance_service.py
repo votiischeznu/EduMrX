@@ -2,9 +2,9 @@ from datetime import timedelta
 
 from django.db.models import Count, F, Q, Sum
 from django.utils import timezone
-from utils.constants import DAYS_UZ, MONTH_NAMES
 
 from apps.models import Center, Debt, Payment
+from apps.utils.constants import DAYS_UZ
 
 
 def calculate_change(current, previous):
@@ -85,7 +85,7 @@ class FinanceChartService:
 
                 data.append(
                     {
-                        "label": FinanceChartService.DAYS_UZ[day.weekday()],
+                        "label": DAYS_UZ[day.weekday()],
                         "income": income,
                         "expense": 0,
                     }

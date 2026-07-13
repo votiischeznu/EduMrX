@@ -92,6 +92,7 @@ from apps.views.finance import (
     PaymentSummaryView,
     StudentPaymentListView,
 )
+from apps.views.telegram_webhook import telegram_webhook
 
 main_router = SimpleRouter(trailing_slash=True)
 main_router.register("rooms", RoomModelViewSet, basename="rooms")
@@ -234,4 +235,5 @@ urlpatterns = [
     path("students/<uuid:student_id>/payments/", StudentPaymentListView.as_view(), name="student-payments-list"),
     # Qarzlar
     path("debts/", DebtListCreateView.as_view(), name="debts-list-create"),
+    path("webhook/bot/", telegram_webhook, name="telegram_webhook"),
 ]

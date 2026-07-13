@@ -95,3 +95,4 @@ from apps.views.notifications import (
 from apps.views.telegram_link import TelegramLinkStartView, TelegramLinkStatusView
 
 from apps.views.super_admin import SuperAdminStudentListView
+from apps.views.telegram_webhook import telegram_webhook

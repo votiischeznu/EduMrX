@@ -2,9 +2,8 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
-from dotenv import load_dotenv
-
 from celery.schedules import crontab
+from dotenv import load_dotenv
 
 load_dotenv(".env")
 
@@ -22,6 +21,8 @@ ALLOWED_HOSTS = [
     "edumrx.uz",
     ".edumrx.uz",
 ]
+# Faqat domen
+WEBHOOK_URL = "https://www.edumrx.uz"
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -166,6 +167,10 @@ SPECTACULAR_SETTINGS = {
         {"name": "Users", "description": "Foydalanuvchilar"},
     ],
 }
+
+CELERY_BROKER_URL = REDIS_URL or "redis://localhost:6379/0"
+CELERY_RESULT_BACKEND = REDIS_URL or "redis://localhost:6379/0"
+CELERY_TIMEZONE = TIME_ZONE  # "Asia/Tashkent"
 
 CELERY_BEAT_SCHEDULE = {
     "delete-old-contact-messages": {

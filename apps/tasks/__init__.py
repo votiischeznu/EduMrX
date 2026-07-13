@@ -1,0 +1,1 @@
+from .contact import delete_old_contact_messages  # noqa: F401
