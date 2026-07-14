@@ -36,7 +36,6 @@ from apps.models import (
     User,
 )
 
-
 # ===========================================================================
 # Asosiy tashkilot: Center / Branch qo'shimchalari
 # (api_client, director_user, center, branch, course, teacher_user, lesson
@@ -306,9 +305,7 @@ class TestManagerStudentDetail:
         self, api_client, manager_user, manager_staff, student_in_other_branch
     ):
         api_client.force_authenticate(user=manager_user)
-        response = api_client.get(
-            reverse("manager-students-detail", kwargs={"pk": student_in_other_branch.id})
-        )
+        response = api_client.get(reverse("manager-students-detail", kwargs={"pk": student_in_other_branch.id}))
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_update_student_first_name(self, api_client, manager_user, manager_staff, student_in_branch):
@@ -555,9 +552,7 @@ class TestManagerGroupDetail:
         group.refresh_from_db()
         assert group.name == "Frontend-02"
 
-    def test_update_group_full_payload(
-        self, api_client, manager_user, manager_staff, group, course, teacher, room
-    ):
+    def test_update_group_full_payload(self, api_client, manager_user, manager_staff, group, course, teacher, room):
         api_client.force_authenticate(user=manager_user)
         payload = {
             "name": "Frontend-02",
@@ -574,7 +569,9 @@ class TestManagerGroupDetail:
         group.refresh_from_db()
         assert group.name == "Frontend-02"
 
-    def test_other_branch_group_returns_404(self, api_client, manager_user, manager_staff, center, other_branch, course, teacher):
+    def test_other_branch_group_returns_404(
+        self, api_client, manager_user, manager_staff, center, other_branch, course, teacher
+    ):
         other_room = Room.objects.create(center=center, branch=other_branch, name="X", capacity=10)
         other_group = Group.objects.create(
             name="Other-Group",
@@ -598,12 +595,12 @@ class TestManagerGroupEnroll:
     def test_enroll_student_success(self, api_client, manager_user, manager_staff, group, student_in_branch):
         api_client.force_authenticate(user=manager_user)
         payload = {"student_id": str(student_in_branch.id), "action": "add"}
-        response = api_client.post(
-            reverse("manager-groups-enroll", kwargs={"pk": group.id}), payload, format="json"
-        )
+        response = api_client.post(reverse("manager-groups-enroll", kwargs={"pk": group.id}), payload, format="json")
         assert response.status_code == status.HTTP_200_OK
 
-    def test_enroll_group_not_found_for_other_branch(self, api_client, manager_user, manager_staff, center, other_branch, course, teacher):
+    def test_enroll_group_not_found_for_other_branch(
+        self, api_client, manager_user, manager_staff, center, other_branch, course, teacher
+    ):
         other_room = Room.objects.create(center=center, branch=other_branch, name="Y", capacity=10)
         other_group = Group.objects.create(
             name="Other-Group-2",
@@ -618,9 +615,7 @@ class TestManagerGroupEnroll:
             lesson_end_time=time(10, 0),
         )
         api_client.force_authenticate(user=manager_user)
-        response = api_client.post(
-            reverse("manager-groups-enroll", kwargs={"pk": other_group.id}), {}, format="json"
-        )
+        response = api_client.post(reverse("manager-groups-enroll", kwargs={"pk": other_group.id}), {}, format="json")
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
@@ -713,7 +708,9 @@ class TestManagerAttendance:
         )
         assert response.status_code in [status.HTTP_200_OK, status.HTTP_201_CREATED]
 
-    def test_attendance_other_branch_lesson_404(self, api_client, manager_user, manager_staff, center, other_branch, course, teacher):
+    def test_attendance_other_branch_lesson_404(
+        self, api_client, manager_user, manager_staff, center, other_branch, course, teacher
+    ):
         other_room = Room.objects.create(center=center, branch=other_branch, name="W", capacity=10)
         other_group = Group.objects.create(
             name="Other-Group-4",
@@ -744,13 +741,13 @@ class TestManagerAttendance:
 class TestManagerPaymentList:
     def test_list_own_branch_payments(self, api_client, manager_user, manager_staff, payment):
         api_client.force_authenticate(user=manager_user)
-        response = api_client.get(reverse("manager-payments-list"))
+        response = api_client.get(reverse("manager-payments-list-create"))
         assert response.status_code == status.HTTP_200_OK
         ids = [p["id"] for p in response.data["results"]]
         assert str(payment.id) in ids
 
     def test_unauthenticated_returns_401(self, api_client):
-        response = api_client.get(reverse("manager-payments-list"))
+        response = api_client.get(reverse("manager-payments-list-create"))
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_other_branch_payment_not_visible(
@@ -769,6 +766,6 @@ class TestManagerPaymentList:
             receipt_number="TEST-0002",
         )
         api_client.force_authenticate(user=manager_user)
-        response = api_client.get(reverse("manager-payments-list"))
+        response = api_client.get(reverse("manager-payments-list-create"))
         ids = [p["id"] for p in response.data["results"]]
         assert str(other_payment.id) not in ids

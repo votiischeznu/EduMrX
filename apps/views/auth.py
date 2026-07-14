@@ -158,6 +158,7 @@ class AccountRecoveryViewSet(GenericViewSet):
 # apps/views/auth.py (qo'shimcha)
 
 
+@extend_schema(tags=["Auth"])
 class TelegramOAuthView(APIView):
     permission_classes = [AllowAny]
 
