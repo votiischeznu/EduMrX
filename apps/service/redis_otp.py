@@ -1,6 +1,8 @@
 # apps/service/redis_otp.py
 import collections.abc
 
+from django.db import IntegrityError
+
 if not hasattr(collections, "MutableMapping"):
     collections.MutableMapping = collections.abc.MutableMapping
 
@@ -122,7 +124,9 @@ class OTPService:
 
         user = User.objects.create_user(
             phone=data["phone"],
-            email=data.get("email"),
+            # Bo'sh string emas — email unique=True bo'lgani uchun
+            # bir nechta "" qiymat DB darajasida to'qnashadi.
+            email=data.get("email") or None,
             first_name=data.get("first_name", ""),
             last_name=data.get("last_name", ""),
             password=data["password"],
@@ -146,7 +150,23 @@ class OTPService:
                     user.id,
                 )
 
-        user.save()
+        try:
+            user.save()
+        except IntegrityError:
+            # already_taken tekshiruvi va save() orasida (race condition)
+            # boshqa so'rov shu telegram_id'ni bog'lab ulgurgan bo'lishi
+            # mumkin. Bunda user (telefon+parol bilan) baribir yaratilgan
+            # bo'lib qoladi — faqat telegram_id'siz saqlaymiz, xatolik
+            # ko'tarib registratsiyani buzmaymiz.
+            logger.warning(
+                "telegram_id=%s bilan save() paytida to'qnashuv, user_id=%s telegram_id'siz saqlanadi.",
+                telegram_chat_id,
+                user.id,
+            )
+            user.telegram_id = None
+            user.telegram_username = ""
+            user.telegram_linked_at = None
+            user.save()
 
         r.delete(key)
         return user
