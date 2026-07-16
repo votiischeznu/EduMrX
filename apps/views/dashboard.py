@@ -3,7 +3,6 @@ from datetime import date
 from dateutil.relativedelta import relativedelta
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Q, Sum
-from django.utils import timezone
 from drf_spectacular.utils import extend_schema
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -13,8 +12,6 @@ from apps.models import (
     Attendance,
     Center,
     Group,
-    GroupStudent,
-    Lesson,
     Payment,
     Student,
     Teacher,
@@ -92,9 +89,7 @@ class AdminDashboardView(APIView):
 
         income_growth = None
         if last_month_income:
-            income_growth = round(
-                ((monthly_income - last_month_income) / last_month_income) * 100, 1
-            )
+            income_growth = round(((monthly_income - last_month_income) / last_month_income) * 100, 1)
 
         # Qarzdor studentlar
         overdue_payments = payments_qs.filter(status=Payment.Status.OVERDUE)
@@ -119,9 +114,7 @@ class AdminDashboardView(APIView):
         )
         total_att = attendance_qs.count()
         present_att = attendance_qs.filter(status=Attendance.Status.PRESENT).count()
-        attendance_rate = (
-            round((present_att / total_att) * 100, 1) if total_att > 0 else 0
-        )
+        attendance_rate = round((present_att / total_att) * 100, 1) if total_att > 0 else 0
 
         # ===================== TOP GROUPS (davomat bo'yicha) =
         top_groups = (
@@ -183,193 +176,5 @@ class AdminDashboardView(APIView):
                 },
                 # Top groups
                 "top_groups_by_attendance": list(top_groups),
-            }
-        )
-
-
-@extend_schema(tags=["StudentDashboard"])
-class StudentDashboardView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        user = request.user
-
-        if not user.is_student:
-            return Response({"detail": "Ruxsat yo'q."}, status=403)
-
-        today = date.today()
-        current_month = today.month
-        current_year = today.year
-
-        try:
-            student = user.student_profile
-        except Exception:
-            return Response({"detail": "Student profil topilmadi."}, status=404)
-
-        enrollments = GroupStudent.objects.filter(
-            student=student, is_active=True
-        ).select_related("group__teacher__user", "group__course")
-
-        groups = []
-        for enrollment in enrollments:
-            group = enrollment.group
-            groups.append(
-                {
-                    "id": group.id,
-                    "name": group.name,
-                    "course": group.course.name,
-                    "teacher": group.teacher.user.full_name,
-                    "lesson_days": group.lesson_days,
-                    "lesson_start_time": group.lesson_start_time,
-                    "lesson_end_time": group.lesson_end_time,
-                    "status": group.status,
-                }
-            )
-
-        # ===================== ATTENDANCE ====================
-        attendance_qs = Attendance.objects.filter(student=student)
-
-        total_att = attendance_qs.count()
-        present_att = attendance_qs.filter(status=Attendance.Status.PRESENT).count()
-        absent_att = attendance_qs.filter(status=Attendance.Status.ABSENT).count()
-        attendance_rate = (
-            round((present_att / total_att) * 100, 1) if total_att > 0 else 0
-        )
-
-        # Shu oylik davomat
-        monthly_att = attendance_qs.filter(
-            lesson__date__month=current_month,
-            lesson__date__year=current_year,
-        )
-        monthly_present = monthly_att.filter(status=Attendance.Status.PRESENT).count()
-        monthly_total = monthly_att.count()
-        monthly_rate = (
-            round((monthly_present / monthly_total) * 100, 1)
-            if monthly_total > 0
-            else 0
-        )
-
-        # ===================== PAYMENTS ======================
-        payments_qs = Payment.objects.filter(student=student)
-
-        monthly_payment = (
-            payments_qs.filter(
-                status=Payment.Status.PAID,
-                period_month=current_month,
-                period_year=current_year,
-            ).aggregate(total=Sum("final_amount"))["total"]
-            or 0
-        )
-
-        total_debt = (
-            payments_qs.filter(status=Payment.Status.OVERDUE).aggregate(
-                total=Sum("final_amount")
-            )["total"]
-            or 0
-        )
-
-        pending_payment = (
-            payments_qs.filter(
-                status=Payment.Status.PENDING,
-                period_month=current_month,
-                period_year=current_year,
-            ).aggregate(total=Sum("final_amount"))["total"]
-            or 0
-        )
-
-        # Oxirgi 5 ta to'lov
-        recent_payments = payments_qs.order_by("-created_at").values(
-            "id",
-            "final_amount",
-            "status",
-            "method",
-            "period_month",
-            "period_year",
-            "paid_at",
-        )[:5]
-
-        # ===================== UPCOMING LESSONS ===============
-        upcoming_lessons = (
-            Lesson.objects.filter(
-                group__enrollments__student=student,
-                group__enrollments__is_active=True,
-                date__gte=today,
-            )
-            .select_related("group__teacher__user")
-            .order_by("date")[:5]
-            .values(
-                "id",
-                "date",
-                "group__name",
-                "group__lesson_start_time",
-                "group__lesson_end_time",
-                "group__teacher__user__first_name",
-                "group__teacher__user__last_name",
-            )
-        )
-
-        return Response(
-            {
-                # Profil
-                "profile": {
-                    "full_name": user.full_name,
-                    "phone": user.phone,
-                    "email": user.email,
-                    "avatar": request.build_absolute_uri(user.avatar.url)
-                    if user.avatar
-                    else None,
-                    "center": student.center.name,
-                    "status": student.status,
-                    "enrolled_at": student.enrolled_at,
-                },
-                # Guruhlar
-                "groups": {
-                    "total": len(groups),
-                    "list": groups,
-                },
-                # Davomat
-                "attendance": {
-                    "overall_rate": attendance_rate,
-                    "monthly_rate": monthly_rate,
-                    "total_present": present_att,
-                    "total_absent": absent_att,
-                    "monthly_present": monthly_present,
-                    "monthly_total": monthly_total,
-                },
-                # To'lovlar
-                "payments": {
-                    "monthly_paid": monthly_payment,
-                    "total_debt": total_debt,
-                    "pending": pending_payment,
-                    "recent": list(recent_payments),
-                },
-                # Kelgusi darslar
-                "upcoming_lessons": list(upcoming_lessons),
-            }
-        )
-
-
-@extend_schema(tags=["StudentStats"])
-class StudentStatsView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        now = timezone.now()
-        start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        active = Student.objects.filter(status=Student.Status.ACTIVE).count()
-        new_this_month = Student.objects.filter(created_at__gte=start_of_month).count()
-        minus_this_month = Student.objects.filter(
-            status__in=[
-                Student.Status.INACTIVE,
-                Student.Status.GRADUATED,
-                Student.Status.SUSPENDED,
-            ],
-            updated_at__gte=start_of_month,
-        ).count()
-        return Response(
-            {
-                "active": active,
-                "new_this_month": new_this_month,
-                "minus_this_month": minus_this_month,
             }
         )

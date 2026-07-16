@@ -7,8 +7,6 @@ from apps.views.auth import (
 )
 from apps.views.dashboard import (
     AdminDashboardView,
-    StudentDashboardView,
-    StudentStatsView,
 )
 from apps.views.management import (
     ManagementAttendanceViewSet,
@@ -96,3 +94,18 @@ from apps.views.telegram_link import TelegramLinkStartView, TelegramLinkStatusVi
 
 from apps.views.super_admin import SuperAdminStudentListView
 from apps.views.telegram_webhook import telegram_webhook
+from apps.views.teacher import TeacherGroupViewSet, TeacherSalaryView, TeacherLessonViewSet
+
+from apps.views.finance import (
+    DebtListCreateView,
+    ExpenseCategoryDetailView,
+    ExpenseCategoryListCreateView,
+    ExpenseDetailView,
+    ExpenseListCreateView,
+    ExpenseSummaryView,
+    PaymentDetailView,
+    PaymentListCreateView,
+    PaymentSummaryView,
+    StudentPaymentListView,
+)
+from apps.views.student import StudentAttendanceListView, StudentDashboardView

@@ -85,3 +85,9 @@ from apps.serializers.stats import SuperAdminDashboardSerializer
 from apps.serializers.profile import DirectorProfileSerializer
 from apps.serializers.super_admin import SuperAdminStudentListSerializer
 
+from apps.serializers.teacher import TeacherGroupSerializer, TeacherSalarySerializer, AttendanceMarkSerializer,TeacherLessonSerializer
+
+from apps.serializers.student import (
+    StudentAttendanceSerializer,
+    StudentDashboardSerializer,
+)

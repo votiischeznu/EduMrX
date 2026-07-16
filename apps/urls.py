@@ -8,6 +8,7 @@ from apps.views import (
     BranchDetailView,
     BranchListCreateView,
     ContactMessageCreateView,
+    DebtListCreateView,
     DirectorAdminDetailView,
     DirectorAdminListCreateView,
     DirectorAnalyticsBranchesView,
@@ -31,6 +32,11 @@ from apps.views import (
     DirectorStudentListCreateView,
     DirectorTeacherDetailView,
     DirectorTeacherListCreateView,
+    ExpenseCategoryDetailView,
+    ExpenseCategoryListCreateView,
+    ExpenseDetailView,
+    ExpenseListCreateView,
+    ExpenseSummaryView,
     GroupModelViewSet,
     GroupStudentModelViewSet,
     LoginAPIView,
@@ -57,11 +63,15 @@ from apps.views import (
     ManagerTeacherDetailView,
     ManagerTeacherListCreateView,
     MyProfileRetrieveUpdateAPIView,
+    PaymentDetailView,
+    PaymentListCreateView,
+    PaymentSummaryView,
     RegisterCreateAPIView,
     RegisterVerifyAPIView,
     RoomModelViewSet,
+    StudentAttendanceListView,
     StudentDashboardView,
-    StudentStatsView,
+    StudentPaymentListView,
     SuperAdminCenterDetailView,
     SuperAdminCenterListCreateView,
     SuperAdminCenterStudentListView,
@@ -76,29 +86,22 @@ from apps.views import (
     SuperAdminFinanceTransactionsView,
     SuperAdminStudentDetailView,
     SuperAdminStudentListView,
+    TeacherGroupViewSet,
+    TeacherLessonViewSet,
+    TeacherSalaryView,
     TelegramLinkStartView,
     TelegramLinkStatusView,
     TelegramOAuthView,
+    telegram_webhook,
 )
-from apps.views.finance import (
-    DebtListCreateView,
-    ExpenseCategoryDetailView,
-    ExpenseCategoryListCreateView,
-    ExpenseDetailView,
-    ExpenseListCreateView,
-    ExpenseSummaryView,
-    PaymentDetailView,
-    PaymentListCreateView,
-    PaymentSummaryView,
-    StudentPaymentListView,
-)
-from apps.views.telegram_webhook import telegram_webhook
 
 main_router = SimpleRouter(trailing_slash=True)
 main_router.register("rooms", RoomModelViewSet, basename="rooms")
 main_router.register("groups", GroupModelViewSet, basename="groups")
 main_router.register("group_students", GroupStudentModelViewSet, basename="group_students")
 main_router.register("attendances", ManagementAttendanceViewSet, basename="management-attendance")
+main_router.register("groups", TeacherGroupViewSet, basename="teacher-group")
+main_router.register("lessons", TeacherLessonViewSet, basename="teacher-lesson")
 auth_router = SimpleRouter(trailing_slash=False)
 auth_router.register("recovery", AccountRecoveryViewSet, basename="auth-recovery")
 
@@ -115,14 +118,12 @@ urlpatterns = [
     # ── Profile ───────────────────────────────────────────
     path("me/", MyProfileRetrieveUpdateAPIView.as_view(), name="my-profile"),
     # ── Management: Students ──────────────────────────────
-    path("students/stats/", StudentStatsView.as_view(), name="students-stats"),
     path("students/", ManagementStudentListCreateView.as_view(), name="students-list-create"),
     path("students/<uuid:pk>/", ManagementStudentDetailView.as_view(), name="students-detail"),
     # ── Management: Teachers ──────────────────────────────
     path("teachers/", ManagementTeacherListCreateView.as_view(), name="teachers-list-create"),
     path("teachers/<uuid:pk>/", ManagementTeacherDetailView.as_view(), name="teachers-detail"),
     # ── Dashboards ────────────────────────────────────────
-    path("student/dashboard/", StudentDashboardView.as_view(), name="student-dashboard"),
     path("admin/dashboard/", AdminDashboardView.as_view(), name="admin-dashboard"),
     # ── Super Admin ───────────────────────────────────────
     path("super-admin/dashboard/", SuperAdminDashboardView.as_view(), name="super-admin-dashboard"),
@@ -236,4 +237,7 @@ urlpatterns = [
     # Qarzlar
     path("debts/", DebtListCreateView.as_view(), name="debts-list-create"),
     path("webhook/bot/", telegram_webhook, name="telegram_webhook"),
+    path("salary/", TeacherSalaryView.as_view(), name="teacher-salary"),
+    path("student/dashboard/", StudentDashboardView.as_view(), name="student-dashboard"),
+    path("student/attendance/", StudentAttendanceListView.as_view(), name="student-attendance-list"),
 ]
