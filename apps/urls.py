@@ -63,6 +63,8 @@ from apps.views import (
     ManagerTeacherDetailView,
     ManagerTeacherListCreateView,
     MyProfileRetrieveUpdateAPIView,
+    ParentDashboardView,
+    ParentPaymentInitiateView,
     PaymentDetailView,
     PaymentListCreateView,
     PaymentSummaryView,
@@ -240,4 +242,6 @@ urlpatterns = [
     path("salary/", TeacherSalaryView.as_view(), name="teacher-salary"),
     path("student/dashboard/", StudentDashboardView.as_view(), name="student-dashboard"),
     path("student/attendance/", StudentAttendanceListView.as_view(), name="student-attendance-list"),
+    path("parent/dashboard/", ParentDashboardView.as_view(), name="parent-dashboard"),
+    path("parent/payments/initiate/", ParentPaymentInitiateView.as_view(), name="parent-payment-initiate"),
 ]

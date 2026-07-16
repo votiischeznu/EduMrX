@@ -17,3 +17,5 @@ from apps.service.director_finance_service import (
     DirectorFinanceChartService,
     DirectorFinanceService,
     DirectorFinanceTransactionsService,)
+
+from apps.service.click_payment import ClickPaymentService

@@ -109,3 +109,4 @@ from apps.views.finance import (
     StudentPaymentListView,
 )
 from apps.views.student import StudentAttendanceListView, StudentDashboardView
+from views.parent import ParentDashboardView, ParentPaymentInitiateView

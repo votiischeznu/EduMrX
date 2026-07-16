@@ -91,3 +91,4 @@ from apps.serializers.student import (
     StudentAttendanceSerializer,
     StudentDashboardSerializer,
 )
+from apps.serializers.parent import ParentDashboardSerializer, ParentPaymentInitiateSerializer
