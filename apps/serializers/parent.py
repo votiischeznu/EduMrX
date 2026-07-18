@@ -1,7 +1,9 @@
 from django.utils import timezone
 from rest_framework.fields import CharField, DateField, SerializerMethodField, UUIDField
 from rest_framework.serializers import Serializer
+
 from apps.models import Attendance, Group, Payment, Student
+
 
 class ParentChildScheduleSerializer(Serializer):
     group_id = UUIDField(source="id", read_only=True)
@@ -20,6 +22,7 @@ class ParentChildScheduleSerializer(Serializer):
 
     def get_end_time(self, group):
         return group.lesson_end_time.strftime("%H:%M")
+
 
 class ParentChildPaymentSerializer(Serializer):
     id = UUIDField(read_only=True)
@@ -42,6 +45,7 @@ class ParentChildPaymentSerializer(Serializer):
     def get_can_pay(self, payment):
         return payment.status in [Payment.Status.PENDING, Payment.Status.OVERDUE]
 
+
 class ParentChildSerializer(Serializer):
     id = UUIDField(read_only=True)
     full_name = CharField(read_only=True)
@@ -56,9 +60,11 @@ class ParentChildSerializer(Serializer):
         return student.center.name if student.center_id else None
 
     def get_schedules(self, student):
-        groups = Group.objects.filter(
-            enrollments__student=student, enrollments__is_active=True
-        ).select_related("course").distinct()
+        groups = (
+            Group.objects.filter(enrollments__student=student, enrollments__is_active=True)
+            .select_related("course")
+            .distinct()
+        )
         return ParentChildScheduleSerializer(groups, many=True).data
 
     def get_attendance_summary(self, student):
@@ -73,14 +79,17 @@ class ParentChildSerializer(Serializer):
         }
 
     def get_next_payment(self, student):
-        payment = student.payments.filter(
-            status__in=[Payment.Status.PENDING, Payment.Status.OVERDUE]
-        ).order_by("due_date").first()
+        payment = (
+            student.payments.filter(status__in=[Payment.Status.PENDING, Payment.Status.OVERDUE])
+            .order_by("due_date")
+            .first()
+        )
         return ParentChildPaymentSerializer(payment).data if payment else None
 
     def get_payments(self, student):
         payments = student.payments.all().order_by("-due_date")
         return ParentChildPaymentSerializer(payments, many=True).data
+
 
 class ParentDashboardSerializer(Serializer):
     id = UUIDField(read_only=True)
@@ -91,6 +100,7 @@ class ParentDashboardSerializer(Serializer):
     def get_children(self, parent):
         children = parent.students.select_related("center").all()
         return ParentChildSerializer(children, many=True).data
+
 
 class ParentPaymentInitiateSerializer(Serializer):
     payment_id = UUIDField()

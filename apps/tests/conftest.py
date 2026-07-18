@@ -68,6 +68,7 @@ def super_admin_user():
         is_staff=True,
     )
     user.set_password("123m")
+    user.role = User.Role.SUPER_ADMIN
     user.save()
     return user
 

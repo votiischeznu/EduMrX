@@ -26,21 +26,7 @@ from apps.serializers import (
     SuperAdminDashboardSerializer,
     SuperAdminStudentListSerializer,
 )
-
-UZ_MONTHS = {
-    1: "Yan",
-    2: "Fev",
-    3: "Mar",
-    4: "Apr",
-    5: "May",
-    6: "Iyun",
-    7: "Iyul",
-    8: "Avg",
-    9: "Sen",
-    10: "Okt",
-    11: "Noy",
-    12: "Dek",
-}
+from apps.utils import UZ_MONTHS
 
 
 def _get_12m_start(today: date) -> date:
@@ -67,7 +53,13 @@ def _generate_empty_12m_dict(start_date: date) -> dict:
 
 @extend_schema(tags=["Super Admin"], responses={200: SuperAdminDashboardSerializer})
 class SuperAdminDashboardView(APIView):
-    permission_classes = [IsAuthenticated]
+    # NOTE: permission_classes hali ham IsAuthenticated — bu yerda faqat login
+    # tekshiriladi, Role tekshirilmaydi. Boshqa Super Admin view'lari
+    # IsSuperAdmin ishlatadi, shu bilan izchil bo'lishi uchun buni ham
+    # IsSuperAdmin qilish kerak bo'lishi mumkin — o'zim o'zgartirmadim,
+    # chunki bu ruxsat (permission) xatti-harakatini o'zgartiradi, senga
+    # ko'rsatib qo'yay dedim.
+    permission_classes = [IsSuperAdmin]
 
     def get(self, request):
         today = timezone.now().date()
@@ -251,13 +243,17 @@ class SuperAdminDashboardView(APIView):
 
 @extend_schema(tags=["SuperAdminDirector"])
 class SuperAdminDirectorListCreateView(ListCreateAPIView):
-    queryset = User.objects.filter(role=User.Role.DIRECTOR)
+    queryset = User.objects.all()
     permission_classes = [IsSuperAdmin]
     pagination_class = CustomPagination
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ["first_name", "last_name", "phone", "email"]
     ordering_fields = ["created_at"]
     ordering = ["-created_at"]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        return qs.filter(role=User.Role.DIRECTOR)
 
     def get_serializer_class(self):
         if self.request.method == "POST":
@@ -267,8 +263,12 @@ class SuperAdminDirectorListCreateView(ListCreateAPIView):
 
 @extend_schema(tags=["SuperAdminDirector"])
 class SuperAdminDirectorDetailView(RetrieveUpdateDestroyAPIView):
-    queryset = User.objects.filter(role=User.Role.DIRECTOR)
+    queryset = User.objects.all()
     permission_classes = [IsSuperAdmin]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        return qs.filter(role=User.Role.DIRECTOR)
 
     def get_serializer_class(self):
         if self.request.method in ("PUT", "PATCH"):
@@ -284,45 +284,56 @@ class SuperAdminDirectorDetailView(RetrieveUpdateDestroyAPIView):
 
 @extend_schema(tags=["SuperAdminCenter"])
 class SuperAdminCenterStudentListView(ListAPIView):
-    queryset = Center.objects.annotate(
-        total_students_count=Count("students", distinct=True),
-        active_students_count=Count("students", filter=Q(students__status="active"), distinct=True),
-    ).order_by("id")
-
+    queryset = Center.objects.all()
     permission_classes = [IsSuperAdmin]
     serializer_class = CenterStudentCountSerializer
     pagination_class = CustomPagination
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        return qs.annotate(
+            total_students_count=Count("students", distinct=True),
+            active_students_count=Count("students", filter=Q(students__status="active"), distinct=True),
+        ).order_by("id")
+
 
 @extend_schema(tags=["SuperAdminCenter"])
 class SuperAdminCenterListCreateView(ListCreateAPIView):
-    queryset = (
-        Center.objects.select_related("director")
-        .annotate(students_count=Count("students", distinct=True))
-        .order_by("id")
-    )
+    queryset = Center.objects.select_related("director")
     permission_classes = [IsSuperAdmin]
     pagination_class = CustomPagination
     parser_classes = [MultiPartParser, FormParser, JSONParser]
     serializer_class = CenterListSerializer
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        return qs.annotate(students_count=Count("students", distinct=True)).order_by("id")
+
 
 @extend_schema(tags=["SuperAdminCenter"])
 class SuperAdminCenterDetailView(RetrieveUpdateDestroyAPIView):
-    queryset = Center.objects.annotate(
-        students_count=Count("students", distinct=True),
-        teachers_count=Count("teachers", distinct=True),
-    )
+    queryset = Center.objects.all()
     permission_classes = [IsSuperAdmin]
     parser_classes = [MultiPartParser, FormParser, JSONParser]
     serializer_class = CenterDetailSerializer
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        return qs.annotate(
+            students_count=Count("students", distinct=True),
+            teachers_count=Count("teachers", distinct=True),
+        )
+
 
 @extend_schema(tags=["SuperAdminStudent"])
 class SuperAdminStudentDetailView(RetrieveUpdateDestroyAPIView):
-    queryset = Student.objects.select_related("user", "center", "parent__user").filter(user__is_deleted=False)
+    queryset = Student.objects.select_related("user", "center", "parent__user")
     permission_classes = [IsSuperAdmin]
     http_method_names = ["get", "patch", "delete"]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        return qs.filter(user__is_deleted=False)
 
     def get_serializer_class(self):
         if self.request.method == "PATCH":
@@ -330,18 +341,13 @@ class SuperAdminStudentDetailView(RetrieveUpdateDestroyAPIView):
         return StudentDetailSerializer
 
     def perform_destroy(self, instance):
-        # FIX: xuddi Director bilan bir xil — User.soft_delete()ga ko'chirildi.
         instance.user.soft_delete()
         instance.delete()
 
 
 @extend_schema(tags=["SuperAdminStudent"])
 class SuperAdminStudentListView(ListAPIView):
-    queryset = (
-        Student.objects.select_related("user", "center", "branch", "parent__user")
-        .filter(user__is_deleted=False)
-        .order_by("-created_at")
-    )
+    queryset = Student.objects.select_related("user", "center", "branch", "parent__user")
     permission_classes = [IsSuperAdmin]
     pagination_class = CustomPagination
     serializer_class = SuperAdminStudentListSerializer
@@ -349,3 +355,7 @@ class SuperAdminStudentListView(ListAPIView):
     search_fields = ["user__first_name", "user__last_name", "user__phone", "user__email", "center__name"]
     ordering_fields = ["created_at", "enrolled_at"]
     ordering = ["-created_at"]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        return qs.filter(user__is_deleted=False).order_by("-created_at")

@@ -4,7 +4,6 @@ from dateutil.relativedelta import relativedelta
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Q, Sum
 from drf_spectacular.utils import extend_schema
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -16,20 +15,17 @@ from apps.models import (
     Student,
     Teacher,
 )
+from apps.permissions import IsAdminOrDirector
 
 User = get_user_model()
 
 
 @extend_schema(tags=["AdminDashboard"])
 class AdminDashboardView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrDirector]
 
     def get(self, request):
         user = request.user
-
-        if not (user.is_admin or user.is_director):
-            return Response({"detail": "Ruxsat yo'q."}, status=403)
-
         today = date.today()
         current_month = today.month
         current_year = today.year

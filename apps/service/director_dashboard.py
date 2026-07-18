@@ -1,30 +1,29 @@
 from datetime import timedelta
 from decimal import Decimal, InvalidOperation
 
-from django.db.models import Sum, Count, DecimalField
+from django.db.models import Count, DecimalField, Sum
 from django.db.models.functions import TruncMonth
 from django.utils import timezone
-
 from rest_framework.exceptions import NotFound
 
 from apps.models import (
-    Payment,
-    Debt,
-    Group,
-    Student,
-    Center,
-    Lesson,
     Attendance,
     Branch,
+    Center,
+    Debt,
+    Group,
+    Lesson,
+    Payment,
+    Student,
     Teacher,
 )
 from apps.models.payments import Expense
 from apps.service.director_finance_service import DirectorFinanceService
 
-
 # ─────────────────────────────────────────────
 # HELPERS
 # ─────────────────────────────────────────────
+
 
 def money(value) -> str:
     """
@@ -98,6 +97,7 @@ def get_previous_period_range(start, end):
 # QUERYSET HELPERLAR (center + branch filtri)
 # ─────────────────────────────────────────────
 
+
 def _student_qs(centers, branch):
     qs = Student.objects.filter(center__in=centers, user__is_deleted=False)
     if branch:
@@ -137,14 +137,15 @@ def _teacher_qs(centers, branch):
 # DASHBOARD BO'LIMLARI
 # ─────────────────────────────────────────────
 
+
 def get_payment_status(centers, branch, start, end):
     payments = _payment_qs(centers, branch).filter(paid_at__range=(start, end))
     paid = payments.filter(status=Payment.Status.PAID).aggregate(t=Sum("final_amount"))["t"] or Decimal("0")
     pending = payments.filter(status=Payment.Status.PENDING).aggregate(t=Sum("final_amount"))["t"] or Decimal("0")
 
-    debt = _debt_qs(centers, branch).filter(
-        status__in=[Debt.Status.UNPAID, Debt.Status.PARTIALLY_PAID]
-    ).aggregate(t=Sum("amount"))["t"] or Decimal("0")
+    debt = _debt_qs(centers, branch).filter(status__in=[Debt.Status.UNPAID, Debt.Status.PARTIALLY_PAID]).aggregate(
+        t=Sum("amount")
+    )["t"] or Decimal("0")
 
     return {
         "paid": money(paid),
@@ -189,12 +190,14 @@ def get_finance_chart(centers, branch, period="this_month"):
         key = cursor.strftime("%Y-%m")
         revenue = revenue_map.get(key) or Decimal("0")
         expense = expense_map.get(key) or Decimal("0")
-        chart.append({
-            "month": months_uz[cursor.month - 1],
-            "revenue": money(revenue),
-            "expense": money(expense),
-            "profit": money(revenue - expense),
-        })
+        chart.append(
+            {
+                "month": months_uz[cursor.month - 1],
+                "revenue": money(revenue),
+                "expense": money(expense),
+                "profit": money(revenue - expense),
+            }
+        )
         # keyingi oyning 1-sanasiga o'tish (oy uzunligidan qat'iy nazar xavfsiz usul)
         cursor = (cursor.replace(day=28) + timedelta(days=4)).replace(day=1)
 
@@ -203,9 +206,9 @@ def get_finance_chart(centers, branch, period="this_month"):
 
 def get_today_lessons(centers, branch):
     today = timezone.localdate()
-    qs = Lesson.objects.select_related(
-        "group", "group__teacher", "group__teacher__user", "group__room"
-    ).filter(group__center__in=centers, date=today)
+    qs = Lesson.objects.select_related("group", "group__teacher", "group__teacher__user", "group__room").filter(
+        group__center__in=centers, date=today
+    )
     if branch:
         qs = qs.filter(group__branch=branch)
     qs = qs.order_by("start_time")
@@ -223,9 +226,12 @@ def get_today_lessons(centers, branch):
 
 
 def get_recent_payments(centers, branch, limit=5):
-    qs = _payment_qs(centers, branch).filter(
-        status=Payment.Status.PAID
-    ).select_related("student__user").order_by("-paid_at")[:limit]
+    qs = (
+        _payment_qs(centers, branch)
+        .filter(status=Payment.Status.PAID)
+        .select_related("student__user")
+        .order_by("-paid_at")[:limit]
+    )
 
     return [
         {
@@ -239,9 +245,12 @@ def get_recent_payments(centers, branch, limit=5):
 
 
 def get_top_debtors(centers, branch, limit=5):
-    qs = _debt_qs(centers, branch).filter(
-        status__in=[Debt.Status.UNPAID, Debt.Status.PARTIALLY_PAID]
-    ).select_related("student__user").order_by("-amount")[:limit]
+    qs = (
+        _debt_qs(centers, branch)
+        .filter(status__in=[Debt.Status.UNPAID, Debt.Status.PARTIALLY_PAID])
+        .select_related("student__user")
+        .order_by("-amount")[:limit]
+    )
 
     return [
         {
@@ -269,23 +278,26 @@ def get_branches_status(centers, start):
 
     result = []
     for b in branches:
-        month_revenue = Payment.objects.filter(
-            branch=b, status=Payment.Status.PAID, paid_at__gte=start
-        ).aggregate(t=Sum("final_amount"))["t"] or Decimal("0")
+        month_revenue = Payment.objects.filter(branch=b, status=Payment.Status.PAID, paid_at__gte=start).aggregate(
+            t=Sum("final_amount")
+        )["t"] or Decimal("0")
 
-        result.append({
-            "id": str(b.id),
-            "name": b.name,
-            "students_count": b.students_total,
-            "month_revenue": money(month_revenue),
-            "status": b.status,
-        })
+        result.append(
+            {
+                "id": str(b.id),
+                "name": b.name,
+                "students_count": b.students_total,
+                "month_revenue": money(month_revenue),
+                "status": b.status,
+            }
+        )
     return result
 
 
 def Q_students_active():
     """Branch.students Count uchun faqat o'chirilmagan foydalanuvchilarni hisoblash filtri."""
     from django.db.models import Q
+
     return Q(students__user__is_deleted=False)
 
 
@@ -300,11 +312,7 @@ def get_quick_stats(centers, branch, start, end):
     teachers_count = _teacher_qs(centers, branch).count()
 
     filled = active_groups_qs.select_related("room").exclude(room__isnull=True)
-    rates = [
-        (g.student_count / g.room.capacity) * 100
-        for g in filled
-        if g.room.capacity
-    ]
+    rates = [(g.student_count / g.room.capacity) * 100 for g in filled if g.room.capacity]
     avg_fill_rate = round(sum(rates) / len(rates), 1) if rates else 0.0
 
     return {
@@ -353,6 +361,7 @@ def get_attendance_change(centers, branch, start, end):
 # ─────────────────────────────────────────────
 # ASOSIY YIG'UVCHI FUNKSIYA
 # ─────────────────────────────────────────────
+
 
 def get_dashboard_data_from_centers(centers, branch, period="this_month"):
     """

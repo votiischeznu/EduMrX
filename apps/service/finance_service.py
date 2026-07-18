@@ -4,7 +4,7 @@ from django.db.models import Count, F, Q, Sum
 from django.utils import timezone
 
 from apps.models import Center, Debt, Payment
-from apps.utils.constants import DAYS_UZ
+from apps.utils import DAYS_UZ, MONTHS_UZ
 
 
 def calculate_change(current, previous):
@@ -104,7 +104,7 @@ class FinanceChartService:
 
                 data.append(
                     {
-                        "label": FinanceChartService.MONTHS_UZ[month - 1],
+                        "label": MONTHS_UZ[month - 1],
                         "income": income,
                         "expense": 0,
                     }
@@ -149,7 +149,7 @@ class FinanceChartService:
 
         chart = []
         for month in range(1, 13):
-            row = {"name": FinanceChartService.MONTHS_UZ[month - 1]}
+            row = {"name": MONTHS_UZ[month - 1]}
             for idx, center_row in enumerate(top_center_ids, start=1):
                 center_id = center_row["student__center_id"]
                 income = (

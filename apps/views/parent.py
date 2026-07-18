@@ -1,22 +1,17 @@
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.models import Payment
+from apps.permissions import IsParent
 from apps.serializers import ParentDashboardSerializer, ParentPaymentInitiateSerializer
 from apps.service import ClickPaymentService
 
 
-class IsParentUser(IsAuthenticated):
-    def has_permission(self, request, view):
-        return super().has_permission(request, view) and getattr(request.user, "is_parent", False)
-
-
 @extend_schema(tags=["ParentDashboard"])
 class ParentDashboardView(APIView):
-    permission_classes = [IsParentUser]
+    permission_classes = [IsParent]
 
     def get(self, request):
         parent = getattr(request.user, "parent_profile", None)
@@ -29,7 +24,7 @@ class ParentDashboardView(APIView):
 
 @extend_schema(tags=["ParentPayment"])
 class ParentPaymentInitiateView(APIView):
-    permission_classes = [IsParentUser]
+    permission_classes = [IsParent]
 
     def post(self, request):
         parent = getattr(request.user, "parent_profile", None)

@@ -37,8 +37,6 @@ from apps.views import (
     ExpenseDetailView,
     ExpenseListCreateView,
     ExpenseSummaryView,
-    GroupModelViewSet,
-    GroupStudentModelViewSet,
     LoginAPIView,
     ManagementAttendanceViewSet,
     ManagementStudentDetailView,
@@ -70,7 +68,6 @@ from apps.views import (
     PaymentSummaryView,
     RegisterCreateAPIView,
     RegisterVerifyAPIView,
-    RoomModelViewSet,
     StudentAttendanceListView,
     StudentDashboardView,
     StudentPaymentListView,
@@ -98,9 +95,6 @@ from apps.views import (
 )
 
 main_router = SimpleRouter(trailing_slash=True)
-main_router.register("rooms", RoomModelViewSet, basename="rooms")
-main_router.register("groups", GroupModelViewSet, basename="groups")
-main_router.register("group_students", GroupStudentModelViewSet, basename="group_students")
 main_router.register("attendances", ManagementAttendanceViewSet, basename="management-attendance")
 main_router.register("groups", TeacherGroupViewSet, basename="teacher-group")
 main_router.register("lessons", TeacherLessonViewSet, basename="teacher-lesson")

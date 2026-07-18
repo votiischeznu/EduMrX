@@ -33,8 +33,13 @@ from apps.serializers.finance import (
 
 
 def get_director_center(request):
+    # FIX: Center modelida is_deleted maydoni umuman yo'q (bor bo'lgani —
+    # status: active/suspended/inactive). Bu filtr har bir chaqiruvda
+    # FieldError bilan yiqilardi — ya'ni ushbu funksiyaga tayangan barcha
+    # Finance view'lari (Payment/Debt/Expense — deyarli shu faylning
+    # hammasi) ishlamas edi.
     center_id = request.query_params.get("center_id")
-    qs = Center.objects.filter(director=request.user, is_deleted=False)
+    qs = Center.objects.filter(director=request.user)
     if center_id:
         return qs.filter(id=center_id).first()
     return qs.first()

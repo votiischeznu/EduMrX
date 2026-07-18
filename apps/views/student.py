@@ -5,20 +5,16 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.models import Attendance
+from apps.permissions import IsStudent
 from apps.serializers import (
     StudentAttendanceSerializer,
     StudentDashboardSerializer,
 )
 
 
-class IsStudentUser(IsAuthenticated):
-    def has_permission(self, request, view):
-        return super().has_permission(request, view) and getattr(request.user, "is_student", False)
-
-
 @extend_schema(tags=["StudentDashboard"])
 class StudentDashboardView(APIView):
-    permission_classes = [IsStudentUser]
+    permission_classes = [IsStudent]
 
     def get(self, request):
         student = getattr(request.user, "student_profile", None)
@@ -29,7 +25,7 @@ class StudentDashboardView(APIView):
 
 @extend_schema(tags=["StudentAttendance"])
 class StudentAttendanceListView(ListAPIView):
-    permission_classes = [IsStudentUser]
+    permission_classes = [IsStudent]
     serializer_class = StudentAttendanceSerializer
 
     def get_queryset(self):

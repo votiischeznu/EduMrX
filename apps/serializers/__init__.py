@@ -78,17 +78,26 @@ from apps.serializers.manager import (
     ManagerPaymentCreateSerializer,
     ManagerPaymentSerializer
 )
-from apps.serializers.notifications import ContactMessageCreateSerializer, ContactMessageListSerializer, \
-    ContactMessageMarkReadSerializer
-from apps.serializers.stats import SuperAdminDashboardSerializer
+from apps.serializers.notifications import (
+    ContactMessageCreateSerializer,
+    ContactMessageListSerializer,
+    ContactMessageMarkReadSerializer)
 
+
+from apps.serializers.stats import SuperAdminDashboardSerializer
 from apps.serializers.profile import DirectorProfileSerializer
 from apps.serializers.super_admin import SuperAdminStudentListSerializer
-
-from apps.serializers.teacher import TeacherGroupSerializer, TeacherSalarySerializer, AttendanceMarkSerializer,TeacherLessonSerializer
-
+from apps.serializers.teacher import (
+    TeacherGroupSerializer,
+    TeacherSalarySerializer,
+    AttendanceMarkSerializer,
+    TeacherLessonSerializer
+)
 from apps.serializers.student import (
     StudentAttendanceSerializer,
     StudentDashboardSerializer,
 )
-from apps.serializers.parent import ParentDashboardSerializer, ParentPaymentInitiateSerializer
+from apps.serializers.parent import (
+    ParentDashboardSerializer,
+    ParentPaymentInitiateSerializer
+)

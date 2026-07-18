@@ -29,12 +29,8 @@ from apps.views.super_admin import (
     SuperAdminDirectorDetailView,
     SuperAdminDirectorListCreateView,
     SuperAdminStudentDetailView)
-from apps.views.profile import (
-    GroupModelViewSet,
-    GroupStudentModelViewSet,
-    MyProfileRetrieveUpdateAPIView,
-    RoomModelViewSet,
-)
+from apps.views.profile import MyProfileRetrieveUpdateAPIView
+
 
 from apps.views.director import (
     DirectorAttendanceView,
@@ -90,11 +86,19 @@ from apps.views.notifications import (
     ManagerSendNotificationView
 )
 
-from apps.views.telegram_link import TelegramLinkStartView, TelegramLinkStatusView
+
+from apps.views.telegram_link import (
+    TelegramLinkStartView,
+    TelegramLinkStatusView
+)
 
 from apps.views.super_admin import SuperAdminStudentListView
 from apps.views.telegram_webhook import telegram_webhook
-from apps.views.teacher import TeacherGroupViewSet, TeacherSalaryView, TeacherLessonViewSet
+from apps.views.teacher import (
+    TeacherGroupViewSet,
+    TeacherSalaryView,
+    TeacherLessonViewSet
+)
 
 from apps.views.finance import (
     DebtListCreateView,
@@ -108,5 +112,11 @@ from apps.views.finance import (
     PaymentSummaryView,
     StudentPaymentListView,
 )
-from apps.views.student import StudentAttendanceListView, StudentDashboardView
-from views.parent import ParentDashboardView, ParentPaymentInitiateView
+from apps.views.student import (
+    StudentAttendanceListView,
+    StudentDashboardView
+)
+from apps.views.parent import (
+    ParentDashboardView,
+    ParentPaymentInitiateView
+)
