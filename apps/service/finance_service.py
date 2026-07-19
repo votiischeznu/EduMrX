@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from django.db.models import Count, F, Q, Sum
+from django.db.models.functions import TruncMonth, TruncDay
 from django.utils import timezone
 
 from apps.models import Center, Debt, Payment
@@ -69,43 +70,43 @@ class FinanceChartService:
         data = []
 
         if period == "week":
-            for i in range(6, -1, -1):
-                day = now - timedelta(days=i)
-                day_start = day.replace(hour=0, minute=0, second=0, microsecond=0)
-                day_end = day.replace(hour=23, minute=59, second=59, microsecond=999999)
-
-                income = (
-                    Payment.objects.filter(
-                        status=Payment.Status.PAID,
-                        paid_at__gte=day_start,
-                        paid_at__lte=day_end,
-                    ).aggregate(t=Sum("final_amount"))["t"]
-                    or 0
+            start_date = now - timedelta(days=6)
+            daily_income = (
+                Payment.objects.filter(
+                    status=Payment.Status.PAID,
+                    paid_at__gte=start_date.replace(hour=0, minute=0, second=0, microsecond=0),
                 )
-
+                .annotate(day=TruncDay("paid_at"))
+                .values("day")
+                .annotate(total=Sum("final_amount"))
+            )
+            daily_map = {item["day"].date(): item["total"] or 0 for item in daily_income}
+            for i in range(6, -1, -1):
+                day = (now - timedelta(days=i)).date()
                 data.append(
                     {
                         "label": DAYS_UZ[day.weekday()],
-                        "income": income,
+                        "income": daily_map.get(day, 0),
                         "expense": 0,
                     }
                 )
 
         elif period == "month":
-            for month in range(1, now.month + 1):
-                income = (
-                    Payment.objects.filter(
-                        status=Payment.Status.PAID,
-                        paid_at__year=now.year,
-                        paid_at__month=month,
-                    ).aggregate(t=Sum("final_amount"))["t"]
-                    or 0
+            monthly_income = (
+                Payment.objects.filter(
+                    status=Payment.Status.PAID,
+                    paid_at__year=now.year,
                 )
-
+                .annotate(month=TruncMonth("paid_at"))
+                .values("month")
+                .annotate(total=Sum("final_amount"))
+            )
+            monthly_map = {item["month"].month: item["total"] or 0 for item in monthly_income}
+            for month in range(1, now.month + 1):
                 data.append(
                     {
                         "label": MONTHS_UZ[month - 1],
-                        "income": income,
+                        "income": monthly_map.get(month, 0),
                         "expense": 0,
                     }
                 )
@@ -147,21 +148,33 @@ class FinanceChartService:
             .order_by("-total")[:5]
         )
 
+        # Optimization: Fetch all monthly data in one query
+        center_ids = [c["student__center_id"] for c in top_center_ids]
+        monthly_data = (
+            Payment.objects.filter(
+                status=Payment.Status.PAID,
+                paid_at__year=year,
+                student__center_id__in=center_ids,
+            )
+            .annotate(month=TruncMonth("paid_at"))
+            .values("month", "student__center_id")
+            .annotate(income=Sum("final_amount"))
+        )
+
+        # Pre-format data for easy access: {month: {center_id: income}}
+        chart_data = {month: {cid: 0.0 for cid in center_ids} for month in range(1, 13)}
+        for item in monthly_data:
+            month = item["month"].month
+            cid = item["student__center_id"]
+            income = item["income"] or 0
+            chart_data[month][cid] = float(income) / 1_000_000
+
         chart = []
         for month in range(1, 13):
             row = {"name": MONTHS_UZ[month - 1]}
             for idx, center_row in enumerate(top_center_ids, start=1):
-                center_id = center_row["student__center_id"]
-                income = (
-                    Payment.objects.filter(
-                        status=Payment.Status.PAID,
-                        paid_at__year=year,
-                        paid_at__month=month,
-                        student__center_id=center_id,
-                    ).aggregate(t=Sum("final_amount"))["t"]
-                    or 0
-                )
-                row[f"c{idx}"] = float(income) / 1_000_000  # millionlarda, TZ namunasiga mos
+                cid = center_row["student__center_id"]
+                row[f"c{idx}"] = chart_data[month][cid]
             chart.append(row)
 
         keys_definition = {

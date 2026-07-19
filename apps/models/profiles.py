@@ -5,7 +5,6 @@ from django.db.models import (
     CharField,
     DateField,
     DecimalField,
-    F,
     ForeignKey,
     Index,
     OneToOneField,
@@ -171,24 +170,6 @@ class Student(TimeStampedModel):
     @property
     def is_first_lesson_free(self) -> bool:
         return self.status == self.Status.NEW
-
-    def save(self, *args, **kwargs):
-        from apps.models.centers import Center
-
-        is_new = self._state.adding
-        super().save(*args, **kwargs)
-
-        if is_new and self.center_id:
-            Center.objects.filter(id=self.center_id).update(total_students=F("total_students") + 1)
-
-    def delete(self, *args, **kwargs):
-        from apps.models.centers import Center
-
-        center_id = self.center_id
-        super().delete(*args, **kwargs)
-
-        if center_id:
-            Center.objects.filter(id=center_id).update(total_students=F("total_students") - 1)
 
     def clean(self):
         if self.user and not self.user.is_student:

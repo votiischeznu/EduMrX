@@ -16,7 +16,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from apps.models import ContactMessage, User
-from apps.service.telegram_bot import TelegramBotService
+from apps.tasks.telegram import send_telegram_bulk_message_task
 
 logger = logging.getLogger(__name__)
 
@@ -45,11 +45,5 @@ def notify_on_new_contact_message(sender, instance: ContactMessage, created: boo
         f"💬 Xabar: {instance.message}"
     )
 
-    try:
-        result = TelegramBotService.send_bulk(superadmin_chat_ids, text, parse_mode=None)
-        logger.info(
-            "ContactMessage Telegram xabari: sent=%s failed=%s",
-            result["sent"], result["failed"],
-        )
-    except Exception as e:
-        logger.error("ContactMessage Telegram xabarini yuborishda xatolik: %s", e)
+    # Asinxron yuborish uchun Celery task'ni chaqiramiz
+    send_telegram_bulk_message_task.delay(superadmin_chat_ids, text, parse_mode=None)

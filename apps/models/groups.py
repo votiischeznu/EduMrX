@@ -71,23 +71,6 @@ class Group(TimeStampedModel):
     def __str__(self):
         return f"{self.name} — {self.course.name}"
 
-    def save(self, *args, **kwargs):
-        from apps.models.centers import Center
-
-        is_new = self._state.adding
-        super().save(*args, **kwargs)
-        if is_new and self.center_id:
-            Center.objects.filter(id=self.center_id).update(total_groups=F("total_groups") + 1)
-
-    def delete(self, *args, **kwargs):
-        from apps.models.centers import Center
-
-        center_id = self.center_id
-        super().delete(*args, **kwargs)
-
-        if center_id:
-            Center.objects.filter(id=center_id).update(total_groups=F("total_groups") - 1)
-
     def clean(self):
         super().clean()
         errors = {}

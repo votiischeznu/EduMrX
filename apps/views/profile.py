@@ -3,7 +3,6 @@ from django.utils.functional import cached_property
 from drf_spectacular.utils import extend_schema
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.viewsets import ModelViewSet
 
 from apps.models import User
 from apps.serializers import (

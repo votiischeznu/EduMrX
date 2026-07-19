@@ -2,7 +2,7 @@ from django.utils import timezone
 from rest_framework.fields import CharField, DateField, SerializerMethodField, UUIDField
 from rest_framework.serializers import Serializer
 
-from apps.models import Attendance, Group, Payment, Student
+from apps.models import Attendance, Group, Payment
 
 
 class ParentChildScheduleSerializer(Serializer):

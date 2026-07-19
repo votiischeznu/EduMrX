@@ -1,4 +1,5 @@
-import hashlib
+from urllib.parse import urlencode
+
 from django.conf import settings
 
 
@@ -29,12 +30,7 @@ class ClickPaymentService:
             "transaction_param": merchant_trans_id,
         }
 
-        query_string = (
-            f"service_id={self.service_id}"
-            f"&merchant_id={self.merchant_id}"
-            f"&amount={amount}"
-            f"&transaction_param={merchant_trans_id}"
-        )
+        query_string = urlencode(params)
 
         # Click linkini qaytarish
         return f"{self.base_url}?{query_string}"

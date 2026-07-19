@@ -9,3 +9,4 @@ class AppsConfig(AppConfig):
 
     def ready(self):
         import apps.signals.contact  # noqa
+        import apps.signals.counters  # noqa
