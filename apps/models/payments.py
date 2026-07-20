@@ -9,6 +9,7 @@ from django.db.models import (
     PositiveSmallIntegerField,
     ForeignKey,
     DecimalField,
+    Index,
     PROTECT,
     SET_NULL,
     CheckConstraint,
@@ -63,6 +64,9 @@ class Payment(TimeStampedModel):
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [
+            Index(fields=["status", "paid_at"]),
+        ]
         constraints = [
             CheckConstraint(condition=Q(final_amount__gte=0), name="payment_final_amount_not_negative"),
             CheckConstraint(condition=Q(discount__gte=0), name="payment_discount_not_negative"),

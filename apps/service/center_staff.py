@@ -1,26 +1,27 @@
 from datetime import date
+from typing import Any
 
-from django.db.models import Sum, Q
+from django.db.models import Sum, Q, QuerySet
 from rest_framework.exceptions import NotFound
 
-from apps.models import Center, Student, Teacher, Group, Course, Payment, Debt
+from apps.models import Center, Student, Teacher, Group, Course, Payment, Debt, User
 
 
-def get_admin_centers(user):
+def get_admin_centers(user: User) -> QuerySet[Center]:
     return Center.objects.filter(
         staff__user=user,
         staff__is_active=True,
     ).distinct()
 
 
-def get_single_admin_center_or_404(user):
+def get_single_admin_center_or_404(user: User) -> Center:
     center = get_admin_centers(user).first()
     if not center:
         raise NotFound("Sizga biriktirilgan filial topilmadi.")
     return center
 
 
-def get_center_analytics(center):
+def get_center_analytics(center: Center) -> dict[str, Any]:
     students_qs = Student.objects.filter(center=center, user__is_deleted=False)
     teachers_qs = Teacher.objects.filter(centers=center, user__is_deleted=False)
     groups_qs = Group.objects.filter(center=center)
@@ -65,11 +66,11 @@ def get_center_analytics(center):
     }
 
 
-def get_multi_center_analytics(centers):
+def get_multi_center_analytics(centers: QuerySet[Center] | list[Center]) -> list[dict[str, Any]]:
     return [get_center_analytics(center) for center in centers]
 
 
-def get_admin_dashboard_data(center):
+def get_admin_dashboard_data(center: Center) -> dict[str, Any]:
     today = date.today()
 
     students_qs = Student.objects.filter(center=center, user__is_deleted=False)

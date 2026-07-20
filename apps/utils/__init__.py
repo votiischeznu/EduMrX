@@ -1,1 +1,1 @@
-from apps.utils.constants import DAYS_UZ, MONTHS_UZ, UZ_MONTHS
+from apps.utils.constants import DAY_NAMES, MONTH_NAMES, UZ_MONTHS

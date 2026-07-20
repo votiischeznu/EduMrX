@@ -1,11 +1,12 @@
 from datetime import timedelta
 
-from django.db.models import Count, F, Q, Sum
-from django.db.models.functions import TruncMonth, TruncDay
+from django.db.models import Case, Count, F, Q, Sum, When
+from django.db.models.functions import ExtractYear, TruncDay, TruncMonth
+from django.db.models.query import QuerySet
 from django.utils import timezone
 
 from apps.models import Center, Debt, Payment
-from apps.utils import DAYS_UZ, MONTHS_UZ
+from apps.utils import DAY_NAMES, MONTH_NAMES
 
 
 def calculate_change(current, previous):
@@ -16,7 +17,22 @@ def calculate_change(current, previous):
 
 class FinanceService:
     @staticmethod
-    def get_summary_data():
+    def get_payment_totals(qs: QuerySet) -> dict[str, float]:
+        totals = qs.aggregate(
+            total_amount=Sum("final_amount"),
+            paid_total=Sum(Case(When(status=Payment.Status.PAID, then=F("final_amount")), default=0)),
+            pending_total=Sum(Case(When(status=Payment.Status.PENDING, then=F("final_amount")), default=0)),
+            overdue_total=Sum(Case(When(status=Payment.Status.OVERDUE, then=F("final_amount")), default=0)),
+        )
+        return {
+            "total_amount": float(totals["total_amount"] or 0),
+            "paid_total": float(totals["paid_total"] or 0),
+            "pending_total": float(totals["pending_total"] or 0),
+            "overdue_total": float(totals["overdue_total"] or 0),
+        }
+
+    @staticmethod
+    def get_summary_data() -> dict:
         now = timezone.now()
         start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         last_month_end = start_of_month - timedelta(seconds=1)
@@ -85,7 +101,7 @@ class FinanceChartService:
                 day = (now - timedelta(days=i)).date()
                 data.append(
                     {
-                        "label": DAYS_UZ[day.weekday()],
+                        "label": DAY_NAMES[day.weekday()],
                         "income": daily_map.get(day, 0),
                         "expense": 0,
                     }
@@ -105,27 +121,30 @@ class FinanceChartService:
             for month in range(1, now.month + 1):
                 data.append(
                     {
-                        "label": MONTHS_UZ[month - 1],
+                        "label": MONTH_NAMES[month - 1],
                         "income": monthly_map.get(month, 0),
                         "expense": 0,
                     }
                 )
 
         elif period == "year":
+            yearly_income = (
+                Payment.objects.filter(
+                    status=Payment.Status.PAID,
+                    paid_at__year__gte=now.year - 4,
+                    paid_at__year__lte=now.year,
+                )
+                .annotate(year=ExtractYear("paid_at"))
+                .values("year")
+                .annotate(total=Sum("final_amount"))
+            )
+            yearly_map = {item["year"]: item["total"] or 0 for item in yearly_income}
             for i in range(4, -1, -1):
                 year = now.year - i
-                income = (
-                    Payment.objects.filter(
-                        status=Payment.Status.PAID,
-                        paid_at__year=year,
-                    ).aggregate(t=Sum("final_amount"))["t"]
-                    or 0
-                )
-
                 data.append(
                     {
                         "label": str(year),
-                        "income": income,
+                        "income": yearly_map.get(year, 0),
                         "expense": 0,
                     }
                 )
@@ -171,7 +190,7 @@ class FinanceChartService:
 
         chart = []
         for month in range(1, 13):
-            row = {"name": MONTHS_UZ[month - 1]}
+            row = {"name": MONTH_NAMES[month - 1]}
             for idx, center_row in enumerate(top_center_ids, start=1):
                 cid = center_row["student__center_id"]
                 row[f"c{idx}"] = chart_data[month][cid]
@@ -195,7 +214,9 @@ class FinanceChartService:
 
 class FinanceCentersService:
     @staticmethod
-    def get_centers_finance_list(status_filter, search, sort_by, sort_dir, page, per_page):
+    def get_centers_finance_list(
+        status_filter: str, search: str | None, sort_by: str, sort_dir: str, page: int, per_page: int
+    ) -> tuple[list[dict], int, float]:
         start_of_month = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
         qs = Center.objects.select_related("director").annotate(
@@ -250,12 +271,12 @@ class FinanceCentersService:
             }
             for c in centers
         ]
-        return data, total, total_revenue_sum
+        return data, total, float(total_revenue_sum)
 
 
 class FinanceTransactionsService:
     @staticmethod
-    def get_transactions_list(page, per_page, include_student=False):
+    def get_transactions_list(page: int, per_page: int, include_student: bool = False) -> tuple[list[dict], int]:
         qs = (
             Payment.objects.filter(status=Payment.Status.PAID)
             .select_related("student__user", "student__center")
