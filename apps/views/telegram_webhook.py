@@ -13,10 +13,7 @@ def telegram_webhook(request):
     if request.method == "POST":
         data = json.loads(request.body.decode("utf-8"))
         update = Update(**data)
-
         # Asinxron funksiyani sinxron muhitda chaqirish
         async_to_sync(dp.feed_update)(bot, update)
-
         return HttpResponse("ok", status=200)
-
     return JsonResponse({"error": "Method not allowed"}, status=405)

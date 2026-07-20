@@ -13,8 +13,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.models import Center, Debt, Payment
-from apps.models.payments import Expense, ExpenseCategory
+from apps.service.finance_service import FinanceService
+
 from apps.permissions import IsDirector
 from apps.serializers.finance import (
     DebtCreateSerializer,
@@ -30,6 +30,8 @@ from apps.serializers.finance import (
     PaymentListSerializer,
     PaymentUpdateSerializer,
 )
+from apps.models import Center, Debt, Payment
+from apps.models.payments import Expense, ExpenseCategory
 
 
 def get_director_center(request):
@@ -75,30 +77,17 @@ class PaymentListCreateView(ListCreateAPIView):
 
     def list(self, request, *args, **kwargs):
         qs = self.filter_queryset(self.get_queryset())
-
-        totals = qs.aggregate(
-            total_amount=Sum("final_amount"),
-            paid_total=Sum(Case(When(status=Payment.Status.PAID, then=F("final_amount")), default=0)),
-            pending_total=Sum(Case(When(status=Payment.Status.PENDING, then=F("final_amount")), default=0)),
-            overdue_total=Sum(Case(When(status=Payment.Status.OVERDUE, then=F("final_amount")), default=0)),
-        )
+        totals = FinanceService.get_payment_totals(qs)
 
         page = self.paginate_queryset(qs)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             response = self.get_paginated_response(serializer.data)
-            response.data.update(
-                {
-                    "total_amount": totals["total_amount"] or 0,
-                    "paid_total": totals["paid_total"] or 0,
-                    "pending_total": totals["pending_total"] or 0,
-                    "overdue_total": totals["overdue_total"] or 0,
-                }
-            )
+            response.data.update(totals)
             return response
 
         serializer = self.get_serializer(qs, many=True)
-        return Response({"results": serializer.data, **{k: v or 0 for k, v in totals.items()}})
+        return Response({"results": serializer.data, **totals})
 
 
 @extend_schema(tags=["Finance - Payments"])

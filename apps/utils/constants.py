@@ -1,45 +1,15 @@
 # utils/constants.py
 
-DAY_NAMES = {
-    0: "Dush",
-    1: "Sesh",
-    2: "Chor",
-    3: "Pay",
-    4: "Jum",
-    5: "Shan",
-    6: "Yak",
-}
-
-MONTH_NAMES = [
-    "Yan",
-    "Fev",
-    "Mar",
-    "Apr",
-    "May",
-    "Iyn",
-    "Iyl",
-    "Avg",
-    "Sen",
-    "Okt",
-    "Noy",
-    "Dek",
+# Kunlar (Du, Se, ...)
+DAY_NAMES = [
+    "Du", "Se", "Ch", "Pa", "Ju", "Sh", "Ya"
 ]
-MONTHS_UZ = ["Yan", "Fev", "Mar", "Apr", "May", "Iyn", "Iyl", "Avg", "Sen", "Okt", "Noy", "Dek"]
 
-DAYS_UZ = ["Du", "Se", "Ch", "Pa", "Ju", "Sh", "Ya"]
-
+# Oylar (Yan, Fev, ...)
+MONTH_NAMES = [
+    "Yan", "Fev", "Mar", "Apr", "May", "Iyun", "Iyul", "Avg", "Sen", "Okt", "Noy", "Dek"
+]
 
 UZ_MONTHS = {
-    1: "Yan",
-    2: "Fev",
-    3: "Mar",
-    4: "Apr",
-    5: "May",
-    6: "Iyun",
-    7: "Iyul",
-    8: "Avg",
-    9: "Sen",
-    10: "Okt",
-    11: "Noy",
-    12: "Dek",
+    i + 1: month for i, month in enumerate(MONTH_NAMES)
 }

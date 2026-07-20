@@ -66,6 +66,15 @@ class Center(TimeStampedModel):
 
     total_groups = PositiveIntegerField(default=0, editable=False)
     total_students = PositiveIntegerField(default=0, editable=False)
+
+    @property
+    def get_students_count(self):
+        return self.students.count()
+
+    @property
+    def get_groups_count(self):
+        return self.groups.count()
+
     PLAN_DEFAULT_BRANCH_LIMITS = {
         Plan.TRIAL: 1,
         Plan.PRO: 3,
