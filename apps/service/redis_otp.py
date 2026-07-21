@@ -69,12 +69,12 @@ class OTPService:
             "telegram_username": "",
         }
 
-        r.setex(OTPService._key(phone), OTP_TTL, json.dumps(payload))
+        r.set(OTPService._key(phone), json.dumps(payload), ex=OTP_TTL)
 
         if method == "telegram_bot":
             link_token = f"reg_{uuid.uuid4().hex[:16]}"
             bot_payload = {"phone": phone, "email": email}
-            r.setex(OTPService._bot_token_key(link_token), OTP_TTL, json.dumps(bot_payload))
+            r.set(OTPService._bot_token_key(link_token), json.dumps(bot_payload), ex=OTP_TTL)
 
             return {
                 "message": "Iltimos, Telegram botimizga o'ting va akkauntni faollashtirish uchun START tugmasini bosing.",
@@ -119,7 +119,7 @@ class OTPService:
 
         if data["otp"] != _hash_otp(raw_otp):
             data["attempts"] = data.get("attempts", 0) + 1
-            r.setex(key, OTP_TTL, json.dumps(data))
+            r.set(key, json.dumps(data), ex=OTP_TTL)
             raise ValidationError("Tasdiqlash kodi noto'g'ri.")
 
         user = User.objects.create_user(
@@ -185,12 +185,12 @@ class AccountRecoveryService:
             "purpose": "recovery",
         }
 
-        r.setex(OTPService._key(str(user.id)), OTP_TTL, json.dumps(payload))
+        r.set(OTPService._key(str(user.id)), json.dumps(payload), ex=OTP_TTL)
 
         if method == "telegram_bot":
             link_token = f"rec_{uuid.uuid4().hex[:16]}"
             bot_payload = {"user_id": str(user.id), "new_phone": new_phone}
-            r.setex(OTPService._bot_token_key(link_token), OTP_TTL, json.dumps(bot_payload))
+            r.set(OTPService._bot_token_key(link_token), json.dumps(bot_payload), ex=OTP_TTL)
 
             return {
                 "message": "Parolni tiklash uchun botimizga o'ting va START tugmasini bosing.",
@@ -235,11 +235,11 @@ class AccountRecoveryService:
 
         if data["otp"] != _hash_otp(raw_otp):
             data["attempts"] = data.get("attempts", 0) + 1
-            r.setex(key, OTP_TTL, json.dumps(data))
+            r.set(key, json.dumps(data), ex=OTP_TTL)
             raise ValidationError("Kod noto'g'ri.")
 
         data["verified"] = True
-        r.setex(key, OTP_TTL, json.dumps(data))
+        r.set(key, json.dumps(data), ex=OTP_TTL)
         return {"message": "Kod muvaffaqiyatli tasdiqlandi"}
 
     @staticmethod
