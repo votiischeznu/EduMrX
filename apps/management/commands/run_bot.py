@@ -8,30 +8,62 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import Command, CommandObject
+from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.storage.redis import RedisStorage
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from redis.asyncio import Redis
 
-# Global obyektlar
-redis_client = Redis.from_url(settings.REDIS_URL, decode_responses=True)
-storage = RedisStorage(redis=redis_client)
-dp = Dispatcher(storage=storage)
-bot = Bot(
-    token=settings.TELEGRAM_BOT_TOKEN,
-    default=DefaultBotProperties(parse_mode=ParseMode.HTML),
-)
-
 logger = logging.getLogger(__name__)
 
+# --- Global obyektlar: xatolik bo'lsa ham import qulamasligi kerak ---
+# Redis ulanmasa yoki REDIS_URL noto'g'ri bo'lsa, butun Django (va shu bilan
+# birga apps.urls orqali import qilinadigan barcha API) qulab tushmasligi kerak.
+try:
+    redis_client = Redis.from_url(settings.REDIS_URL, decode_responses=True)
+    storage = RedisStorage(redis=redis_client)
+    BOT_READY = True
+except Exception:
+    logger.exception(
+        "Redis ulanmadi (REDIS_URL='%s'). Bot MemoryStorage bilan ishga tushdi — "
+        "bu faqat vaqtinchalik holat, production uchun mos emas.",
+        getattr(settings, "REDIS_URL", None),
+    )
+    redis_client = None
+    storage = MemoryStorage()
+    BOT_READY = False
 
-# --- Handlerlar o'zgarishsiz qoladi ---
+dp = Dispatcher(storage=storage)
+
+try:
+    bot = Bot(
+        token=settings.TELEGRAM_BOT_TOKEN,
+        default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+    )
+except Exception:
+    logger.exception("Bot obyekti yaratilmadi — TELEGRAM_BOT_TOKEN sozlamasini tekshiring.")
+    bot = None
+
+
 def hash_otp(otp: str) -> str:
     return hashlib.sha256(otp.encode()).hexdigest()
 
 
+def _redis_required(func):
+    """Redis ishlamasa, handler ichiga kirmasdan foydalanuvchiga xabar beradi."""
+
+    async def wrapper(message: types.Message, *args, **kwargs):
+        if not BOT_READY or redis_client is None:
+            await message.answer("Bot vaqtincha ishlamayapti. Birozdan so'ng urinib ko'ring.")
+            return
+        return await func(message, *args, **kwargs)
+
+    return wrapper
+
+
 @dp.message(Command("start"))
+@_redis_required
 async def command_start_handler(message: types.Message, command: CommandObject):
     link_token = command.args
     if not link_token:
@@ -187,6 +219,10 @@ class Command(BaseCommand):
     help = "Bot webhook'ini o'rnatish"
 
     def handle(self, *args, **options):
+        if bot is None:
+            self.stderr.write(self.style.ERROR("Bot obyekti yaratilmagan — TELEGRAM_BOT_TOKEN ni tekshiring."))
+            return
+
         webhook_url = f"{settings.WEBHOOK_URL}/webhook/bot/"
         loop = asyncio.get_event_loop()
         loop.run_until_complete(bot.set_webhook(webhook_url))

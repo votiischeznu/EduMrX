@@ -10,10 +10,21 @@ from apps.management.commands.run_bot import bot, dp
 
 @csrf_exempt
 def telegram_webhook(request):
-    if request.method == "POST":
+    if request.method != "POST":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+
+    if bot is None:
+        # TELEGRAM_BOT_TOKEN sozlanmagan yoki bot yaratilmagan —
+        # webhookni sekin/xato bilan javob qaytarib, Telegram tomonidan
+        # qayta-qayta chaqirilishining oldini olamiz.
+        return JsonResponse({"error": "bot not configured"}, status=503)
+
+    try:
         data = json.loads(request.body.decode("utf-8"))
         update = Update(**data)
-        # Asinxron funksiyani sinxron muhitda chaqirish
-        async_to_sync(dp.feed_update)(bot, update)
-        return HttpResponse("ok", status=200)
-    return JsonResponse({"error": "Method not allowed"}, status=405)
+    except (json.JSONDecodeError, UnicodeDecodeError, ValueError):
+        return JsonResponse({"error": "invalid payload"}, status=400)
+
+    # Asinxron funksiyani sinxron muhitda chaqirish
+    async_to_sync(dp.feed_update)(bot, update)
+    return HttpResponse("ok", status=200)

@@ -80,7 +80,7 @@ DATABASES = {
         "PORT": os.getenv("POSTGRES_PORT"),
     }
 }
-REDIS_URL = os.getenv("REDIS_URL", "")
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 ADMIN_ID = int(os.getenv("ADMIN_ID", 0))
 TELEGRAM_AUTH_MAX_AGE = 300
