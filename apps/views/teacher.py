@@ -1,6 +1,7 @@
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -15,10 +16,11 @@ from apps.serializers import (
     AttendanceSerializer,
     TeacherGroupSerializer,
     TeacherLessonSerializer,
-    TeacherSalarySerializer
+    TeacherSalarySerializer,
 )
 
 
+@extend_schema(tags=["TeacherGroup"])
 class TeacherGroupViewSet(ReadOnlyModelViewSet):
     """Teacherga biriktirilgan guruhlar: xona, faol o'quvchilar, hafta kunlari.
 
@@ -42,6 +44,7 @@ class TeacherGroupViewSet(ReadOnlyModelViewSet):
         )
 
 
+@extend_schema(tags=["TeacherSalary"])
 class TeacherSalaryView(APIView):
     """Teacherning maoshi — hozircha faqat statik summa (Teacher.salary).
 
@@ -56,6 +59,7 @@ class TeacherSalaryView(APIView):
         return Response(serializer.data)
 
 
+@extend_schema(tags=["TeacherLessons"])
 class TeacherLessonViewSet(ModelViewSet):
     """Teacher o'z guruhlarining darslarini ko'radi, mavzu kiritadi/tahrirlaydi,
     va shu dars uchun davomat belgilaydi.

@@ -4,9 +4,16 @@ run:
 stop:
 	docker compose down
 
-mig:
+compose-mig:
 	docker compose exec backend uv run python manage.py makemigrations
 
-up:
+compose-up:
 	docker compose exec backend uv run python manage.py migrate
+
+
+mig:
+	python manage.py makemigrations
+
+up:
+	python manage.py migrate
 

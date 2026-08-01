@@ -1,0 +1,37 @@
+# EduMrX Loyihasi bo'yicha tavsiyalar
+
+Ushbu tahlil natijasida aniqlangan xatoliklar, optimallashtirish imkoniyatlari va loyihani yaxshilash bo'yicha tavsiyalar:
+
+## 2. Unumdorlik (Performance) va N+1 Muammolari
+* +++ **FinanceChartService optimallashtirish:** `FinanceChartService.get_chart_data` va `get_top_centers_yearly_chart` metodlarida loop ichida ma'lumotlar bazasiga so'rovlar yuborilmoqda (N+1 query). Masalan, `get_top_centers_yearly_chart` metodi 12 oy va 5 ta markaz uchun jami 60 tadan ortiq so'rov yuboradi. Buni Django'ning `annotate`, `TruncMonth` va `TruncDay` funksiyalari yordamida bitta yoki bir nechta agregat so'rovga aylantirish kerak.
+* +++ **FinanceCentersService:** Markazlar ro'yxatini olishda har bir markaz uchun talabalar soni va daromadni hisoblashda `annotate` ishlatilgan, bu yaxshi. Biroq, ma'lumotlar ko'paygan sari bu so'rov sekinlashishi mumkin. Index'lar mavjudligini tekshirish lozim.
+
+## 3. Tashqi Servislar bilan Ishlash (Telegram)
+* +++ **Sinxron Bulk Xabarlar:** `TelegramBotService.send_bulk` metodi xabarlarni bitta-bitta va sinxron yuboradi. Agar 100 ta foydalanuvchiga xabar yuborilsa, bu HTTP request'ni bir necha soniyaga bloklab qo'yadi. Telegram xabarlarini yuborishni Celery tasklariga o'tkazish tavsiya etiladi.
+* +++ **Error Handling:** Tashqi API'lar bilan ishlashda (httpx) timeout va retry mexanizmlarini yanada mustahkamroq qilish lozim.
+
+## 4. Ma'lumotlar Bazasining Izchilligi (Consistency)
+*   **Denormalizatsiya va Signallar:** `Center.total_students` va `Center.total_groups` maydonlari `save()` va `delete()` metodlari orqali yangilanmoqda. Bu usul `bulk_create` yoki `QuerySet.delete()` operatsiyalarida ishlamaydi va ma'lumotlar noto'g'ri bo'lib qolishiga olib keladi. Buning o'rniga Django signallari (post_save/post_delete) yoki har safar Count() bilan hisoblash (yoki materializatsiyalashgan view) tavsiya etiladi.
+*   **Unique Constraintlar:** `soft_delete` funksiyasi `phone` raqamga UUID qo'shish orqali raqamni bo'shatadi, bu yaxshi yechim.
+
+## 5. Xavfsizlik (Security)
+* +++ **Click Secret Key:** `ClickPaymentService` da secret key sozlamalardan olinmoqda, lekin to'lov linkini yaratishda `hash` tekshiruvi (signature) qatnashmagan. Click dokumentatsiyasiga ko'ra, xavfsizlik uchun barcha parametrlardan hash generatsiya qilish shart.
+* +++ **Sensitive Data:** `.env` fayli va maxfiy kalitlar (API keys) hech qachon git'ga kirmasligini va logging'da ko'rinmasligini ta'minlash lozim.
+
+## 6. Arxitektura va Tavsiyalar
+*   **Type Hinting:** Servis qatlamida (services) metodlarning qaytaradigan qiymat turlarini (type hints) ko'rsatish kodning tushunarliligini oshiradi.
+* **UUID vs Integer ID:** `User` modeli UUID ishlatadi, boshqa modellar default Integer ID ishlatadi. Tizim bo'ylab to'liq migratsiya (hammasini UUID qilish) juda ko'p vaqt va xavf talab qiladi. Hozirgi aralash yondashuvni saqlab qolish va buni `GEMINI.md` da hujjatlashtirish tavsiya etiladi.
+* +++ **Business Logic Location:** Ko'plab hisob-kitoblar to'g'ridan-to'g'ri Service'larda emas, View'larda yoki Serializer'larda qolib ketgan joylar bor. Ularni markazlashtirilgan Service'larga ko'chirish testlashni osonlashtiradi. (Qisman bajarildi: PaymentListCreateView.list logikasi FinanceService ga ko'chirildi)
+* +++ **Redundant Constants:** `apps/utils/constants.py` faylida bir xil ma'lumotlar (oy va kun nomlari) bir necha marta har xil nomlar bilan (`MONTHS_UZ`, `MONTH_NAMES`, `UZ_MONTHS`) takrorlangan. Ularni yagona standartga keltirish tavsiya etiladi.
+
+## 7. Testlar
+* +++ **Coverage:** Hozirda 107 ta test o'tmoqda, coverage 71%. Tavsiya: `coverage` tahlili asosida kam qamrab olingan quyidagi qismlarga test yozish zarur:
+    - `apps/service/center_staff.py` (0%)
+    - `apps/views/attendance.py` (0%)
+    - `apps/service/director_dashboard.py` (22%)
+    - `apps/management/commands/run_bot.py` (27%)
+    - `apps/service/redis_otp.py` (28%)
+    - `apps/views/dashboard.py` (29%)
+
+
+
