@@ -25,8 +25,11 @@ class MyProfileRetrieveUpdateAPIView(RetrieveUpdateAPIView):
                 "student_profile",
                 "teacher_profile",
                 "parent_profile",
+                "staff_profile",
+                "staff_profile__center",
+                "managed_branch",
             )
-            .prefetch_related("directed_centers", "centers")
+            .prefetch_related("directed_centers")
             .get(pk=self.request.user.pk)
         )
 

@@ -85,8 +85,9 @@ class AdminProfileSerializer(ModelSerializer):
         read_only_fields = ["id", "phone", "role", "full_name", "center_ids"]
 
     def get_center_ids(self, obj):
-        if hasattr(obj, "centers"):
-            return list(obj.centers.values_list("id", flat=True))
+        staff = getattr(obj, "staff_profile", None)
+        if staff and staff.center_id:
+            return [staff.center_id]
         return []
 
 
