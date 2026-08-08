@@ -92,7 +92,12 @@ class AdminProfileSerializer(ModelSerializer):
 
 
 class DirectorProfileSerializer(ModelSerializer):
-    user_data = BaseUserProfileModelSerializer(source="*")
+    # FIX: bu yerda avval `user_data = BaseUserProfileModelSerializer(source="*")` deb
+    # e'lon qilingan edi, lekin u Meta.fields ro'yxatiga qo'shilmagan edi. DRF har bir
+    # explicit e'lon qilingan fieldni Meta.fields ichida talab qiladi, aks holda
+    # serializer ishlatilganda (ya'ni /api/v1/me/ chaqirilganda) AssertionError otiladi
+    # va bu 500 Internal Server Error ga olib kelardi. Model = User bo'lgani uchun
+    # nested user_data kerak emas — kerakli fieldlar pastda to'g'ridan-to'g'ri bor.
     center_ids = SerializerMethodField()
 
     class Meta:
