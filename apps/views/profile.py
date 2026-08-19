@@ -14,6 +14,7 @@ from apps.serializers import (
 )
 
 
+@extend_schema(tags=["profile"])
 class MyProfileRetrieveUpdateAPIView(RetrieveUpdateAPIView):
     permission_classes = [IsAuthenticated]
     http_method_names = ["get", "patch"]

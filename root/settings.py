@@ -218,3 +218,28 @@ EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+
+# settings.py
+
+SPECTACULAR_SETTINGS = {
+    "ENUM_NAME_OVERRIDES": {
+        # ── status ──
+        "CenterStatusEnum": "apps.models.Center.Status.choices",
+        "BranchStatusEnum": "apps.models.Branch.Status.choices",
+        "CourseStatusEnum": "apps.models.Course.Status.choices",
+        "AttendanceStatusEnum": "apps.models.Attendance.Status.choices",
+        "GroupStatusEnum": "apps.models.Group.Status.choices",
+        "PaymentStatusEnum": "apps.models.Payment.Status.choices",
+        "DebtStatusEnum": "apps.models.Debt.Status.choices",
+        "ExpenseStatusEnum": "apps.models.Expense.Status.choices",
+        "SubscriptionStatusEnum": "apps.models.Subscription.Status.choices",
+        "StudentStatusEnum": "apps.models.Student.Status.choices",
+        "CenterPlanEnum": "apps.models.Center.Plan.choices",
+        "SubscriptionPlanEnum": "apps.models.Subscription.Plan.choices",
+        # ── method ──
+        "PaymentMethodEnum": "apps.models.Payment.Method.choices",
+        "ExpenseMethodEnum": "apps.models.Expense.Method.choices",
+        "IncomeMethodEnum": "apps.models.Income.Method.choices",
+    },
+}

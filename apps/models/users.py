@@ -12,6 +12,7 @@ from django.db.models import (
     URLField,
     UUIDField,
 )
+
 from django.utils.translation import gettext_lazy as _
 
 from apps.models.manager import AllUserManager, UserManager

@@ -1,5 +1,6 @@
 from django.contrib.auth import update_session_auth_hash
 from django.shortcuts import get_object_or_404
+from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.decorators import action
@@ -157,8 +158,14 @@ class AccountRecoveryViewSet(GenericViewSet):
 
 # apps/views/auth.py (qo'shimcha)
 
+# apps/views/auth.py
 
-@extend_schema(tags=["Auth"])
+
+@extend_schema(
+    tags=["Auth"],
+    request=TelegramOAuthSerializer,
+    responses={200: OpenApiTypes.OBJECT},
+)
 class TelegramOAuthView(APIView):
     permission_classes = [AllowAny]
 

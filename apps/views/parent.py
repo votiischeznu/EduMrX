@@ -1,3 +1,4 @@
+from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.response import Response
@@ -26,6 +27,10 @@ class ParentDashboardView(APIView):
 class ParentPaymentInitiateView(APIView):
     permission_classes = [IsParent]
 
+    @extend_schema(
+        request=ParentPaymentInitiateSerializer,
+        responses={200: OpenApiTypes.OBJECT},
+    )
     def post(self, request):
         parent = getattr(request.user, "parent_profile", None)
         if not parent:
