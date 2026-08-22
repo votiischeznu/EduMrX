@@ -1,4 +1,5 @@
-from django.db.models import Case, Count, F, Q, Sum, When
+from django.db.models import Case, Count, F, Q, Sum, When, DecimalField
+from django.db.models.functions import Coalesce
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework import filters
@@ -77,7 +78,44 @@ class PaymentListCreateView(ListCreateAPIView):
 
     def list(self, request, *args, **kwargs):
         qs = self.filter_queryset(self.get_queryset())
-        totals = FinanceService.get_payment_totals(qs)
+
+        money_field = DecimalField(max_digits=14, decimal_places=2)
+
+        totals = qs.aggregate(
+            total_income=Coalesce(
+                Sum(
+                    Case(
+                        When(status=Payment.Status.PAID, then=F("final_amount")),
+                        default=0,
+                        output_field=money_field,
+                    )
+                ),
+                0,
+                output_field=money_field,
+            ),
+            total_pending=Coalesce(
+                Sum(
+                    Case(
+                        When(status=Payment.Status.PENDING, then=F("final_amount")),
+                        default=0,
+                        output_field=money_field,
+                    )
+                ),
+                0,
+                output_field=money_field,
+            ),
+            total_overdue=Coalesce(
+                Sum(
+                    Case(
+                        When(status=Payment.Status.OVERDUE, then=F("final_amount")),
+                        default=0,
+                        output_field=money_field,
+                    )
+                ),
+                0,
+                output_field=money_field,
+            ),
+        )
 
         page = self.paginate_queryset(qs)
         if page is not None:
@@ -144,9 +182,31 @@ class StudentPaymentListView(ListAPIView):
     def list(self, request, *args, **kwargs):
         qs = self.filter_queryset(self.get_queryset())
 
+        money_field = DecimalField(max_digits=14, decimal_places=2)
+
         totals = qs.aggregate(
-            total_paid=Sum(Case(When(status=Payment.Status.PAID, then=F("final_amount")), default=0)),
-            total_debt=Sum(Case(When(status=Payment.Status.OVERDUE, then=F("final_amount")), default=0)),
+            total_paid=Coalesce(
+                Sum(
+                    Case(
+                        When(status=Payment.Status.PAID, then=F("final_amount")),
+                        default=0,
+                        output_field=money_field,
+                    )
+                ),
+                0,
+                output_field=money_field,
+            ),
+            total_debt=Coalesce(
+                Sum(
+                    Case(
+                        When(status=Payment.Status.OVERDUE, then=F("final_amount")),
+                        default=0,
+                        output_field=money_field,
+                    )
+                ),
+                0,
+                output_field=money_field,
+            ),
         )
 
         page = self.paginate_queryset(qs)
@@ -155,8 +215,8 @@ class StudentPaymentListView(ListAPIView):
             response = self.get_paginated_response(serializer.data)
             response.data.update(
                 {
-                    "total_paid": totals["total_paid"] or 0,
-                    "total_debt": totals["total_debt"] or 0,
+                    "total_paid": totals["total_paid"],
+                    "total_debt": totals["total_debt"],
                 }
             )
             return response
@@ -165,8 +225,8 @@ class StudentPaymentListView(ListAPIView):
         return Response(
             {
                 "results": serializer.data,
-                "total_paid": totals["total_paid"] or 0,
-                "total_debt": totals["total_debt"] or 0,
+                "total_paid": totals["total_paid"],
+                "total_debt": totals["total_debt"],
             }
         )
 
@@ -189,12 +249,54 @@ class PaymentSummaryView(APIView):
         if month:
             qs = qs.filter(period_month=month)
 
+        money_field = DecimalField(max_digits=14, decimal_places=2)
+
         totals = qs.aggregate(
-            total=Sum("final_amount"),
-            paid=Sum(Case(When(status=Payment.Status.PAID, then=F("final_amount")), default=0)),
-            pending=Sum(Case(When(status=Payment.Status.PENDING, then=F("final_amount")), default=0)),
-            overdue=Sum(Case(When(status=Payment.Status.OVERDUE, then=F("final_amount")), default=0)),
-            refunded=Sum(Case(When(status=Payment.Status.REFUNDED, then=F("final_amount")), default=0)),
+            total=Coalesce(Sum("final_amount", output_field=money_field), 0, output_field=money_field),
+            paid=Coalesce(
+                Sum(
+                    Case(
+                        When(status=Payment.Status.PAID, then=F("final_amount")),
+                        default=0,
+                        output_field=money_field,
+                    )
+                ),
+                0,
+                output_field=money_field,
+            ),
+            pending=Coalesce(
+                Sum(
+                    Case(
+                        When(status=Payment.Status.PENDING, then=F("final_amount")),
+                        default=0,
+                        output_field=money_field,
+                    )
+                ),
+                0,
+                output_field=money_field,
+            ),
+            overdue=Coalesce(
+                Sum(
+                    Case(
+                        When(status=Payment.Status.OVERDUE, then=F("final_amount")),
+                        default=0,
+                        output_field=money_field,
+                    )
+                ),
+                0,
+                output_field=money_field,
+            ),
+            refunded=Coalesce(
+                Sum(
+                    Case(
+                        When(status=Payment.Status.REFUNDED, then=F("final_amount")),
+                        default=0,
+                        output_field=money_field,
+                    )
+                ),
+                0,
+                output_field=money_field,
+            ),
             count_total=Count("id"),
             count_paid=Count(Case(When(status=Payment.Status.PAID, then=1))),
             count_overdue=Count(Case(When(status=Payment.Status.OVERDUE, then=1))),
@@ -211,7 +313,17 @@ class PaymentSummaryView(APIView):
             qs.values("branch__name")
             .annotate(
                 total=Sum("final_amount"),
-                paid=Sum(Case(When(status=Payment.Status.PAID, then=F("final_amount")), default=0)),
+                paid=Coalesce(
+                    Sum(
+                        Case(
+                            When(status=Payment.Status.PAID, then=F("final_amount")),
+                            default=0,
+                            output_field=money_field,
+                        )
+                    ),
+                    0,
+                    output_field=money_field,
+                ),
             )
             .order_by("-total")
         )
@@ -222,14 +334,24 @@ class PaymentSummaryView(APIView):
                 qs.values("period_month")
                 .annotate(
                     total=Sum("final_amount"),
-                    paid=Sum(Case(When(status=Payment.Status.PAID, then=F("final_amount")), default=0)),
+                    paid=Coalesce(
+                        Sum(
+                            Case(
+                                When(status=Payment.Status.PAID, then=F("final_amount")),
+                                default=0,
+                                output_field=money_field,
+                            )
+                        ),
+                        0,
+                        output_field=money_field,
+                    ),
                 )
                 .order_by("period_month")
             )
 
         return Response(
             {
-                "totals": {k: v or 0 for k, v in totals.items()},
+                "totals": totals,
                 "by_method": list(by_method),
                 "by_branch": list(by_branch),
                 "monthly": list(monthly),
@@ -275,10 +397,10 @@ class DebtListCreateView(ListCreateAPIView):
     def list(self, request, *args, **kwargs):
         qs = self.filter_queryset(self.get_queryset())
         total_debt = (
-            qs.filter(status__in=[Debt.Status.UNPAID, Debt.Status.PARTIALLY_PAID]).aggregate(total=Sum("amount"))[
-                "total"
-            ]
-            or 0
+                qs.filter(status__in=[Debt.Status.UNPAID, Debt.Status.PARTIALLY_PAID]).aggregate(total=Sum("amount"))[
+                    "total"
+                ]
+                or 0
         )
 
         page = self.paginate_queryset(qs)
