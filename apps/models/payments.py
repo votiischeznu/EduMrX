@@ -96,6 +96,10 @@ class Payment(TimeStampedModel):
 
     def save(self, *args, **kwargs):
         self.full_clean()
+        if not self.discount:
+            percent = sibling_discount_percent(self.student)
+            if percent:
+                self.discount = (self.amount * percent / Decimal("100")).quantize(Decimal("0.01"))
         self.final_amount = max(Decimal("0"), self.amount - self.discount)
         if self.status == self.Status.PAID and not self.paid_at:
             from django.utils import timezone
