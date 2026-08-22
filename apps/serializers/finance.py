@@ -144,7 +144,8 @@ class DebtListSerializer(ModelSerializer):
         ]
 
     def get_student_name(self, obj):
-        return obj.student.get_full_name()
+        user = obj.student.user
+        return f"{user.first_name} {user.last_name}".strip()
 
 
 class DebtCreateSerializer(ModelSerializer):
@@ -227,7 +228,8 @@ class ExpenseListSerializer(ModelSerializer):
 
     def get_performed_by_name(self, obj):
         if obj.performed_by:
-            return obj.performed_by.get_full_name() or obj.performed_by.phone
+            full_name = f"{obj.performed_by.first_name} {obj.performed_by.last_name}".strip()
+            return full_name or obj.performed_by.phone
         return None
 
 
