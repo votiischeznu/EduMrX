@@ -1,8 +1,10 @@
 import asyncio
+import functools
 import hashlib
 import json
 import logging
 import random
+import threading
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.client.default import DefaultBotProperties
@@ -52,7 +54,7 @@ def hash_otp(otp: str) -> str:
 
 def _redis_required(func):
     """Redis ishlamasa, handler ichiga kirmasdan foydalanuvchiga xabar beradi."""
-
+    @functools.wraps(func)
     async def wrapper(message: types.Message, *args, **kwargs):
         if not BOT_READY or redis_client is None:
             await message.answer("Bot vaqtincha ishlamayapti. Birozdan so'ng urinib ko'ring.")
@@ -215,6 +217,17 @@ async def _handle_registration_start(message: types.Message, link_token: str, da
     await redis_client.delete(f"bot_token:{link_token}")
 
 
+bot_loop = asyncio.new_event_loop()
+
+
+def _run_bot_loop():
+    asyncio.set_event_loop(bot_loop)
+    bot_loop.run_forever()
+
+
+_bot_loop_thread = threading.Thread(target=_run_bot_loop, daemon=True)
+_bot_loop_thread.start()
+
 class Command(BaseCommand):
     help = "Bot webhook'ini o'rnatish"
 
@@ -224,6 +237,5 @@ class Command(BaseCommand):
             return
 
         webhook_url = f"{settings.WEBHOOK_URL}/webhook/bot/"
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(bot.set_webhook(webhook_url))
+        asyncio.run(bot.set_webhook(webhook_url))
         self.stdout.write(self.style.SUCCESS(f"Webhook {webhook_url} ga o'rnatildi."))
