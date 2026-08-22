@@ -1,49 +1,46 @@
-"""
-ContactMessage yaratilganda FAQAT role=SUPER_ADMIN bo'lgan
-foydalanuvchilarga Telegram orqali xabar yuboradi. Boshqa rollarga
-(Director, Manager, Teacher, Parent, Student) bu signal orqali
-hech qachon xabar bormaydi.
-
-apps/apps.py ichida ready() metodida import qilinishi kerak:
-
-    class AppsConfig(AppConfig):
-        def ready(self):
-            import apps.signals.contact  # noqa
-"""
 import logging
 
+import requests
+from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from apps.models import ContactMessage, User
-from apps.tasks.telegram import send_telegram_bulk_message_task
+from apps.models.notifications import ContactMessage
 
 logger = logging.getLogger(__name__)
 
 
+def send_telegram_message(text: str) -> None:
+    bot_token = settings.TELEGRAM_BOT_TOKEN
+    chat_id = settings.TELEGRAM_ADMIN_CHAT_ID
+
+    if not bot_token or not chat_id:
+        logger.warning("TELEGRAM_BOT_TOKEN yoki TELEGRAM_ADMIN_CHAT_ID sozlanmagan.")
+        return
+
+    url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+    payload = {
+        "chat_id": chat_id,
+        "text": text,
+        "parse_mode": "HTML",
+    }
+
+    try:
+        response = requests.post(url, json=payload, timeout=5)
+        response.raise_for_status()
+    except requests.RequestException as e:
+        logger.error(f"Telegramga xabar yuborishda xatolik: {e}")
+
+
 @receiver(post_save, sender=ContactMessage)
-def notify_on_new_contact_message(sender, instance: ContactMessage, created: bool, **kwargs):
+def notify_admin_on_contact_message(sender, instance: ContactMessage, created, **kwargs):
     if not created:
         return
 
-    superadmin_chat_ids = list(
-        User.objects.filter(
-            role=User.Role.SUPER_ADMIN,
-            telegram_id__isnull=False,
-        ).values_list("telegram_id", flat=True)
-    )
-
-    if not superadmin_chat_ids:
-        logger.info("ContactMessage keldi, lekin Telegramga ulangan SuperAdmin topilmadi.")
-        return
-
     text = (
-        "📩 Yangi murojaat\n\n"
-        f"👤 Ism: {instance.full_name}\n"
-        f"📞 Tel: {instance.phone}\n"
-        f"🏢 Markaz: {instance.center_name or '—'}\n"
-        f"💬 Xabar: {instance.message}"
+        "📩 <b>Yangi xabar — EduMRX Contact</b>\n\n"
+        f"👤 <b>Ism:</b> {instance.full_name}\n"
+        f"📞 <b>Telefon:</b> {instance.phone}\n\n"
+        f"💬 <b>Xabar:</b>\n{instance.message}"
     )
-
-    # Asinxron yuborish uchun Celery task'ni chaqiramiz
-    send_telegram_bulk_message_task.delay(superadmin_chat_ids, text, parse_mode=None)
+    send_telegram_message(text)

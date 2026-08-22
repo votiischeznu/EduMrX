@@ -56,10 +56,11 @@ class SendNotificationSerializer(ModelSerializer):
         ]
 
 
+
 class ContactMessageCreateSerializer(ModelSerializer):
     class Meta:
         model = ContactMessage
-        fields = ["full_name", "phone", "center_name", "message"]
+        fields = ["full_name", "phone", "message"]
 
     def validate_phone(self, value):
         digits = re.sub(r"\D", "", value)
@@ -77,8 +78,8 @@ class ContactMessageCreateSerializer(ModelSerializer):
 class ContactMessageListSerializer(ModelSerializer):
     class Meta:
         model = ContactMessage
-        fields = ["id", "full_name", "phone", "center_name", "message", "is_read", "created_at"]
-        read_only_fields = ["id", "full_name", "phone", "center_name", "message", "created_at"]
+        fields = ["id", "full_name", "phone", "message", "is_read", "created_at"]
+        read_only_fields = ["id", "full_name", "phone", "message", "created_at"]
 
 
 class ContactMessageMarkReadSerializer(ModelSerializer):

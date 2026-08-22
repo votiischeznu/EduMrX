@@ -80,8 +80,6 @@ from apps.views.manager import (
 
 from apps.views.notifications import (
     ContactMessageCreateView,
-    SuperAdminContactMessageListView,
-    SuperAdminContactMessageMarkReadView,
     DirectorSendNotificationView,
     ManagerSendNotificationView
 )

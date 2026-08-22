@@ -8,7 +8,7 @@ from django.db.models import (
     Index,
     TextChoices,
     TextField,
-    UUIDField,
+    UUIDField, Model,
 )
 
 from apps.models import BaseModel, TimeStampedModel
@@ -66,11 +66,13 @@ class NotificationRecipient(BaseModel):
         return f"{self.recipient} | {self.notification.title} | {status}"
 
 
-class ContactMessage(TimeStampedModel):
+
+
+class ContactMessage(Model):
     full_name = CharField(max_length=150)
-    phone = CharField(max_length=15)
-    center_name = CharField(max_length=200, blank=True, null=True)
+    phone = CharField(max_length=20)
     message = TextField()
+    created_at = DateTimeField(auto_now_add=True)
     is_read = BooleanField(default=False)
 
     class Meta:

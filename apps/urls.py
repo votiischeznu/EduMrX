@@ -74,8 +74,6 @@ from apps.views import (
     SuperAdminCenterDetailView,
     SuperAdminCenterListCreateView,
     SuperAdminCenterStudentListView,
-    SuperAdminContactMessageListView,
-    SuperAdminContactMessageMarkReadView,
     SuperAdminDashboardView,
     SuperAdminDirectorDetailView,
     SuperAdminDirectorListCreateView,
@@ -94,6 +92,7 @@ from apps.views import (
     telegram_webhook,
 )
 from apps.views.director import DirectorGroupBulkEnrollView
+from apps.views.notifications import ContactMessageListView, ContactMessageMarkReadView
 
 main_router = SimpleRouter(trailing_slash=True)
 main_router.register("attendances", ManagementAttendanceViewSet, basename="management-attendance")
@@ -148,12 +147,8 @@ urlpatterns = [
         name="super-admin-finance-transactions",
     ),
     path("contact/", ContactMessageCreateView.as_view(), name="contact-create"),
-    path("superadmin/contact/", SuperAdminContactMessageListView.as_view(), name="super-admin-contact-list"),
-    path(
-        "superadmin/contact/<int:pk>/mark-read/",
-        SuperAdminContactMessageMarkReadView.as_view(),
-        name="super-admin-contact-mark-read",
-    ),
+    path("contact/list/", ContactMessageListView.as_view(), name="contact-list"),
+    path("contact/<int:pk>/mark-read/", ContactMessageMarkReadView.as_view(), name="contact-mark-read"),
     # ── Director ──────────────────────────────────────────
     path("director/dashboard/", DirectorDashboardView.as_view(), name="director-dashboard"),
     path("director/admins/", DirectorAdminListCreateView.as_view(), name="director-admins-list-create"),

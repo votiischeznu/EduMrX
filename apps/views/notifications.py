@@ -62,26 +62,19 @@ class ContactMessageCreateView(CreateAPIView):
         # avtomatik yuboriladi — bu yerda qo'lda chaqirish shart emas.
 
 
-@extend_schema(tags=["SuperAdminContact"])
-class SuperAdminContactMessageListView(ListAPIView):
+@extend_schema(tags=["Contact"])
+class ContactMessageListView(ListAPIView):
     queryset = ContactMessage.objects.all()
     serializer_class = ContactMessageListSerializer
     permission_classes = [IsSuperAdmin]
-    pagination_class = CustomPagination
-    filter_backends = [OrderingFilter]
-    ordering_fields = ["created_at", "is_read"]
-    ordering = ["-created_at"]
 
 
-@extend_schema(tags=["SuperAdminContact"])
-class SuperAdminContactMessageMarkReadView(UpdateAPIView):
+@extend_schema(tags=["Contact"])
+class ContactMessageMarkReadView(UpdateAPIView):
     queryset = ContactMessage.objects.all()
     serializer_class = ContactMessageMarkReadSerializer
     permission_classes = [IsSuperAdmin]
     http_method_names = ["patch"]
-
-    def perform_update(self, serializer):
-        serializer.save(is_read=True)
 
 
 class SendNotificationInputSerializer(serializers.Serializer):
