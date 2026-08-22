@@ -93,6 +93,7 @@ from apps.views import (
     TelegramOAuthView,
     telegram_webhook,
 )
+from apps.views.director import DirectorGroupBulkEnrollView
 
 main_router = SimpleRouter(trailing_slash=True)
 main_router.register("attendances", ManagementAttendanceViewSet, basename="management-attendance")
@@ -173,6 +174,7 @@ urlpatterns = [
     path("director/groups/", DirectorGroupListCreateView.as_view(), name="director-groups-list-create"),
     path("director/groups/<uuid:pk>/", DirectorGroupDetailView.as_view(), name="director-groups-detail"),
     path("director/groups/<uuid:pk>/enroll/", DirectorGroupEnrollView.as_view(), name="director-groups-enroll"),
+    path("groups/<uuid:pk>/bulk-enroll/", DirectorGroupBulkEnrollView.as_view(), name="director-group-bulk-enroll"),
     # Lessons
     path("director/lessons/", DirectorLessonListCreateView.as_view(), name="director-lessons-list-create"),
     path("director/lessons/<uuid:pk>/", DirectorLessonDetailView.as_view(), name="director-lessons-detail"),

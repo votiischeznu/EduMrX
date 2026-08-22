@@ -34,6 +34,7 @@ from apps.serializers import (
     DirectorTeacherDetailSerializer,
     DirectorTeacherListSerializer,
 )
+from apps.serializers.director import DirectorGroupBulkEnrollSerializer
 from apps.service import (
     DirectorFinanceBranchesService,
     DirectorFinanceChartService,
@@ -369,6 +370,33 @@ class DirectorGroupEnrollView(APIView):
             raise NotFound("Guruh topilmadi.")
 
     def post(self, request, pk):
+        serializer = self.serializer_class(data=request.data, context=self.get_serializer_context())
+        serializer.is_valid(raise_exception=True)
+        group = serializer.save()
+        return Response(DirectorGroupListSerializer(group, context=self.get_serializer_context()).data)
+
+
+@extend_schema(tags=["DirectorGroups"])
+class DirectorGroupBulkEnrollView(APIView):
+    permission_classes = [IsAuthenticated, IsDirector]
+    serializer_class = DirectorGroupBulkEnrollSerializer
+
+    def get_serializer_context(self):
+        group = self._get_group(self.kwargs["pk"])
+        return {
+            "request": self.request,
+            "center": group.center,
+            "group": group,
+        }
+
+    def _get_group(self, pk):
+        centers = get_director_centers(self.request.user)
+        try:
+            return Group.objects.get(pk=pk, center__in=centers)
+        except Group.DoesNotExist:
+            raise NotFound("Guruh topilmadi.")
+
+    def patch(self, request, pk):
         serializer = self.serializer_class(data=request.data, context=self.get_serializer_context())
         serializer.is_valid(raise_exception=True)
         group = serializer.save()

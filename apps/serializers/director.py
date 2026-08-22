@@ -8,7 +8,7 @@ from rest_framework.fields import (
     EmailField,
     IntegerField,
     URLField,
-    UUIDField,
+    UUIDField, ListField,
 )
 from rest_framework.serializers import ModelSerializer, Serializer, SerializerMethodField, TimeField
 
@@ -464,6 +464,37 @@ class DirectorGroupEnrollSerializer(Serializer):
             GroupStudent.objects.filter(group=group, student_id=student_id).delete()
         return group
 
+class DirectorGroupBulkEnrollSerializer(Serializer):
+    student_ids = ListField(child=UUIDField(), allow_empty=True)
+
+    def validate_student_ids(self, value):
+        center = self.context.get("center")
+        unique_ids = set(value)
+        valid_count = Student.objects.filter(id__in=unique_ids, center=center).count()
+        if valid_count != len(unique_ids):
+            raise ValidationError("Ro'yxatdagi ayrim o'quvchilar bu markazga tegishli emas.")
+        return list(unique_ids)
+
+    def save(self):
+        group = self.context["group"]
+        new_ids = set(self.validated_data["student_ids"])
+
+        existing_ids = set(
+            GroupStudent.objects.filter(group=group).values_list("student_id", flat=True)
+        )
+
+        to_add = new_ids - existing_ids
+        to_remove = existing_ids - new_ids
+
+        if to_add:
+            GroupStudent.objects.bulk_create(
+                [GroupStudent(group=group, student_id=sid) for sid in to_add]
+            )
+
+        if to_remove:
+            GroupStudent.objects.filter(group=group, student_id__in=to_remove).delete()
+
+        return group
 
 class DirectorLessonListSerializer(ModelSerializer):
     group_name = CharField(source="group.name", read_only=True)
