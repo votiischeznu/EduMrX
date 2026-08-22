@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from django.db.models import Case, Count, F, Q, Sum, When
+from django.db.models import Case, Count, DecimalField, F, Q, Sum, When
 from django.db.models.functions import ExtractYear, TruncDay, TruncMonth
 from django.db.models.query import QuerySet
 from django.utils import timezone
@@ -20,9 +20,27 @@ class FinanceService:
     def get_payment_totals(qs: QuerySet) -> dict[str, float]:
         totals = qs.aggregate(
             total_amount=Sum("final_amount"),
-            paid_total=Sum(Case(When(status=Payment.Status.PAID, then=F("final_amount")), default=0)),
-            pending_total=Sum(Case(When(status=Payment.Status.PENDING, then=F("final_amount")), default=0)),
-            overdue_total=Sum(Case(When(status=Payment.Status.OVERDUE, then=F("final_amount")), default=0)),
+            paid_total=Sum(
+                Case(
+                    When(status=Payment.Status.PAID, then=F("final_amount")),
+                    default=0,
+                    output_field=DecimalField(),
+                )
+            ),
+            pending_total=Sum(
+                Case(
+                    When(status=Payment.Status.PENDING, then=F("final_amount")),
+                    default=0,
+                    output_field=DecimalField(),
+                )
+            ),
+            overdue_total=Sum(
+                Case(
+                    When(status=Payment.Status.OVERDUE, then=F("final_amount")),
+                    default=0,
+                    output_field=DecimalField(),
+                )
+            ),
         )
         return {
             "total_amount": float(totals["total_amount"] or 0),
