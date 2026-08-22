@@ -192,7 +192,7 @@ class ExpenseCategory(BaseModel):
 class Expense(TimeStampedModel):
     class Status(TextChoices):
         PLANNED = "planned", "Rejalashtirilgan"
-        PAID = "paid", "To'landi"
+        DONE = "done", "Bajarildi"
         CANCELLED = "cancelled", "Bekor qilindi"
 
     class Method(TextChoices):
