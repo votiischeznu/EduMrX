@@ -224,6 +224,5 @@ class Command(BaseCommand):
             return
 
         webhook_url = f"{settings.WEBHOOK_URL}/webhook/bot/"
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(bot.set_webhook(webhook_url))
+        asyncio.run(bot.set_webhook(webhook_url))
         self.stdout.write(self.style.SUCCESS(f"Webhook {webhook_url} ga o'rnatildi."))
