@@ -10,7 +10,7 @@ from django.db.models import (
     Index,
     TextChoices,
     URLField,
-    UUIDField,
+    UUIDField, ImageField,
 )
 
 from django.utils.translation import gettext_lazy as _
@@ -39,7 +39,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     first_name = CharField(_("Ism"), max_length=100)
     last_name = CharField(_("Familiya"), max_length=100)
     role = CharField(_("Rol"), max_length=20, choices=Role.choices, default=Role.STUDENT)
-    avatar = URLField(_("Rasm"), blank=True, null=True)
+    avatar = ImageField(_("Rasm"),upload_to="avatars/", blank=True, null=True)
     is_deleted = BooleanField(default=False)
     telegram_id = BigIntegerField(
         _("Telegram ID"),

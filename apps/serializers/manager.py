@@ -2,6 +2,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.utils.crypto import get_random_string
 from rest_framework.exceptions import ValidationError
+from rest_framework.fields import ImageField
 from rest_framework.serializers import (
     CharField,
     ChoiceField,
@@ -73,7 +74,7 @@ class ManagerStudentCreateSerializer(Serializer):
     first_name = CharField(max_length=100)
     last_name = CharField(max_length=100)
     email = EmailField(required=False, allow_null=True, allow_blank=True)
-    avatar = URLField(required=False, allow_null=True)
+    avatar = ImageField(required=False, allow_null=True)
     password = CharField(write_only=True, required=False, allow_blank=True)
     date_of_birth = DateField(required=False, allow_null=True)
     notes = CharField(required=False, allow_blank=True)
@@ -201,7 +202,7 @@ class ManagerTeacherCreateSerializer(Serializer):
     first_name = CharField(max_length=100)
     last_name = CharField(max_length=100)
     email = EmailField(required=False, allow_null=True, allow_blank=True)
-    avatar = URLField(required=False, allow_null=True)
+    avatar = ImageField(required=False, allow_null=True)
     password = CharField(write_only=True, required=False, allow_blank=True)
     specialization = CharField(max_length=255, required=False, allow_blank=True)
     experience = IntegerField(min_value=0, required=False, default=0)

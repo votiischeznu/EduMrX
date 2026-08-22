@@ -22,7 +22,7 @@ class TeacherDetailSerializer(ModelSerializer):
     full_name = CharField(source="user.full_name", read_only=True)
     phone = CharField(source="user.phone", read_only=True)
     email = EmailField(source="user.email", read_only=True)
-    avatar = URLField(source="user.avatar", read_only=True)
+    avatar = ImageField(source="user.avatar", read_only=True)
 
     class Meta:
         model = Teacher
@@ -45,7 +45,7 @@ class TeacherListSerializer(ModelSerializer):
     last_name = CharField(source="user.last_name", read_only=True)
     phone = CharField(source="user.phone", read_only=True)
     email = EmailField(source="user.email", read_only=True)
-    avatar = URLField(source="user.avatar", read_only=True)
+    avatar = ImageField(source="user.avatar", read_only=True)
 
     class Meta:
         model = Teacher
@@ -174,7 +174,7 @@ class StudentListSerializer(ModelSerializer):
     last_name = CharField(source="user.last_name", read_only=True)
     phone = CharField(source="user.phone", read_only=True)
     email = EmailField(source="user.email", read_only=True)
-    avatar = URLField(source="user.avatar", read_only=True)
+    avatar = ImageField(source="user.avatar", read_only=True)
     center_name = CharField(source="center.name", read_only=True)
     student_id = CharField(source="generated_student_id", read_only=True)
 

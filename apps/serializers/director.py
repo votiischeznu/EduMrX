@@ -8,8 +8,9 @@ from rest_framework.fields import (
     EmailField,
     IntegerField,
     URLField,
-    UUIDField, ListField,
+    UUIDField, ListField, ImageField,
 )
+from rest_framework.relations import PrimaryKeyRelatedField
 from rest_framework.serializers import ModelSerializer, Serializer, SerializerMethodField, TimeField
 
 from apps.models import (
@@ -99,7 +100,7 @@ class DirectorStudentCreateSerializer(Serializer):
     first_name = CharField(max_length=100)
     last_name = CharField(max_length=100)
     email = EmailField(required=False, allow_null=True)
-    avatar = URLField(required=False, allow_null=True)
+    avatar = ImageField(required=False, allow_null=True)
     password = CharField(write_only=True, required=False, allow_blank=True)
     center = UUIDField()
     branch = UUIDField(required=False, allow_null=True)
@@ -258,7 +259,7 @@ class DirectorTeacherCreateSerializer(Serializer):
     first_name = CharField(max_length=100)
     last_name = CharField(max_length=100)
     email = EmailField(required=False, allow_null=True)
-    avatar = URLField(required=False, allow_null=True)
+    avatar = ImageField(required=False, allow_null=True)
     password = CharField(write_only=True, required=True)
     center = UUIDField()
     branch = UUIDField(required=False, allow_null=True)
@@ -430,6 +431,13 @@ class DirectorGroupListSerializer(ModelSerializer):
 
 
 class DirectorGroupCreateSerializer(ModelSerializer):
+    students = PrimaryKeyRelatedField(
+        many=True,
+        queryset=Student.objects.all(),
+        required=False,
+        write_only=True,
+    )
+
     class Meta:
         model = Group
         exclude = ["center"]
@@ -441,8 +449,38 @@ class DirectorGroupCreateSerializer(ModelSerializer):
         return attrs
 
     def create(self, validated_data):
+        students = validated_data.pop("students", [])
         validated_data["center"] = self.context["center"]
-        return super().create(validated_data)
+        group = super().create(validated_data)
+        if students:
+            GroupStudent.objects.bulk_create(
+                [GroupStudent(group=group, student_id=s.id) for s in students]
+            )
+        return group
+
+    def update(self, instance, validated_data):
+        students = validated_data.pop("students", None)
+        instance = super().update(instance, validated_data)
+
+        if students is not None:
+            new_ids = {s.id for s in students}
+            existing_ids = set(
+                GroupStudent.objects.filter(group=instance).values_list("student_id", flat=True)
+            )
+
+            to_add = new_ids - existing_ids
+            to_remove = existing_ids - new_ids
+
+            if to_add:
+                GroupStudent.objects.bulk_create(
+                    [GroupStudent(group=instance, student_id=sid) for sid in to_add]
+                )
+            if to_remove:
+                GroupStudent.objects.filter(
+                    group=instance, student_id__in=to_remove
+                ).delete()
+
+        return instance
 
 
 class DirectorGroupEnrollSerializer(Serializer):
@@ -463,6 +501,7 @@ class DirectorGroupEnrollSerializer(Serializer):
         else:
             GroupStudent.objects.filter(group=group, student_id=student_id).delete()
         return group
+
 
 class DirectorGroupBulkEnrollSerializer(Serializer):
     student_ids = ListField(child=UUIDField(), allow_empty=True)
@@ -495,6 +534,7 @@ class DirectorGroupBulkEnrollSerializer(Serializer):
             GroupStudent.objects.filter(group=group, student_id__in=to_remove).delete()
 
         return group
+
 
 class DirectorLessonListSerializer(ModelSerializer):
     group_name = CharField(source="group.name", read_only=True)
@@ -621,7 +661,7 @@ class DirectorAdminCreateSerializer(Serializer):
     first_name = CharField(max_length=100)
     last_name = CharField(max_length=100)
     email = EmailField(required=False, allow_null=True)
-    avatar = URLField(required=False, allow_null=True)
+    avatar = ImageField(required=False, allow_null=True)
     password = CharField(write_only=True, required=False)
     center = UUIDField()
     branch = UUIDField(required=False, allow_null=True)
