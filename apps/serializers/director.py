@@ -10,6 +10,7 @@ from rest_framework.fields import (
     URLField,
     UUIDField, ListField,
 )
+from rest_framework.relations import PrimaryKeyRelatedField
 from rest_framework.serializers import ModelSerializer, Serializer, SerializerMethodField, TimeField
 
 from apps.models import (
@@ -430,6 +431,13 @@ class DirectorGroupListSerializer(ModelSerializer):
 
 
 class DirectorGroupCreateSerializer(ModelSerializer):
+    students = PrimaryKeyRelatedField(
+        many=True,
+        queryset=Student.objects.all(),
+        required=False,
+        write_only=True,
+    )
+
     class Meta:
         model = Group
         exclude = ["center"]
@@ -441,8 +449,15 @@ class DirectorGroupCreateSerializer(ModelSerializer):
         return attrs
 
     def create(self, validated_data):
+        students = validated_data.pop("students", [])
         validated_data["center"] = self.context["center"]
-        return super().create(validated_data)
+        group = super().create(validated_data)
+
+        if students:
+            GroupStudent.objects.bulk_create(
+                [GroupStudent(group=group, student_id=s.id) for s in students]
+            )
+        return group
 
 
 class DirectorGroupEnrollSerializer(Serializer):
