@@ -1,31 +1,44 @@
 from decimal import Decimal
 
 from django.db.models import (
-    DateField,
-    CharField,
-    TextChoices,
-    DateTimeField,
-    TextField,
-    PositiveSmallIntegerField,
-    ForeignKey,
-    DecimalField,
-    Index,
     PROTECT,
     SET_NULL,
-    CheckConstraint,
-    UniqueConstraint,
-    Q,
     BooleanField,
-    IntegerField,
+    CharField,
+    CheckConstraint,
+    DateField,
+    DateTimeField,
+    DecimalField,
     F,
+    ForeignKey,
+    Index,
+    IntegerField,
+    PositiveSmallIntegerField,
+    Q,
+    TextChoices,
+    TextField,
+    UniqueConstraint,
 )
 
 from apps.models import BaseModel, TimeStampedModel
 
-
+SIBLING_DISCOUNT_PERCENT = Decimal("15")
 # ─────────────────────────────────────────────
 # PAYMENT (mavjud model — o'zgartirilmadi)
 # ─────────────────────────────────────────────
+
+
+def sibling_discount_percent(student):
+    if not student.parent:
+        return Decimal("0")
+    active_children_count = student.parent.children.filter(
+        user__is_deleted=False,
+        status__in=[student.Status.ACTIVE, student.Status.NEW],
+    ).count()
+
+    if active_children_count >= 2:
+        return SIBLING_DISCOUNT_PERCENT
+    return Decimal("0")
 
 
 class Payment(TimeStampedModel):
