@@ -19,6 +19,7 @@ from django.db.models import (
     TextField,
     UniqueConstraint,
 )
+from django.utils.timezone import now
 
 from apps.models import BaseModel, TimeStampedModel
 
@@ -109,6 +110,13 @@ class Debt(BaseModel):
 
     def __str__(self):
         return f"{self.student} | {self.group} | {self.amount} ({self.get_status_display()})"
+
+    def if_not_due_date(self, *args, **kwargs):
+        if now() > self.due_date:
+            self.amount = max(Decimal("0"), self.amount + (self.amount * 0.1))
+            self.due_date = self.due_date + self.due_date.month.__add__(1)
+            self.full_clean()
+        super().save(*args, **kwargs)
 
 
 # ─────────────────────────────────────────────

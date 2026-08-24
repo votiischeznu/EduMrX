@@ -1,0 +1,27 @@
+class Debt(BaseModel):
+    class Status(TextChoices):
+        UNPAID = "unpaid", "To'lanmagan"
+        PARTIALLY_PAID = "partially_paid", "Qisman to'langan"
+        PAID = "paid", "To'liq to'langan"
+
+    student = ForeignKey("apps.Student", PROTECT, related_name="debts")
+    group = ForeignKey("apps.Group", PROTECT, related_name="debts")
+    amount = DecimalField(max_digits=12, decimal_places=2)
+    due_date = DateField()
+    status = CharField(max_length=20, choices=Status.choices, default=Status.UNPAID)
+
+    class Meta:
+        ordering = ["due_date"]
+
+    def __str__(self):
+        return f"{self.student} | {self.group} | {self.amount} ({self.get_status_display()})"
+
+    def if_not_due_date(self, *args, **kwargs):
+        if now() > self.due_date:
+            self.amount = max(Decimal("0"), self.amount + (self.amount * 0.1))
+            self.due_date = self.due_date + self.due_date.month.__add__(1)
+            self.full_clean()
+        super().save(*args, **kwargs)
+
+
+due_date dan 1 kunga ham oshsa, amount + 10%, date 1 oyga chozilsin
