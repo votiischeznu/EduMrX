@@ -22,24 +22,6 @@ from django.db.models import (
 
 from apps.models import BaseModel, TimeStampedModel
 
-SIBLING_DISCOUNT_PERCENT = Decimal("15")
-# ─────────────────────────────────────────────
-# PAYMENT (mavjud model — o'zgartirilmadi)
-# ─────────────────────────────────────────────
-
-
-def sibling_discount_percent(student):
-    if not student.parent:
-        return Decimal("0")
-    active_children_count = student.parent.children.filter(
-        user__is_deleted=False,
-        status__in=[student.Status.ACTIVE, student.Status.NEW],
-    ).count()
-
-    if active_children_count >= 2:
-        return SIBLING_DISCOUNT_PERCENT
-    return Decimal("0")
-
 
 class Payment(TimeStampedModel):
     class Status(TextChoices):
@@ -95,15 +77,12 @@ class Payment(TimeStampedModel):
                 self.discount = self.amount
 
     def save(self, *args, **kwargs):
-        self.full_clean()
-        if not self.discount:
-            percent = sibling_discount_percent(self.student)
-            if percent:
-                self.discount = (self.amount * percent / Decimal("100")).quantize(Decimal("0.01"))
         self.final_amount = max(Decimal("0"), self.amount - self.discount)
+
+        self.full_clean()
+
         if self.status == self.Status.PAID and not self.paid_at:
             from django.utils import timezone
-
             self.paid_at = timezone.now()
         super().save(*args, **kwargs)
 
