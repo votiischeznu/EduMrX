@@ -117,11 +117,7 @@ class Debt(BaseModel):
         return f"{self.student} | {self.group} | {self.amount} ({self.get_status_display()})"
 
     def save(self, *args, **kwargs):
-        # Agar qarz muddati o'tgan bo'lsa (bugungi sana due_date dan katta bo'lsa)
         while now().date() > self.due_date:
-            # Miqdorga 10% qo'shamiz (Decimal bilan ishlash xatolik bermasligi uchun)
-            self.amount += self.amount * Decimal("0.10")
-            # Sanani 1 oy oldinga suramiz
             self.due_date += relativedelta(months=1)
 
         super().save(*args, **kwargs)
