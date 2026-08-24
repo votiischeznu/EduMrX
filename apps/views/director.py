@@ -297,9 +297,15 @@ class DirectorCourseDetailView(RetrieveUpdateDestroyAPIView):
         return qs.filter(center__in=centers)
 
 
+
+
+from django.db.models import Count
+
 @extend_schema(tags=["DirectorGroups"])
 class DirectorGroupListCreateView(ListCreateAPIView):
-    queryset = Group.objects.select_related("course", "teacher__user", "room")
+    queryset = Group.objects.select_related("course", "teacher__user", "room").annotate(
+        student_count=Count("enrollments", distinct=True)
+    )
     permission_classes = [IsAuthenticated, IsDirector]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ["status", "course", "teacher"]
@@ -313,10 +319,7 @@ class DirectorGroupListCreateView(ListCreateAPIView):
         return qs.filter(center__in=centers)
 
     def get_serializer_class(self):
-        if self.request.method == "POST":
-            return DirectorGroupCreateSerializer
-        else:
-            return DirectorGroupListSerializer
+        return DirectorGroupCreateSerializer if self.request.method == "POST" else DirectorGroupListSerializer
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -328,6 +331,8 @@ class DirectorGroupListCreateView(ListCreateAPIView):
 class DirectorGroupDetailView(RetrieveUpdateDestroyAPIView):
     queryset = Group.objects.select_related("course", "teacher__user", "room").prefetch_related(
         "enrollments__student__user"
+    ).annotate(
+        student_count=Count("enrollments", distinct=True)
     )
     permission_classes = [IsAuthenticated, IsDirector]
     http_method_names = ["get", "patch", "delete"]
@@ -338,10 +343,7 @@ class DirectorGroupDetailView(RetrieveUpdateDestroyAPIView):
         return qs.filter(center__in=centers)
 
     def get_serializer_class(self):
-        if self.request.method == "PATCH":
-            return DirectorGroupCreateSerializer
-        else:
-            return DirectorGroupListSerializer
+        return DirectorGroupCreateSerializer if self.request.method == "PATCH" else DirectorGroupListSerializer
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -356,16 +358,14 @@ class DirectorGroupEnrollView(APIView):
 
     def get_serializer_context(self):
         group = self._get_group(self.kwargs["pk"])
-        return {
-            "request": self.request,
-            "center": group.center,
-            "group": group,
-        }
+        return {"request": self.request, "center": group.center, "group": group}
 
     def _get_group(self, pk):
         centers = get_director_centers(self.request.user)
         try:
-            return Group.objects.get(pk=pk, center__in=centers)
+            return Group.objects.annotate(
+                student_count=Count("enrollments", distinct=True)
+            ).get(pk=pk, center__in=centers)
         except Group.DoesNotExist:
             raise NotFound("Guruh topilmadi.")
 
@@ -383,16 +383,14 @@ class DirectorGroupBulkEnrollView(APIView):
 
     def get_serializer_context(self):
         group = self._get_group(self.kwargs["pk"])
-        return {
-            "request": self.request,
-            "center": group.center,
-            "group": group,
-        }
+        return {"request": self.request, "center": group.center, "group": group}
 
     def _get_group(self, pk):
         centers = get_director_centers(self.request.user)
         try:
-            return Group.objects.get(pk=pk, center__in=centers)
+            return Group.objects.annotate(
+                student_count=Count("enrollments", distinct=True)
+            ).get(pk=pk, center__in=centers)
         except Group.DoesNotExist:
             raise NotFound("Guruh topilmadi.")
 

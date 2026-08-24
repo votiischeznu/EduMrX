@@ -311,8 +311,13 @@ def get_quick_stats(centers, branch, start, end):
 
     teachers_count = _teacher_qs(centers, branch).count()
 
-    filled = active_groups_qs.select_related("room").exclude(room__isnull=True)
-    rates = [(g.student_count / g.room.capacity) * 100 for g in filled if g.room.capacity]
+    filled = (
+        active_groups_qs
+        .select_related("room")
+        .exclude(room__isnull=True)
+        .annotate(_sc=Count("enrollments", distinct=True))
+    )
+    rates = [(g._sc / g.room.capacity) * 100 for g in filled if g.room.capacity]
     avg_fill_rate = round(sum(rates) / len(rates), 1) if rates else 0.0
 
     return {

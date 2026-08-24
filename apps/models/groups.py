@@ -51,7 +51,6 @@ class Group(TimeStampedModel):
     course = ForeignKey("apps.Course", PROTECT, related_name="groups")
     teacher = ForeignKey("apps.Teacher", PROTECT, related_name="teaching_groups")
     students = ManyToManyField("apps.Student", through="GroupStudent", related_name="groups", blank=True)
-    student_count = PositiveSmallIntegerField(default=0, editable=False)
     room = ForeignKey("apps.Room", SET_NULL, null=True, blank=True, related_name="groups")
     status = CharField(max_length=20, choices=Status.choices, default=Status.ACTIVE)
 
@@ -91,6 +90,10 @@ class Group(TimeStampedModel):
             raise ValidationError(errors)
 
     @property
+    def student_count(self):
+        return self.enrollments.count()
+
+    @property
     def capacity(self):
         return self.room.capacity if self.room_id else None
 
@@ -112,15 +115,3 @@ class GroupStudent(BaseModel):
 
     def __str__(self):
         return f"{self.student} → {self.group}"
-
-    def save(self, *args, **kwargs):
-        is_new = self._state.adding
-        super().save(*args, **kwargs)
-
-        if is_new:
-            Group.objects.filter(id=self.group_id).update(student_count=F("student_count") + 1)
-
-    def delete(self, *args, **kwargs):
-        group_id = self.group_id
-        super().delete(*args, **kwargs)
-        Group.objects.filter(id=group_id).update(student_count=F("student_count") - 1)

@@ -23,7 +23,6 @@ class TeacherShortProfileSerializer(ModelSerializer):
 
 
 class GroupModelSerializer(ModelSerializer):
-    student_count = IntegerField(read_only=True)
     capacity = IntegerField(read_only=True)
     is_full = BooleanField(read_only=True)
 
@@ -41,7 +40,6 @@ class GroupModelSerializer(ModelSerializer):
             "lesson_days",
             "lesson_start_time",
             "lesson_end_time",
-            "student_count",
             "capacity",
             "is_full",
         )
