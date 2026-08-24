@@ -39,7 +39,10 @@ class PaymentListSerializer(ModelSerializer):
         ]
 
     def get_student_name(self, obj):
-        return obj.student.get_full_name()
+        user = obj.student.user
+        if not user:
+            return ""
+        return f"{user.first_name} {user.last_name}".strip() or user.phone
 
 
 class PaymentDetailSerializer(PaymentListSerializer):
