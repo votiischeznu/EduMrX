@@ -91,7 +91,13 @@ class Group(TimeStampedModel):
 
     @property
     def student_count(self):
+        if "_student_count" in self.__dict__:
+            return self.__dict__["_student_count"]
         return self.enrollments.count()
+
+    @student_count.setter
+    def student_count(self, value):
+        self.__dict__["_student_count"] = value
 
     @property
     def capacity(self):
