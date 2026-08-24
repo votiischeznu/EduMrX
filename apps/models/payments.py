@@ -118,6 +118,7 @@ class Debt(BaseModel):
 
     def save(self, *args, **kwargs):
         while now().date() > self.due_date:
+            self.amount += self.amount * Decimal("0.10")
             self.due_date += relativedelta(months=1)
 
         super().save(*args, **kwargs)
