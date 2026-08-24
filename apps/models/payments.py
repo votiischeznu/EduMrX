@@ -84,6 +84,7 @@ class Payment(TimeStampedModel):
 
         if self.status == self.Status.PAID and not self.paid_at:
             from django.utils import timezone
+
             self.paid_at = timezone.now()
         super().save(*args, **kwargs)
 
@@ -91,6 +92,10 @@ class Payment(TimeStampedModel):
 # ─────────────────────────────────────────────
 # DEBT (mavjud model — o'zgartirilmadi)
 # ─────────────────────────────────────────────
+
+from decimal import Decimal
+from dateutil.relativedelta import relativedelta
+from django.utils.timezone import now
 
 
 class Debt(BaseModel):
@@ -111,13 +116,15 @@ class Debt(BaseModel):
     def __str__(self):
         return f"{self.student} | {self.group} | {self.amount} ({self.get_status_display()})"
 
-    def if_not_due_date(self, *args, **kwargs):
-        if now() > self.due_date:
-            self.amount = max(Decimal("0"), self.amount + (self.amount * 0.1))
-            self.due_date = self.due_date + self.due_date.month.__add__(1)
-            self.full_clean()
-        super().save(*args, **kwargs)
+    def save(self, *args, **kwargs):
+        # Agar qarz muddati o'tgan bo'lsa (bugungi sana due_date dan katta bo'lsa)
+        while now().date() > self.due_date:
+            # Miqdorga 10% qo'shamiz (Decimal bilan ishlash xatolik bermasligi uchun)
+            self.amount += self.amount * Decimal("0.10")
+            # Sanani 1 oy oldinga suramiz
+            self.due_date += relativedelta(months=1)
 
+        super().save(*args, **kwargs)
 
 # ─────────────────────────────────────────────
 # EXPENSE CATEGORY
